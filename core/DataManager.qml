@@ -5,7 +5,7 @@ import Quickshell.Io
 import QtQuick
 import ".."
 
-// Manages the data directory at $XDG_DATA_HOME/quickshell/.
+// Manages the data directory at $XDG_DATA_HOME/dotshell/.
 // Provides profile-aware state paths and centralized defaults management.
 //
 // Bootstrap sequence:
@@ -18,7 +18,7 @@ import ".."
 Singleton {
   id: dataManager
 
-  readonly property string dataDir: (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/quickshell"
+  readonly property string dataDir: (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/dotshell"
   readonly property string defaultsDir: dataDir + "/defaults"
 
   // Active profile directory name (set by GeneralSettings)
