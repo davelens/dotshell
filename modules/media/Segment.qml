@@ -43,9 +43,10 @@ Item {
   }
 
   // Hide when nothing is playing
+  property bool showInBar: activePlayer !== null
+
   anchors.verticalCenter: parent.verticalCenter
-  visible: activePlayer !== null
-  width: visible ? content.width : 0
+  width: showInBar ? content.width : 0
   height: content.height
 
   Row {
