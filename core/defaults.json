@@ -1,0 +1,19 @@
+{
+  "settingsCategoryOrder": [
+    "statusbar",
+    "workspaces",
+    "display",
+    "wireless",
+    "bluetooth",
+    "notifications",
+    "recording"
+  ],
+  "activeProfile": "defaults",
+  "activeProfileName": "Default",
+  "profiles": [
+    {
+      "name": "Default",
+      "dir": "defaults"
+    }
+  ]
+}
