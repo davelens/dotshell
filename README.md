@@ -24,7 +24,7 @@ Built on [Quickshell](https://quickshell.outfoxxed.me), with support for Sway/i3
 - Workspace support for Sway/i3 and Niri compositors
 - Settings panel with basic profile management
 - Keyboard-driven navigation throughout
-- Catppuccin Mocha color scheme - About 50% hardcoded for now.
+- Catppuccin Mocha color scheme - Not configurable yet, but you can alter `core/Colors.qml`
 
 ## Dependencies
 There's quite a few you will need to install, seeing as this is mostly a personal setup.
