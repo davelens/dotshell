@@ -11,7 +11,6 @@ Item {
   // Fresh occupancy map from `swaymsg -t get_workspaces`
   // workspace name -> bool (has windows)
   property var windowState: ({})
-  property int refreshTrigger: 0
 
   function hasWindowsFromIpc(ipc) {
     if (!ipc) return false
@@ -38,20 +37,15 @@ Item {
     return arr
   }
 
-  Connections {
-    target: I3
-
-    function onRawEvent(event) {
-      if (event.type === "window") backend.refreshTrigger++
+  // Poll for window state changes (open/close/move don't trigger I3.workspaces)
+  Timer {
+    interval: 500
+    running: true
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: {
+      if (!refreshProc.running) refreshProc.running = true
     }
-
-    function onConnected() {
-      backend.refreshTrigger++
-    }
-  }
-
-  onRefreshTriggerChanged: {
-    if (!refreshProc.running) refreshProc.running = true
   }
 
   Process {
@@ -81,10 +75,6 @@ Item {
       }
       refreshProc.buffer = ""
     }
-  }
-
-  Component.onCompleted: {
-    refreshTrigger++
   }
 
   function focusWorkspace(name) {
