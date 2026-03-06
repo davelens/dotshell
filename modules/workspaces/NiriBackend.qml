@@ -21,12 +21,11 @@ Item {
     id: discoverProc
     command: ["sh", "-c", "ls /run/user/$(id -u)/niri.*.sock 2>/dev/null | head -1"]
     running: !backend.niriSocket
-  }
 
-  SplitParser {
-    source: discoverProc
-    onRead: line => {
-      if (line.trim()) backend.discoveredSocket = line.trim()
+    stdout: SplitParser {
+      onRead: line => {
+        if (line.trim()) backend.discoveredSocket = line.trim()
+      }
     }
   }
 
@@ -46,17 +45,17 @@ Item {
     id: pollProc
     command: ["sh", "-c", "NIRI_SOCKET='" + backend.socket + "' niri msg -j workspaces"]
     property string buffer: ""
+
+    stdout: SplitParser {
+      onRead: line => { pollProc.buffer += line }
+    }
+
     onExited: (code) => {
       if (code === 0 && pollProc.buffer) {
         backend.parseWorkspaces(pollProc.buffer)
       }
       pollProc.buffer = ""
     }
-  }
-
-  SplitParser {
-    source: pollProc
-    onRead: line => { pollProc.buffer += line }
   }
 
   function parseWorkspaces(json) {
