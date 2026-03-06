@@ -3,8 +3,6 @@
 A custom, keyboard-driven shell featuring a modular status bar and settings panel.
 Built on [Quickshell](https://quickshell.outfoxxed.me), with support for Sway/i3 and Niri.
 
-<img width="2558" height="48" alt="image" src="https://github.com/user-attachments/assets/fe09ccf3-942f-4894-ae03-0e8d8d7e1056" />
-
 > [!NOTE]
 > This was made to support my own simple needs as a backend dev on Arch Linux.
 > I chose to open source this for the few interested souls looking for something similar.
