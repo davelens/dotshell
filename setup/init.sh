@@ -2,7 +2,8 @@
 set -e
 
 DOTSHELL_REPO_HOME="$(cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")" && pwd)"
-export DOTSHELL_REPO_HOME
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export DOTSHELL_REPO_HOME XDG_DATA_HOME
 
 echo "==> Installing Quickshell and dependencies..."
 
@@ -57,16 +58,18 @@ systemctl --user restart quickshell
 
 # Install desktop entry for settings panel
 echo "==> Installing settings panel desktop entry..."
-mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/applications"
-cat >"${XDG_DATA_HOME:-$HOME/.local/share}/applications/quickshell-settings.desktop" <<'EOF'
+mkdir -p "$XDG_DATA_HOME/applications"
+cat >"$XDG_DATA_HOME/applications/quickshell-settings.desktop" <<EOF
 [Desktop Entry]
 Name=Settings
 Comment=Open our shell settings panel
-Exec=quickshell ipc call settings toggle
+Exec=qs -p $HOME/.config/dotshell ipc call settings toggle
 Icon=preferences-system
 Type=Application
 Categories=Settings;
 EOF
+
+update-desktop-database "$XDG_DATA_HOME/applications"
 
 # Stop mako if running (Quickshell has its own notification daemon)
 if pgrep -x mako >/dev/null; then
