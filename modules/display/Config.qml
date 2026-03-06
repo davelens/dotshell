@@ -19,15 +19,6 @@ Singleton {
     command: ["qs", "ipc", "call", "settings", "showCategory", "display"]
   }
 
-  // Sway-specific rotation
-  Process {
-    id: rotateProc
-    property string outputName: ""
-    property string transform: "normal"
-    command: ["swaymsg", "output", outputName, "transform", transform]
-    running: false
-  }
-
   // Rotate a screen. degrees: 0, 90, 180, 270
   function setRotation(screen, degrees) {
     if (!screen) return
@@ -36,9 +27,7 @@ Singleton {
     else if (degrees === 180) transform = "180"
     else if (degrees === 270) transform = "270"
 
-    rotateProc.outputName = screen.name
-    rotateProc.transform = transform
-    rotateProc.running = true
+    Compositor.setTransform(screen.name, transform)
   }
 
   // Track current rotation per screen (by name)

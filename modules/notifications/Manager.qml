@@ -312,15 +312,10 @@ Singleton {
     return []
   }
 
-  // Focus an app's window by its desktop entry (app_id in Sway)
+  // Focus an app's window by its desktop entry (app_id)
   function focusAppWindow(desktopEntry) {
     if (!desktopEntry) return
-    focusProc.command = ["swaymsg", "[app_id=" + desktopEntry + "] focus"]
-    focusProc.running = true
-  }
-
-  Process {
-    id: focusProc
+    Compositor.focusWindow(desktopEntry)
   }
 
   function addToHistory(notification) {

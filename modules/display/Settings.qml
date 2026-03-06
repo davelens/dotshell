@@ -1,5 +1,4 @@
 import Quickshell
-import Quickshell.Io
 import QtQuick
 import QtQuick.Controls
 import "../.."
@@ -272,49 +271,41 @@ ScrollView {
     layoutItems = items
   }
 
-  // Apply layout via swaymsg
+  // Apply layout via Compositor
+  property int pendingApplyCount: 0
+
   function applyLayout() {
     normalizeLayout()
-    var cmds = []
+    var activeItems = []
     for (var i = 0; i < layoutItems.length; i++) {
-      var item = layoutItems[i]
-      if (!item.active) continue
-      cmds.push("output " + item.name + " pos " + item.x + " " + item.y)
+      if (layoutItems[i].active) activeItems.push(layoutItems[i])
     }
-    if (cmds.length === 0) return
-    applyProc.command = ["swaymsg", cmds.join("; ")]
-    applyProc.running = true
+    if (activeItems.length === 0) return
+    pendingApplyCount = activeItems.length
+    for (var j = 0; j < activeItems.length; j++) {
+      Compositor.applyPosition(activeItems[j].name, activeItems[j].x, activeItems[j].y)
+    }
   }
 
   // Fetch outputs on load and when screens change
-  Component.onCompleted: fetchProc.running = true
+  Component.onCompleted: Compositor.fetchOutputs()
 
   Connections {
     target: Quickshell
-    function onScreensChanged() { fetchProc.running = true }
+    function onScreensChanged() { Compositor.fetchOutputs() }
   }
 
-  Process {
-    id: fetchProc
-    command: ["swaymsg", "-t", "get_outputs"]
-    property string output: ""
-    stdout: SplitParser {
-      splitMarker: ""
-      onRead: data => { fetchProc.output += data }
-    }
-    onExited: (exitCode, exitStatus) => {
-      if (exitCode === 0) settingsRoot.parseOutputs(fetchProc.output)
-      fetchProc.output = ""
-    }
-  }
-
-  Process {
-    id: applyProc
-    running: false
-    onExited: (exitCode, exitStatus) => {
-      if (exitCode === 0) {
-        settingsRoot.layoutDirty = false
-        fetchProc.running = true
+  Connections {
+    target: Compositor
+    function onOutputsFetched(json) { settingsRoot.parseOutputs(json) }
+    function onPositionApplied(success) {
+      settingsRoot.pendingApplyCount--
+      if (settingsRoot.pendingApplyCount <= 0) {
+        settingsRoot.pendingApplyCount = 0
+        if (success) {
+          settingsRoot.layoutDirty = false
+        }
+        Compositor.fetchOutputs()
       }
     }
   }

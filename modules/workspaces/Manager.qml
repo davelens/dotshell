@@ -15,22 +15,8 @@ Singleton {
   property int count: 5
   property var icons: ({})
 
-  // Resolved backend name ("sway" or "niri") based on auto-detection or explicit setting
-  readonly property string resolvedBackend: {
-    if (backend !== "auto") return backend
-    return detectedCompositor
-  }
-
-  // Auto-detect compositor from environment
-  readonly property string detectedCompositor: {
-    var swaysock = Quickshell.env("SWAYSOCK")
-    if (swaysock) return "sway"
-    var i3sock = Quickshell.env("I3SOCK")
-    if (i3sock) return "sway"
-    var niriSocket = Quickshell.env("NIRI_SOCKET")
-    if (niriSocket) return "niri"
-    return "sway"
-  }
+  // Resolved backend name ("sway" or "niri") based on user override or core auto-detection
+  readonly property string resolvedBackend: backend !== "auto" ? backend : Compositor.resolvedBackend
 
   // File-based persistence
   readonly property string statePath: DataManager.getStatePath("workspaces")
