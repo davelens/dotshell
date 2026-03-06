@@ -1,9 +1,11 @@
-> [!WARNING]
-> I'm still in the process of porting this over until I've had a chance to test this on a fresh install.
-
 # dotshell
 
-A custom shell built with [Quickshell](https://quickshell.outfoxxed.me), featuring a configurable status bar with modular components and workspace support for Sway and Niri.
+A custom, keyboard-driven shell featuring a modular status bar and settings panel.
+Built on [Quickshell](https://quickshell.outfoxxed.me), with support for Sway/i3 and Niri.
+
+> [!INFO]
+> This was made to support my own simple needs as a backend dev on Arch Linux.
+> I chose to open source this for the few interested souls looking for something similar.
 
 ## Features
 
@@ -13,7 +15,7 @@ A custom shell built with [Quickshell](https://quickshell.outfoxxed.me), featuri
   - brightness
   - clock
   - display
-  - media
+  - media - Play/pause toggles for music
   - notifications
   - volume
   - wireless
@@ -24,15 +26,34 @@ A custom shell built with [Quickshell](https://quickshell.outfoxxed.me), featuri
 - Keyboard-driven navigation throughout
 - Catppuccin Mocha color scheme - About 50% hardcoded for now.
 
-## Requirements
+## Dependencies
+There's quite a few you will need to install, seeing as this is mostly a personal setup.
+Though I dare say most of them are common, and widely used.
 
-- Arch Linux (the setup script uses `pacman` and `paru`)
-- [Quickshell](https://quickshell.outfoxxed.me) (installed automatically from the AUR)
-- Sway or Niri compositor
+| Dependency | Packages | Reason |
+|---|---|---|
+| Quickshell | `quickshell` | The core runtime |
+| Compositor | `sway` or `niri` | Workspace detection |
+| Bluetooth tools | `bluez`, `bluez-utils` | GUI connection management |
+| Network management | `networkmanager` | GUI connection management |
+| Brightness tools | `brightnessctl`, `ddcutil` | Backlight control via slider |
+| Audio stack | `pipewire`, `wireplumber` | Volume/audio integration |
+| Fonts | `otf-commit-mono-nerd`, `ttf-dejavu` | Font + nerd icons used in panels |
+| Notifications CLI | `libnotify` | Catch and display notifications |
 
 ## Installation
 
-Clone the repository and run the setup script:
+Install the dependencies above, then clone the repo to `~/.config/dotshell`:
+```sh
+git clone https://github.com/davelens/dotshell.git ~/.config/dotshell
+```
+
+### If you're on Arch Linux
+
+The script I use to install this is included in `setup/init.sh`.
+It installs dependencies via `pacman` and `paru`, and configures systemd.
+
+Clone the repository wherever and run the setup script:
 
 ```sh
 git clone https://github.com/davelens/dotshell.git
@@ -41,19 +62,18 @@ bash setup/init.sh
 ```
 
 The setup script will:
-
 1. Install Quickshell and all dependencies via `pacman`/`paru`
 2. Configure `i2c-dev` for external monitor brightness control (ddcutil)
 3. Symlink the repo to `~/.config/dotshell`
 4. Enable and start a systemd user service for Quickshell
 5. Install a desktop entry for the settings panel
 
-After installation, log out and back in if you need external monitor brightness control (i2c group membership).
+If you need external monitor brightness control you will need a reboot to refresh the i2c group membership.
 
-## IPC Commands
+## Toggling window panels
 
-dotshell exposes IPC targets you can call from the command line or bind to keybindings:
-
+dotshell provides IPC targets for Quickshell to call from the command line.
+Useful for binding to keymaps in a window manager:
 ```sh
 qs ipc call <target> <command> [args]
 ```
