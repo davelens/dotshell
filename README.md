@@ -1,11 +1,26 @@
 # dotshell
 
-A custom, keyboard-driven shell featuring a modular status bar and settings panel.
-Built on [Quickshell](https://quickshell.outfoxxed.me), with support for Sway/i3 and Niri.
+A custom, keyboard-driven shell featuring a modular status bar and settings panel, built on [Quickshell](https://quickshell.outfoxxed.me)
 
 > [!NOTE]
 > This was made to support my own simple needs as a backend dev on Arch Linux.
 > I chose to open source this for the few interested souls looking for something similar.
+
+## Media
+
+### Status bar examples
+
+#### Custom icons, fixed workspaces
+<img width="2558" height="42" alt="image" src="https://github.com/user-attachments/assets/26c0fcad-989b-40b5-bfd4-edab2a71aa81" />
+
+#### Dots, fixed workspaces, less icons
+<img width="2558" height="42" alt="image" src="https://github.com/user-attachments/assets/756c45e6-2ffe-4ecd-903e-eadc1ea8f252" />
+
+#### Numbers, with autodetect
+<img width="2558" height="42" alt="image" src="https://github.com/user-attachments/assets/495c2507-36d5-412f-95f5-2a8b93adba51" />
+
+### Settings panel
+<img width="1554" height="1141" alt="image" src="https://github.com/user-attachments/assets/012ece19-c5ba-4378-86c6-3cf39541acd6" />
 
 ## Features
 
