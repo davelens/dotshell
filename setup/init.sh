@@ -3,7 +3,6 @@ set -e
 
 DOTSHELL_REPO_HOME="$(cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")" && pwd)"
 XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-export DOTSHELL_REPO_HOME XDG_DATA_HOME
 
 echo "==> Installing Quickshell and dependencies..."
 
