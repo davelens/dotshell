@@ -15,9 +15,10 @@ Item {
       var ws = wsValues[i]
       var hasWin = false
       var ipc = ws.lastIpcObject
-      if (ipc && ipc.representation) {
-        var match = ipc.representation.match(/\[(.+)\]/)
-        hasWin = match !== null && match[1].length > 0
+      if (ipc) {
+        var hasTiled = ipc.representation && /\[(.+)\]/.test(ipc.representation)
+        var hasFloating = ipc.floating_nodes && ipc.floating_nodes.length > 0
+        hasWin = hasTiled || hasFloating
       }
       arr.push({ name: ws.name, focused: ws.focused, hasWindows: hasWin })
     }
