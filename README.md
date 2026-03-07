@@ -22,6 +22,9 @@ A custom, keyboard-driven shell featuring a modular status bar and settings pane
 ### Settings panel
 <img width="1554" height="1141" alt="image" src="https://github.com/user-attachments/assets/012ece19-c5ba-4378-86c6-3cf39541acd6" />
 
+### Updates panel
+<img width="935" height="664" alt="image" src="https://github.com/user-attachments/assets/5b2baa8d-030f-4119-9cac-a728b6f9fdd4" />
+
 ## Features
 
 - Modular status bar with drop-in modules:
