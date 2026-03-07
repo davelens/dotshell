@@ -32,6 +32,11 @@ Singleton {
   // Pause refresh when popup is open
   property bool popupOpen: false
 
+  // True once both backlight and DDC detection have completed at least once
+  readonly property bool ready: _backlightReady && _ddcReady
+  property bool _backlightReady: false
+  property bool _ddcReady: false
+
   // =========================================================================
   // PUBLIC API
   // =========================================================================
@@ -102,6 +107,7 @@ Singleton {
       }
     }
     onExited: exitCode => {
+      brightnessManager._backlightReady = true
       if (exitCode !== 0) {
         brightnessManager.removeDisplaysByType("backlight")
       }
@@ -135,6 +141,7 @@ Singleton {
       }
     }
     onExited: exitCode => {
+      brightnessManager._ddcReady = true
       brightnessManager.ddcDisplays = foundDisplays
       brightnessManager.removeStaleDisplays()
       for (var i = 0; i < foundDisplays.length; i++) {

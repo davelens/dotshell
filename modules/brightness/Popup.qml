@@ -70,5 +70,31 @@ Variants {
         }
       }
     }
+
+    // Empty state
+    Column {
+      width: parent.width
+      spacing: 8
+      visible: BrightnessManager.displays.length === 0
+
+      Text {
+        width: parent.width
+        text: !BrightnessManager.ready ? "Detecting displays..." : "No controllable displays"
+        color: Colors.overlay0
+        font.pixelSize: 15
+        horizontalAlignment: Text.AlignHCenter
+        topPadding: 8
+      }
+
+      Text {
+        width: parent.width
+        visible: BrightnessManager.ready
+        text: "Your GPU driver may not support DDC/CI"
+        color: Colors.overlay1
+        font.pixelSize: 13
+        horizontalAlignment: Text.AlignHCenter
+        bottomPadding: 8
+      }
+    }
   }
 }
