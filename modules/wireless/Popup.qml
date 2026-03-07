@@ -262,7 +262,6 @@ Variants {
               onVisibleChanged: {
                 if (visible) {
                   passwordInput.text = ""
-                  WirelessManager.connectError = ""
                   passwordInput.forceActiveFocus()
                 }
               }
@@ -378,6 +377,7 @@ Variants {
                 color: Colors.red
                 font.pixelSize: 12
                 leftPadding: 10
+                wrapMode: Text.WordWrap
                 visible: WirelessManager.connectError !== ""
               }
             }

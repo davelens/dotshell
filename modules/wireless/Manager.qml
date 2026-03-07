@@ -347,11 +347,17 @@ Singleton {
   Process {
     id: connectProc
     property string lastSSID: ""
+    property string errorOutput: ""
     command: []
+    onStarted: errorOutput = ""
+    stderr: SplitParser {
+      onRead: data => connectProc.errorOutput += data
+    }
     onExited: exitCode => {
       wirelessManager.busy = false
       wirelessManager.connectingSSID = ""
       if (exitCode !== 0) {
+        var errMsg = connectProc.errorOutput.trim()
         // Find the network to check if it's secured
         var network = null
         for (var i = 0; i < wirelessManager.networks.length; i++) {
@@ -360,10 +366,17 @@ Singleton {
             break
           }
         }
-        // Show password prompt if the network is secured
+        // Re-show password prompt if the network is secured
         if (network && network.security) {
           wirelessManager.pendingSSID = lastSSID
-          wirelessManager.connectError = "Connection failed. Check your password."
+        }
+        // Use nmcli's actual error when available
+        if (errMsg) {
+          // Strip "Error: " prefix from nmcli output
+          if (errMsg.indexOf("Error: ") === 0) {
+            errMsg = errMsg.substring(7)
+          }
+          wirelessManager.connectError = errMsg
         } else {
           wirelessManager.connectError = "Connection failed."
         }
