@@ -11,7 +11,15 @@ Item {
   anchors.verticalCenter: parent.verticalCenter
   width: batteryRow.width
   height: batteryRow.height
-  property bool showInBar: UPower.displayDevice && UPower.displayDevice.ready && Math.round(battery.percentage) < 100
+  // Hide when: no device, not ready, fully charged (100%), or no real battery
+  // (0% + not charging = desktop with no battery hardware)
+  property bool showInBar: {
+    if (!UPower.displayDevice || !UPower.displayDevice.ready) return false
+    var pct = Math.round(battery.percentage)
+    if (pct >= 100) return false
+    if (pct <= 0 && !battery.charging) return false
+    return true
+  }
 
   property real percentage: UPower.displayDevice ? UPower.displayDevice.percentage * 100 : 0
   property int batteryState: UPower.displayDevice ? UPower.displayDevice.state : 0
