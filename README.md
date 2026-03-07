@@ -6,9 +6,9 @@ A custom, keyboard-driven shell featuring a modular status bar and settings pane
 > This was made to support my own simple needs as a backend dev on Arch Linux.
 > I chose to open source this for the few interested souls looking for something similar.
 
-## Media
+## Screenshots
 
-### Status bar examples
+### Status bar
 
 #### Custom icons, fixed workspaces
 <img width="2558" height="42" alt="image" src="https://github.com/user-attachments/assets/26c0fcad-989b-40b5-bfd4-edab2a71aa81" />
