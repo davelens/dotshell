@@ -28,6 +28,12 @@ Singleton {
   // Operation in progress (for UI feedback)
   property bool busy: false
 
+  // Address currently being connected to (for UI feedback)
+  property string connectingAddress: ""
+
+  // Error message from last failed connection attempt
+  property string connectError: ""
+
   // Suppress refreshes briefly after disconnect (to prevent overwriting optimistic update)
   property bool suppressRefresh: false
 
@@ -65,8 +71,10 @@ Singleton {
   }
 
   function connect(address) {
+    connectError = ""
     busy = true
-    connectProc.address = address
+    connectingAddress = address
+    connectProc.command = ["bluetoothctl", "connect", address]
     connectProc.running = true
   }
 
@@ -278,10 +286,31 @@ Singleton {
   // Connect to device
   Process {
     id: connectProc
-    property string address: ""
-    command: ["bash", "-c", "echo 'connect " + address + "' | bluetoothctl"]
+    property string errorOutput: ""
+    command: []
+    onStarted: errorOutput = ""
+    stdout: SplitParser {
+      onRead: data => {
+        // bluetoothctl writes some errors to stdout
+        if (data.indexOf("Failed") >= 0 || data.indexOf("not available") >= 0) {
+          connectProc.errorOutput += data + "\n"
+        }
+      }
+    }
+    stderr: SplitParser {
+      onRead: data => connectProc.errorOutput += data + "\n"
+    }
     onExited: exitCode => {
       bluetoothManager.busy = false
+      bluetoothManager.connectingAddress = ""
+      var errMsg = connectProc.errorOutput.trim()
+      if (exitCode !== 0 || errMsg) {
+        if (errMsg) {
+          bluetoothManager.connectError = errMsg
+        } else {
+          bluetoothManager.connectError = "Connection failed."
+        }
+      }
       bluetoothManager.refresh()
     }
   }

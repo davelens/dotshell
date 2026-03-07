@@ -12,6 +12,7 @@ Variants {
   // Start/stop scan when popup opens/closes
   onIsOpenChanged: {
     if (isOpen && BluetoothManager.powered) {
+      BluetoothManager.connectError = ""
       BluetoothManager.startScan()
     } else {
       BluetoothManager.stopScan()
@@ -47,6 +48,9 @@ Variants {
         } else {
           h += 40
         }
+
+        // Error message
+        if (BluetoothManager.connectError) h += 24
       }
 
       return h + 48
@@ -204,6 +208,7 @@ Variants {
 
           FocusListItem {
             required property var modelData
+            property bool isConnecting: BluetoothManager.connectingAddress === modelData.address
 
             visible: !modelData.connected
             itemHeight: 36
@@ -211,8 +216,8 @@ Variants {
             bodyRadius: 4
             icon: modelData.paired ? "󰂰" : "󰂯"
             iconSize: 18
-            iconColor: modelData.paired ? Colors.blue : Colors.overlay0
-            text: modelData.name
+            iconColor: isConnecting ? Colors.blue : (modelData.paired ? Colors.blue : Colors.overlay0)
+            text: isConnecting ? modelData.name + "  —  Connecting..." : modelData.name
             fontSize: 15
             hoverBackgroundColor: Colors.surface0
             onClicked: {
@@ -229,6 +234,18 @@ Variants {
           visible: BluetoothManager.devices.length === 0
           topPadding: 8
           bottomPadding: 8
+        }
+
+        // Error message
+        Text {
+          width: parent.width
+          text: BluetoothManager.connectError
+          color: Colors.red
+          font.pixelSize: 12
+          leftPadding: 10
+          topPadding: 4
+          wrapMode: Text.WordWrap
+          visible: BluetoothManager.connectError !== ""
         }
       }
     }
