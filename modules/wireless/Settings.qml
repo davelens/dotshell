@@ -8,6 +8,7 @@ ScrollView {
   anchors.fill: parent
   clip: true
   contentWidth: availableWidth
+  Component.onCompleted: WirelessManager.connectError = ""
 
   // Search query passed from SettingsPanel
   property string searchQuery: ""
@@ -143,13 +144,162 @@ ScrollView {
         Repeater {
           model: WirelessManager.networks.filter(function(n) { return !n.active })
 
-          FocusListItem {
+          Column {
             required property var modelData
 
-            icon: WirelessManager.getSignalIcon(modelData.signal)
-            text: modelData.ssid
-            rightIcon: modelData.security ? "󰌾" : ""
-            onClicked: WirelessManager.connect(modelData.ssid)
+            width: parent.width
+            spacing: 0
+
+            property bool isPending: WirelessManager.pendingSSID === modelData.ssid
+
+            FocusListItem {
+              property bool isConnecting: WirelessManager.connectingSSID === modelData.ssid
+
+              icon: WirelessManager.getSignalIcon(modelData.signal)
+              iconColor: isConnecting ? Colors.blue : Colors.overlay0
+              text: isConnecting ? modelData.ssid + "  —  Connecting..." : modelData.ssid
+              rightIcon: modelData.security ? "󰌾" : ""
+              onClicked: {
+                if (!WirelessManager.busy) WirelessManager.connect(modelData.ssid)
+              }
+            }
+
+            // Inline password input
+            Column {
+              width: parent.width
+              spacing: 4
+              visible: parent.isPending
+              topPadding: 4
+
+              onVisibleChanged: {
+                if (visible) {
+                  settingsPasswordInput.text = ""
+                  settingsPasswordInput.forceActiveFocus()
+                }
+              }
+
+              Text {
+                text: "Password required for " + modelData.ssid
+                color: Colors.subtext0
+                font.pixelSize: 12
+                leftPadding: 2
+              }
+
+              Rectangle {
+                width: parent.width
+                height: 36
+                radius: 4
+                color: Colors.surface0
+                border.width: 1
+                border.color: settingsPasswordInput.activeFocus ? Colors.blue : Colors.surface1
+
+                Row {
+                  anchors.fill: parent
+                  anchors.leftMargin: 10
+                  anchors.rightMargin: 4
+                  spacing: 4
+
+                  TextInput {
+                    id: settingsPasswordInput
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - settingsToggleVis.width - settingsConnectBtn.width - 12
+                    color: Colors.text
+                    font.pixelSize: 14
+                    clip: true
+                    echoMode: TextInput.Password
+
+                    Text {
+                      anchors.fill: parent
+                      anchors.verticalCenter: parent.verticalCenter
+                      text: "Enter password"
+                      color: Colors.overlay0
+                      font.pixelSize: 14
+                      visible: !settingsPasswordInput.text
+                    }
+
+                    Keys.onReturnPressed: {
+                      if (settingsPasswordInput.text) {
+                        WirelessManager.connect(modelData.ssid, settingsPasswordInput.text)
+                      }
+                    }
+                    Keys.onEnterPressed: {
+                      if (settingsPasswordInput.text) {
+                        WirelessManager.connect(modelData.ssid, settingsPasswordInput.text)
+                      }
+                    }
+                    Keys.onEscapePressed: WirelessManager.cancelPending()
+                  }
+
+                  // Show/hide password toggle
+                  Text {
+                    id: settingsToggleVis
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: settingsPasswordInput.echoMode === TextInput.Password ? "󰈈" : "󰈉"
+                    color: settingsToggleMouse.containsMouse ? Colors.text : Colors.overlay0
+                    font.pixelSize: 16
+                    font.family: "Symbols Nerd Font"
+                    width: 28
+                    horizontalAlignment: Text.AlignHCenter
+
+                    MouseArea {
+                      id: settingsToggleMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        settingsPasswordInput.echoMode = settingsPasswordInput.echoMode === TextInput.Password
+                          ? TextInput.Normal
+                          : TextInput.Password
+                      }
+                    }
+                  }
+
+                  // Connect button
+                  Rectangle {
+                    id: settingsConnectBtn
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 28
+                    height: 28
+                    radius: 4
+                    color: settingsConnectMouse.containsMouse && settingsPasswordInput.text
+                      ? Colors.blue : "transparent"
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: "󰁔"
+                      color: settingsPasswordInput.text
+                        ? (settingsConnectMouse.containsMouse ? Colors.base : Colors.blue)
+                        : Colors.surface2
+                      font.pixelSize: 16
+                      font.family: "Symbols Nerd Font"
+                    }
+
+                    MouseArea {
+                      id: settingsConnectMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: settingsPasswordInput.text ? Qt.PointingHandCursor : Qt.ArrowCursor
+                      onClicked: {
+                        if (settingsPasswordInput.text) {
+                          WirelessManager.connect(modelData.ssid, settingsPasswordInput.text)
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
+              // Error message
+              Text {
+                width: parent.width
+                text: WirelessManager.connectError
+                color: Colors.red
+                font.pixelSize: 12
+                leftPadding: 10
+                wrapMode: Text.WordWrap
+                visible: WirelessManager.connectError !== ""
+              }
+            }
           }
         }
       }

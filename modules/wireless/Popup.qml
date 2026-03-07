@@ -12,6 +12,7 @@ Variants {
   // Start scan when popup opens, clear pending state when it closes
   onIsOpenChanged: {
     if (isOpen && WirelessManager.enabled) {
+      WirelessManager.connectError = ""
       WirelessManager.startScan()
     } else if (!isOpen) {
       WirelessManager.cancelPending()
@@ -295,7 +296,7 @@ Variants {
                       text: "Enter password"
                       color: Colors.overlay0
                       font.pixelSize: 14
-                      visible: !passwordInput.text && !passwordInput.activeFocus
+                      visible: !passwordInput.text
                     }
 
                     Keys.onReturnPressed: {
