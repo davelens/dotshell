@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Controls
@@ -44,7 +45,28 @@ Variants {
   }
 
   PopupBase {
+    id: popupBase
     popupWidth: 360
+
+    property var currentSink: Pipewire.defaultAudioSink
+    property var currentSource: Pipewire.defaultAudioSource
+
+    function setDefaultSink(item) {
+      currentSink = item
+      Pipewire.preferredDefaultAudioSink = item
+      sinkProcess.command = ["wpctl", "set-default", String(item.id)]
+      sinkProcess.running = true
+    }
+
+    function setDefaultSource(item) {
+      currentSource = item
+      Pipewire.preferredDefaultAudioSource = item
+      sourceProcess.command = ["wpctl", "set-default", String(item.id)]
+      sourceProcess.running = true
+    }
+
+    Process { id: sinkProcess }
+    Process { id: sourceProcess }
 
     // Volume slider
     Row {
@@ -102,12 +124,12 @@ Variants {
     Dropdown {
       width: parent.width
       items: volumePopup.audioSinks
-      currentItem: Pipewire.defaultAudioSink
+      currentItem: popupBase.currentSink
       headerIcon: "󰓃"
       headerLabel: "Output"
       textRole: "description"
       valueRole: "id"
-      onItemSelected: item => Pipewire.preferredDefaultAudioSink = item
+      onItemSelected: item => popupBase.setDefaultSink(item)
     }
 
     Rectangle {
@@ -120,12 +142,12 @@ Variants {
     Dropdown {
       width: parent.width
       items: volumePopup.audioSources
-      currentItem: Pipewire.defaultAudioSource
+      currentItem: popupBase.currentSource
       headerIcon: "󰍬"
       headerLabel: "Input"
       textRole: "description"
       valueRole: "id"
-      onItemSelected: item => Pipewire.preferredDefaultAudioSource = item
+      onItemSelected: item => popupBase.setDefaultSource(item)
     }
   }
 }
