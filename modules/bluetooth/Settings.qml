@@ -8,7 +8,10 @@ ScrollView {
   anchors.fill: parent
   clip: true
   contentWidth: availableWidth
-  Component.onCompleted: BluetoothManager.connectError = ""
+  Component.onCompleted: {
+    BluetoothManager.connectError = ""
+    BluetoothManager.connectErrorAddress = ""
+  }
 
   // Search query passed from SettingsPanel
   property string searchQuery: ""
@@ -151,18 +154,36 @@ ScrollView {
         Repeater {
           model: BluetoothManager.devices.filter(function(d) { return !d.connected })
 
-          FocusListItem {
+          Column {
             required property var modelData
-            property bool isConnecting: BluetoothManager.connectingAddress === modelData.address
+            width: parent.width
+            spacing: 0
 
-            icon: modelData.paired ? "󰂰" : "󰂯"
-            iconColor: isConnecting ? Colors.blue : (modelData.paired ? Colors.blue : Colors.overlay0)
-            text: isConnecting ? modelData.name + "  —  Connecting..." : modelData.name
-            subtitle: isConnecting ? "" : (modelData.paired ? "Paired" : "Not paired")
-            onClicked: {
-              if (!BluetoothManager.busy) {
-                BluetoothManager.connect(modelData.address)
+            FocusListItem {
+              property bool isConnecting: BluetoothManager.connectingAddress === modelData.address
+
+              icon: modelData.paired ? "󰂰" : "󰂯"
+              iconColor: isConnecting ? Colors.blue : (modelData.paired ? Colors.blue : Colors.overlay0)
+              text: isConnecting ? modelData.name + "  —  Connecting..." : modelData.name
+              subtitle: isConnecting ? "" : (modelData.paired ? "Paired" : "Not paired")
+              onClicked: {
+                if (!BluetoothManager.busy) {
+                  BluetoothManager.connect(modelData.address)
+                }
               }
+            }
+
+            // Inline error for this device
+            Text {
+              width: parent.width
+              text: BluetoothManager.connectError
+              color: Colors.red
+              font.pixelSize: 12
+              leftPadding: 10
+              topPadding: 4
+              wrapMode: Text.WordWrap
+              visible: BluetoothManager.connectErrorAddress === modelData.address
+                && BluetoothManager.connectError !== ""
             }
           }
         }
@@ -172,18 +193,6 @@ ScrollView {
           text: BluetoothManager.scanning ? "Looking for devices..." : "No devices found"
           visible: BluetoothManager.devices.filter(function(d) { return !d.connected }).length === 0
           topPadding: 8
-        }
-
-        // Error message
-        Text {
-          width: parent.width
-          text: BluetoothManager.connectError
-          color: Colors.red
-          font.pixelSize: 12
-          leftPadding: 10
-          topPadding: 4
-          wrapMode: Text.WordWrap
-          visible: BluetoothManager.connectError !== ""
         }
       }
     }

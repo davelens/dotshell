@@ -13,6 +13,7 @@ Variants {
   onIsOpenChanged: {
     if (isOpen && BluetoothManager.powered) {
       BluetoothManager.connectError = ""
+      BluetoothManager.connectErrorAddress = ""
       BluetoothManager.startScan()
     } else {
       BluetoothManager.stopScan()
@@ -206,22 +207,40 @@ Variants {
         Repeater {
           model: BluetoothManager.devices
 
-          FocusListItem {
+          Column {
             required property var modelData
-            property bool isConnecting: BluetoothManager.connectingAddress === modelData.address
-
+            width: parent.width
             visible: !modelData.connected
-            itemHeight: 36
-            bodyMargins: 0
-            bodyRadius: 4
-            icon: modelData.paired ? "󰂰" : "󰂯"
-            iconSize: 18
-            iconColor: isConnecting ? Colors.blue : (modelData.paired ? Colors.blue : Colors.overlay0)
-            text: isConnecting ? modelData.name + "  —  Connecting..." : modelData.name
-            fontSize: 15
-            hoverBackgroundColor: Colors.surface0
-            onClicked: {
-              if (!BluetoothManager.busy) BluetoothManager.connect(modelData.address)
+            spacing: 0
+
+            FocusListItem {
+              property bool isConnecting: BluetoothManager.connectingAddress === modelData.address
+
+              itemHeight: 36
+              bodyMargins: 0
+              bodyRadius: 4
+              icon: modelData.paired ? "󰂰" : "󰂯"
+              iconSize: 18
+              iconColor: isConnecting ? Colors.blue : (modelData.paired ? Colors.blue : Colors.overlay0)
+              text: isConnecting ? modelData.name + "  —  Connecting..." : modelData.name
+              fontSize: 15
+              hoverBackgroundColor: Colors.surface0
+              onClicked: {
+                if (!BluetoothManager.busy) BluetoothManager.connect(modelData.address)
+              }
+            }
+
+            // Inline error for this device
+            Text {
+              width: parent.width
+              text: BluetoothManager.connectError
+              color: Colors.red
+              font.pixelSize: 12
+              leftPadding: 10
+              topPadding: 4
+              wrapMode: Text.WordWrap
+              visible: BluetoothManager.connectErrorAddress === modelData.address
+                && BluetoothManager.connectError !== ""
             }
           }
         }
@@ -234,18 +253,6 @@ Variants {
           visible: BluetoothManager.devices.length === 0
           topPadding: 8
           bottomPadding: 8
-        }
-
-        // Error message
-        Text {
-          width: parent.width
-          text: BluetoothManager.connectError
-          color: Colors.red
-          font.pixelSize: 12
-          leftPadding: 10
-          topPadding: 4
-          wrapMode: Text.WordWrap
-          visible: BluetoothManager.connectError !== ""
         }
       }
     }

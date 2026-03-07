@@ -34,6 +34,9 @@ Singleton {
   // Error message from last failed connection attempt
   property string connectError: ""
 
+  // Address of the device that failed to connect (for inline error display)
+  property string connectErrorAddress: ""
+
   // Suppress refreshes briefly after disconnect (to prevent overwriting optimistic update)
   property bool suppressRefresh: false
 
@@ -72,6 +75,7 @@ Singleton {
 
   function connect(address) {
     connectError = ""
+    connectErrorAddress = ""
     busy = true
     connectingAddress = address
     connectProc.command = ["bluetoothctl", "connect", address]
@@ -301,15 +305,13 @@ Singleton {
       onRead: data => connectProc.errorOutput += data + "\n"
     }
     onExited: exitCode => {
+      var failedAddress = bluetoothManager.connectingAddress
       bluetoothManager.busy = false
       bluetoothManager.connectingAddress = ""
       var errMsg = connectProc.errorOutput.trim()
       if (exitCode !== 0 || errMsg) {
-        if (errMsg) {
-          bluetoothManager.connectError = errMsg
-        } else {
-          bluetoothManager.connectError = "Connection failed."
-        }
+        bluetoothManager.connectErrorAddress = failedAddress
+        bluetoothManager.connectError = errMsg || "Connection failed."
       }
       bluetoothManager.refresh()
     }
