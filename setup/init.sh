@@ -20,6 +20,7 @@ sudo pacman -S --needed --noconfirm \
   ddcutil \
   networkmanager \
   pipewire wireplumber \
+  pacman-contrib \
   otf-commit-mono-nerd ttf-dejavu \
   libnotify
 
