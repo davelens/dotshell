@@ -21,6 +21,8 @@ sudo pacman -S --needed --noconfirm \
   networkmanager \
   pipewire wireplumber \
   pacman-contrib \
+  gpu-screen-recorder \
+  wf-renderer \
   otf-commit-mono-nerd ttf-dejavu \
   libnotify
 
