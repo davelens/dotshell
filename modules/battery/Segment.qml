@@ -1,7 +1,7 @@
 import QtQuick
-import Quickshell
 import Quickshell.Services.UPower
 import "../.."
+import "../../core/components"
 
 Item {
   id: battery
@@ -87,23 +87,11 @@ Item {
   }
 
   // Tooltip
-  PopupWindow {
+  TooltipBase {
+    anchorItem: battery
     visible: hoverArea.containsMouse || battery.barFocused
 
-    anchor.item: battery
-    anchor.edges: Edges.Bottom | Edges.Right
-    anchor.gravity: Edges.Bottom | Edges.Left
-    anchor.margins.bottom: -10
-
-    implicitWidth: tooltipText.implicitWidth + 24
-    implicitHeight: tooltipText.implicitHeight + 16
-    color: Colors.crust
-
-    Rectangle { anchors.fill: parent; color: "transparent"; border.width: 1; border.color: Colors.surface2; z: 100 }
-
     Text {
-      id: tooltipText
-      anchors.centerIn: parent
       color: Colors.text
       font.pixelSize: 14
 

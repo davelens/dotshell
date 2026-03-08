@@ -17,25 +17,13 @@ BarButton {
   iconColor: WirelessManager.enabled ? Colors.text : Colors.overlay0
 
   // Bar icon tooltip
-  PopupWindow {
+  TooltipBase {
+    anchorItem: button
     visible: button.hovered && WirelessManager.connectedNetwork && !button.popupManager.isOpen("wireless")
-
-    anchor.item: button
-    anchor.edges: Edges.Bottom | Edges.Right
-    anchor.gravity: Edges.Bottom | Edges.Left
-    anchor.margins.bottom: -10
-
     implicitWidth: 260
     implicitHeight: 72
-    color: Colors.crust
-
-    Rectangle { anchors.fill: parent; color: "transparent"; border.width: 1; border.color: Colors.surface2; z: 100 }
 
     Column {
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.verticalCenter: parent.verticalCenter
-      anchors.margins: 12
       spacing: 2
 
       Text {

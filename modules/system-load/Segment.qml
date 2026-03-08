@@ -1,6 +1,6 @@
 import QtQuick
-import Quickshell
 import "../.."
+import "../../core/components"
 
 Item {
   id: root
@@ -53,23 +53,11 @@ Item {
     hoverEnabled: true
   }
 
-  PopupWindow {
+  TooltipBase {
+    anchorItem: root
     visible: hoverArea.containsMouse || root.barFocused
 
-    anchor.item: root
-    anchor.edges: Edges.Bottom | Edges.Right
-    anchor.gravity: Edges.Bottom | Edges.Left
-    anchor.margins.bottom: -10
-
-    implicitWidth: tooltipContent.implicitWidth + 24
-    implicitHeight: tooltipContent.implicitHeight + 16
-    color: Colors.crust
-
-    Rectangle { anchors.fill: parent; color: "transparent"; border.width: 1; border.color: Colors.surface2; z: 100 }
-
     Column {
-      id: tooltipContent
-      anchors.centerIn: parent
       spacing: 4
 
       Text {

@@ -15,23 +15,11 @@ BarButton {
   iconColor: Colors.green
 
   // Hover tooltip showing update count breakdown
-  PopupWindow {
+  TooltipBase {
+    anchorItem: button
     visible: button.hovered && !button.popupManager.isOpen("updates") && button.visible
 
-    anchor.item: button
-    anchor.edges: Edges.Bottom | Edges.Right
-    anchor.gravity: Edges.Bottom | Edges.Left
-    anchor.margins.bottom: -10
-
-    implicitWidth: tooltipContent.implicitWidth + 24
-    implicitHeight: tooltipContent.implicitHeight + 16
-    color: Colors.crust
-
-    Rectangle { anchors.fill: parent; color: "transparent"; border.width: 1; border.color: Colors.surface2; z: 100 }
-
     Column {
-      id: tooltipContent
-      anchors.centerIn: parent
       spacing: 2
 
       // Single line for checking / up to date states
