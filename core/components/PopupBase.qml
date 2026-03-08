@@ -151,7 +151,7 @@ PanelWindow {
   contentItem {
     focus: true
     Keys.onPressed: function(event) {
-      if (event.key === Qt.Key_Escape
+      if (event.key === Qt.Key_Escape || event.key === Qt.Key_Q
           || (event.key === Qt.Key_BracketLeft && (event.modifiers & Qt.ControlModifier))) {
         popupBase.resetFocus()
         PopupManager.close()

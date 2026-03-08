@@ -205,8 +205,8 @@ Scope {
         Keys.onPressed: function(event) {
           if (!panel.barFocusActive) return
 
-          // Escape or ctrl+[
-          if (event.key === Qt.Key_Escape
+          // Escape, q, or ctrl+[
+          if (event.key === Qt.Key_Escape || event.key === Qt.Key_Q
               || (event.key === Qt.Key_BracketLeft && (event.modifiers & Qt.ControlModifier))) {
             panel.barFocusActive = false
             event.accepted = true
