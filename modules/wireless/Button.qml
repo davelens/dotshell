@@ -20,8 +20,7 @@ BarButton {
   TooltipBase {
     anchorItem: button
     visible: button.hovered && WirelessManager.connectedNetwork && !button.popupManager.isOpen("wireless")
-    implicitWidth: 260
-    implicitHeight: 72
+    fixedWidth: 260
 
     Column {
       spacing: 2
