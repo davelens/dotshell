@@ -19,6 +19,9 @@ Singleton {
   property string activeProfileName: ""
   property var profiles: []
 
+  // Active theme (matches filename in themes/ without .json extension)
+  property string theme: "catppuccin-mocha"
+
   // File-based persistence (general.json lives at dataDir root, not in a profile)
   readonly property string statePath: DataManager.dataDir + "/general.json"
   readonly property string defaultsPath: Quickshell.shellDir + "/core/defaults.json"
@@ -53,6 +56,7 @@ Singleton {
     try {
       var config = JSON.parse(text)
       settingsCategoryOrder = config.settingsCategoryOrder || []
+      theme = config.theme || "catppuccin-mocha"
       profiles = config.profiles || []
 
       var profile = config.activeProfile || ""
@@ -126,6 +130,7 @@ Singleton {
   function saveConfig() {
     var config = {
       settingsCategoryOrder: settingsCategoryOrder,
+      theme: theme,
       activeProfile: activeProfile,
       activeProfileName: activeProfileName,
       profiles: profiles
@@ -161,6 +166,20 @@ Singleton {
           return
         }
       }
+    }
+  }
+
+  // Theme IPC: qs ipc call theme {current,set}
+  IpcHandler {
+    target: "theme"
+
+    function current(): string {
+      return settings.theme
+    }
+
+    function set(name: string): void {
+      settings.theme = name
+      settings.saveConfig()
     }
   }
 

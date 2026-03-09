@@ -8,6 +8,7 @@
     "notifications",
     "recording"
   ],
+  "theme": "catppuccin-mocha",
   "activeProfile": "defaults",
   "activeProfileName": "Default",
   "profiles": [
