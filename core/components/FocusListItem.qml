@@ -11,15 +11,15 @@ Item {
   property int iconSize: 16
   property int fontSize: 14
   property int subtitleFontSize: 11
-  property color iconColor: Colors.overlay0
-  property color subtitleColor: Colors.overlay0
+  property color iconColor: Theme.textMuted
+  property color subtitleColor: Theme.textMuted
 
   // Configurable dimensions and colors (defaults match settings panel usage)
   property int itemHeight: -1  // -1 = auto (56 with subtitle, 48 without)
-  property color rightIconColor: Colors.overlay0
+  property color rightIconColor: Theme.textMuted
   property color rightIconHoverColor: rightIconColor
   property color backgroundColor: "transparent"
-  property color hoverBackgroundColor: Colors.surface0
+  property color hoverBackgroundColor: Theme.bgCard
   property int bodyMargins: 4
   property int bodyRadius: 6
 
@@ -51,7 +51,7 @@ Item {
     radius: body.radius + 3
     color: "transparent"
     border.width: 2
-    border.color: Colors.peach
+    border.color: Theme.focusRing
     visible: item.focused && item.bodyMargins > 0
   }
 
@@ -63,7 +63,7 @@ Item {
     radius: item.bodyRadius
     color: item.hovered || item.focused ? item.hoverBackgroundColor : item.backgroundColor
     border.width: item.focused && item.bodyMargins === 0 ? 2 : 0
-    border.color: Colors.peach
+    border.color: Theme.focusRing
 
     Row {
       anchors.left: parent.left
@@ -86,7 +86,7 @@ Item {
 
         Text {
           text: item.text
-          color: Colors.text
+          color: Theme.textPrimary
           font.pixelSize: item.fontSize
         }
 

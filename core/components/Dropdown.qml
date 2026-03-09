@@ -123,14 +123,14 @@ Item {
         radius: 7
         color: "transparent"
         border.width: 2
-        border.color: Colors.peach
+        border.color: Theme.focusRing
         visible: dropdown.focused && !dropdown.compact
       }
 
       Rectangle {
         anchors.fill: parent
         radius: 4
-        color: headerAreaNormal.containsMouse ? Colors.surface0 : "transparent"
+        color: headerAreaNormal.containsMouse ? Theme.bgCard : "transparent"
 
       Row {
         id: headerLeft
@@ -143,7 +143,7 @@ Item {
           id: headerIcon
           anchors.verticalCenter: parent.verticalCenter
           text: dropdown.headerIcon
-          color: Colors.blue
+          color: Theme.accent
           font.pixelSize: 16
           font.family: "Symbols Nerd Font"
           visible: dropdown.headerIcon
@@ -159,7 +159,7 @@ Item {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: dropdown.getItemText(dropdown.currentItem, false)
-          color: Colors.text
+          color: Theme.textPrimary
           font.pixelSize: 15
           elide: Text.ElideRight
           width: {
@@ -177,7 +177,7 @@ Item {
         anchors.rightMargin: 8
         anchors.verticalCenter: parent.verticalCenter
         text: dropdown.expanded ? "\uf106" : "\uf107"
-        color: Colors.overlay0
+        color: Theme.textMuted
         font.pixelSize: 16
         font.family: "Symbols Nerd Font"
       }
@@ -216,9 +216,9 @@ Item {
           height: 32
           radius: 4
           color: {
-            if (isHighlighted) return Colors.surface1
-            if (isSelected) return Colors.surface1
-            if (itemAreaNormal.containsMouse) return Colors.surface0
+            if (isHighlighted) return Theme.bgCardHover
+            if (isSelected) return Theme.bgCardHover
+            if (itemAreaNormal.containsMouse) return Theme.bgCard
             return "transparent"
           }
 
@@ -231,7 +231,7 @@ Item {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               text: isSelected ? dropdown.selectedIcon : (dropdown.itemIcon || dropdown.headerIcon)
-              color: isSelected ? Colors.green : (isHighlighted ? Colors.blue : Colors.overlay0)
+              color: isSelected ? Theme.success : (isHighlighted ? Theme.accent : Theme.textMuted)
               font.pixelSize: 16
               font.family: "Symbols Nerd Font"
             }
@@ -239,7 +239,7 @@ Item {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               text: dropdown.getItemText(modelData, false)
-              color: (isSelected || isHighlighted) ? Colors.text : Colors.subtext0
+              color: (isSelected || isHighlighted) ? Theme.textPrimary : Theme.textSecondary
               font.pixelSize: 15
               elide: Text.ElideRight
               width: parent.width - 40
@@ -271,7 +271,7 @@ Item {
       radius: 7
       color: "transparent"
       border.width: 2
-      border.color: Colors.peach
+      border.color: Theme.focusRing
       visible: dropdown.focused && dropdown.compact
     }
 
@@ -279,9 +279,9 @@ Item {
       id: compactHeader
       anchors.fill: parent
       radius: 4
-      color: headerAreaCompact.containsMouse ? Colors.surface1 : Colors.surface0
+      color: headerAreaCompact.containsMouse ? Theme.bgCardHover : Theme.bgCard
       border.width: 1
-      border.color: Colors.surface2
+      border.color: Theme.bgBorder
 
     Row {
       anchors.fill: parent
@@ -292,7 +292,7 @@ Item {
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: dropdown.getItemText(dropdown.currentItem, true)
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 12
         elide: Text.ElideRight
         width: parent.width - 20
@@ -301,7 +301,7 @@ Item {
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: dropdown.expanded ? "\uf106" : "\uf107"
-        color: Colors.overlay0
+        color: Theme.textMuted
         font.pixelSize: 10
         font.family: "Symbols Nerd Font"
       }
@@ -341,9 +341,9 @@ Item {
 
     background: Rectangle {
       radius: 4
-      color: Colors.surface0
+      color: Theme.bgCard
       border.width: 1
-      border.color: Colors.surface2
+      border.color: Theme.bgBorder
     }
 
     contentItem: Column {
@@ -362,12 +362,12 @@ Item {
           width: dropdown.width
           height: 32
           radius: 4
-          color: isSelected ? Colors.surface1 : (itemAreaCompact.containsMouse ? Colors.surface1 : "transparent")
+          color: isSelected ? Theme.bgCardHover : (itemAreaCompact.containsMouse ? Theme.bgCardHover : "transparent")
 
           Text {
             anchors.centerIn: parent
             text: dropdown.getItemText(modelData, true)
-            color: isSelected ? Colors.text : Colors.subtext0
+            color: isSelected ? Theme.textPrimary : Theme.textSecondary
             font.pixelSize: 12
           }
 

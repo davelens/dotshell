@@ -172,7 +172,7 @@ PanelWindow {
     y: 32
     width: popupBase.width
     height: popupBase.height - 32
-    color: "#80000000"
+    color: Theme.overlay
   }
 
   // Click outside to close
@@ -198,9 +198,9 @@ PanelWindow {
       : contentColumn.implicitHeight + 48
     radius: 5
     topRightRadius: popupBase.showStem ? 0 : 5
-    color: Colors.base
+    color: Theme.bgBase
     border.width: 1
-    border.color: Colors.surface2
+    border.color: Theme.bgBorder
 
     Column {
       id: contentColumn
@@ -247,7 +247,7 @@ PanelWindow {
       var sr = r + sw
 
       // Fill the stem body (starts at ov to overlap behind the bar)
-      ctx.fillStyle = Colors.base.toString()
+      ctx.fillStyle = Theme.bgBase.toString()
       ctx.beginPath()
       ctx.rect(sl, 0, sw, sh + ov)
       ctx.fill()
@@ -262,7 +262,7 @@ PanelWindow {
       ctx.fill()
 
       // Stroke: left border of stem + inverted corner curve
-      ctx.strokeStyle = Colors.surface2.toString()
+      ctx.strokeStyle = Theme.bgBorder.toString()
       ctx.lineWidth = 1
       ctx.beginPath()
       ctx.moveTo(sl + 0.5, 0)
@@ -288,6 +288,6 @@ PanelWindow {
     y: popupBase.contentOffset + popupBase.stemHeight
     width: popupBase.stemWidth + 9
     height: 1
-    color: Colors.base
+    color: Theme.bgBase
   }
 }

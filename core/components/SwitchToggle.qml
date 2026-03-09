@@ -34,7 +34,7 @@ Item {
     radius: 14
     color: "transparent"
     border.width: 2
-    border.color: Colors.peach
+    border.color: Theme.focusRing
     visible: toggle.focused
   }
 
@@ -43,9 +43,9 @@ Item {
     id: body
     anchors.fill: parent
     radius: 11
-    color: toggle.checked ? Colors.blue : Colors.surface0
+    color: toggle.checked ? Theme.accent : Theme.bgCard
     border.width: 1
-    border.color: Colors.text
+    border.color: Theme.textPrimary
 
     Rectangle {
       x: toggle.checked ? parent.width - width - 3 : 3
@@ -53,7 +53,7 @@ Item {
       width: 16
       height: 16
       radius: 8
-      color: Colors.text
+      color: Theme.textPrimary
 
       Behavior on x { NumberAnimation { duration: 150 } }
     }

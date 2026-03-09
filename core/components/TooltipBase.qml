@@ -37,14 +37,14 @@ PopupWindow {
   implicitWidth: fixedWidth > 0 ? fixedWidth
     : contentItem.childrenRect.width + horizontalPadding
   implicitHeight: contentItem.childrenRect.height + verticalPadding
-  color: Colors.crust
+  color: Theme.bgDeep
 
   // Border
   Rectangle {
     anchors.fill: parent
     color: "transparent"
     border.width: 1
-    border.color: Colors.surface2
+    border.color: Theme.bgBorder
     z: 100
   }
 

@@ -20,7 +20,7 @@ FocusScope {
 
   Rectangle {
     anchors.fill: parent
-    color: Colors.base
+    color: Theme.bgBase
     radius: 8
   }
 
@@ -35,7 +35,7 @@ FocusScope {
     anchors.fill: parent
     color: "transparent"
     border.width: 1
-    border.color: Colors.surface2
+    border.color: Theme.bgBorder
     radius: 8
     z: 100
   }
@@ -55,7 +55,7 @@ FocusScope {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         text: overlay.title
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 20
         font.bold: true
       }
@@ -64,7 +64,7 @@ FocusScope {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         text: "✕"
-        color: closeHover.containsMouse ? Colors.text : Colors.overlay0
+        color: closeHover.containsMouse ? Theme.textPrimary : Theme.textMuted
         font.pixelSize: 16
 
         MouseArea {

@@ -5,8 +5,8 @@ Item {
   id: button
 
   property string icon: ""
-  property color iconColor: Colors.overlay0
-  property color hoverColor: Colors.blue
+  property color iconColor: Theme.textMuted
+  property color hoverColor: Theme.accent
   property int iconSize: 14
 
   // Allow parent to control whether focus ring is shown
@@ -38,7 +38,7 @@ Item {
     radius: width / 2
     color: "transparent"
     border.width: 2
-    border.color: Colors.peach
+    border.color: Theme.focusRing
     visible: button.focused
   }
 

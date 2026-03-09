@@ -68,7 +68,7 @@ Row {
           radius: 6
           color: "transparent"
           border.width: 2
-          border.color: Colors.peach
+          border.color: Theme.focusRing
           visible: section.focusLocalIndex === index
         }
       }

@@ -5,8 +5,8 @@ Item {
   id: link
 
   property string text: ""
-  property color textColor: Colors.overlay0
-  property color hoverColor: Colors.red
+  property color textColor: Theme.textMuted
+  property color hoverColor: Theme.danger
   property int fontSize: 13
 
   // Allow parent to control whether focus ring is shown
@@ -37,7 +37,7 @@ Item {
     anchors.horizontalCenter: label.horizontalCenter
     width: label.width + 4
     height: 2
-    color: Colors.peach
+    color: Theme.focusRing
     visible: link.focused
   }
 

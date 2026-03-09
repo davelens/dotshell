@@ -29,7 +29,7 @@ Row {
 
     delegate: Text {
       text: modelData.toString().padStart(2, '0')
-      color: Tumbler.displacement === 0 ? Colors.text : Colors.overlay0
+      color: Tumbler.displacement === 0 ? Theme.textPrimary : Theme.textMuted
       font.pixelSize: Tumbler.displacement === 0 ? 18 : 14
       font.bold: Tumbler.displacement === 0
       opacity: 1.0 - Math.abs(Tumbler.displacement) / 2
@@ -46,7 +46,7 @@ Row {
       y: parent.height / 2 - height / 2
       width: parent.width - 8
       height: 28
-      color: Colors.surface0
+      color: Theme.bgCard
       radius: 4
       z: -1
     }
@@ -55,7 +55,7 @@ Row {
   // Colon separator
   Text {
     text: ":"
-    color: Colors.text
+    color: Theme.textPrimary
     font.pixelSize: 18
     font.bold: true
     anchors.verticalCenter: parent.verticalCenter
@@ -80,7 +80,7 @@ Row {
 
     delegate: Text {
       text: modelData
-      color: Tumbler.displacement === 0 ? Colors.text : Colors.overlay0
+      color: Tumbler.displacement === 0 ? Theme.textPrimary : Theme.textMuted
       font.pixelSize: Tumbler.displacement === 0 ? 18 : 14
       font.bold: Tumbler.displacement === 0
       opacity: 1.0 - Math.abs(Tumbler.displacement) / 2
@@ -97,7 +97,7 @@ Row {
       y: parent.height / 2 - height / 2
       width: parent.width - 8
       height: 28
-      color: Colors.surface0
+      color: Theme.bgCard
       radius: 4
       z: -1
     }

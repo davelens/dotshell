@@ -12,8 +12,8 @@ Item {
   property bool live: true
 
   // Configurable appearance (defaults match settings panel usage)
-  property color accentColor: Colors.blue
-  property color trackColor: Colors.surface1
+  property color accentColor: Theme.accent
+  property color trackColor: Theme.bgCardHover
   property int trackHeight: 4
   property int handleSize: 16
 
@@ -48,7 +48,7 @@ Item {
     radius: 6
     color: "transparent"
     border.width: 2
-    border.color: Colors.peach
+    border.color: Theme.focusRing
     visible: slider.focused
   }
 
@@ -86,7 +86,7 @@ Item {
       width: slider.handleSize
       height: slider.handleSize
       radius: slider.handleSize / 2
-      color: Colors.text
+      color: Theme.textPrimary
     }
   }
 

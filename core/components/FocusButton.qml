@@ -5,10 +5,10 @@ Item {
   id: button
 
   property string text: ""
-  property color textColor: Colors.text
+  property color textColor: Theme.textPrimary
   property color textHoverColor: textColor
-  property color backgroundColor: Colors.surface0
-  property color hoverColor: Colors.surface1
+  property color backgroundColor: Theme.bgCard
+  property color hoverColor: Theme.bgCardHover
   property int fontSize: 13
 
   // Allow parent to control whether focus ring is shown
@@ -40,7 +40,7 @@ Item {
     radius: body.radius + 3
     color: "transparent"
     border.width: 2
-    border.color: Colors.peach
+    border.color: Theme.focusRing
     visible: button.focused
   }
 

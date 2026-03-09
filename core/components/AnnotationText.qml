@@ -2,6 +2,6 @@ import QtQuick
 import "../.."
 
 Text {
-  color: Colors.subtext0
+  color: Theme.textSecondary
   font.pixelSize: 12
 }

@@ -17,7 +17,7 @@ Rectangle {
 
   // Optional customization
   property int iconSize: 18
-  property color iconColor: Colors.text
+  property color iconColor: Theme.textPrimary
   property color iconColorHover: iconColor
   property bool iconColorOnHover: false
 
@@ -34,8 +34,8 @@ Rectangle {
   bottomLeftRadius: popupOpen ? 0 : 4
   bottomRightRadius: popupOpen ? 0 : 4
   color: {
-    if (popupOpen) return Colors.base
-    return mouseArea.containsMouse ? Colors.surface1 : Colors.surface0
+    if (popupOpen) return Theme.bgBase
+    return mouseArea.containsMouse ? Theme.bgCardHover : Theme.bgCard
   }
 
   // Left border when popup is open
@@ -45,7 +45,7 @@ Rectangle {
     anchors.top: parent.top
     anchors.bottom: parent.bottom
     width: 1
-    color: Colors.surface2
+    color: Theme.bgBorder
   }
 
   // Top border when popup is open
@@ -55,7 +55,7 @@ Rectangle {
     anchors.right: parent.right
     anchors.top: parent.top
     height: 1
-    color: Colors.surface2
+    color: Theme.bgBorder
   }
 
   // Right border when popup is open
@@ -65,7 +65,7 @@ Rectangle {
     anchors.top: parent.top
     anchors.bottom: parent.bottom
     width: 1
-    color: Colors.surface2
+    color: Theme.bgBorder
   }
 
   Text {
