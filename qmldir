@@ -1,5 +1,4 @@
 module Root
-singleton Colors 1.0 core/Colors.qml
 singleton Theme 1.0 core/Theme.qml
 singleton Compositor 1.0 core/Compositor.qml
 singleton DataManager 1.0 core/DataManager.qml

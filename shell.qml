@@ -361,7 +361,7 @@ Scope {
                 }
               }
 
-              // Focus highlight ring (peach border, matching keyboard focus convention)
+              // Focus highlight ring (matching keyboard focus convention)
               Rectangle {
                 anchors.fill: parent
                 anchors.margins: -3
