@@ -32,13 +32,40 @@ Singleton {
   property color activeIndicator
   property color overlay
 
-  // Resolved path to the active theme JSON file
-  readonly property string themePath: Quickshell.shellDir + "/themes/"
-    + GeneralSettings.theme + ".json"
+  readonly property string themeFileName: GeneralSettings.theme + ".json"
+
+  // User overrides in $XDG_DATA_HOME/dotshell/themes/ take precedence
+  readonly property string userThemePath: DataManager.dataDir + "/themes/"
+    + themeFileName
+
+  // Bundled themes in the shell config directory
+  readonly property string bundledThemePath: Quickshell.shellDir + "/themes/"
+    + themeFileName
+
+  // Resolved path: user override if it exists, otherwise bundled
+  property string resolvedThemePath: ""
+  property bool pathReady: false
+
+  // Resolve which file to use: prefer user override, fall back to bundled.
+  // Uses sh -c so we can do the conditional in a single process.
+  Process {
+    id: resolveProcess
+    running: DataManager.dataDirReady && GeneralSettings.ready
+    command: ["sh", "-c",
+      "if [ -f '" + theme.userThemePath + "' ]; then echo user; else echo bundled; fi"]
+    stdout: SplitParser {
+      onRead: data => {
+        theme.resolvedThemePath = data.trim() === "user"
+          ? theme.userThemePath
+          : theme.bundledThemePath
+        theme.pathReady = true
+      }
+    }
+  }
 
   FileView {
     id: themeFile
-    path: GeneralSettings.ready ? theme.themePath : ""
+    path: theme.pathReady ? theme.resolvedThemePath : ""
     watchChanges: true
     onFileChanged: reload()
 
@@ -49,6 +76,14 @@ Singleton {
     onLoadFailed: error => {
       console.error("[Theme] Failed to load theme file:", error)
     }
+  }
+
+  // Re-resolve when theme name changes (e.g. via IPC)
+  onThemeFileNameChanged: {
+    pathReady = false
+    resolvedThemePath = ""
+    if (DataManager.dataDirReady && GeneralSettings.ready)
+      resolveProcess.running = true
   }
 
   function applyTheme(text) {
