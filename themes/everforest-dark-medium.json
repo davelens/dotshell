@@ -1,0 +1,21 @@
+{
+  "name": "Everforest Dark Medium",
+  "bgBase": "#2d353b",
+  "bgBaseAlt": "#232a2e",
+  "bgDeep": "#232a2e",
+  "bgCard": "#343f44",
+  "bgCardHover": "#3d484d",
+  "bgBorder": "#4f585e",
+  "textPrimary": "#ded4bf",
+  "textSecondary": "#abb5ae",
+  "textTertiary": "#919c94",
+  "textMuted": "#7a8478",
+  "textSubtle": "#919c94",
+  "accent": "#a7c080",
+  "success": "#83c092",
+  "warning": "#dbbc7f",
+  "danger": "#e67e80",
+  "focusRing": "#e69875",
+  "activeIndicator": "#7fbbb3",
+  "overlay": "#80000000"
+}

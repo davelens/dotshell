@@ -1,0 +1,21 @@
+{
+  "name": "Everforest Dark Hard",
+  "bgBase": "#272e33",
+  "bgBaseAlt": "#1e2326",
+  "bgDeep": "#1e2326",
+  "bgCard": "#2e383c",
+  "bgCardHover": "#374145",
+  "bgBorder": "#495156",
+  "textPrimary": "#ded4bf",
+  "textSecondary": "#abb5ae",
+  "textTertiary": "#919c94",
+  "textMuted": "#7a8478",
+  "textSubtle": "#919c94",
+  "accent": "#a7c080",
+  "success": "#83c092",
+  "warning": "#dbbc7f",
+  "danger": "#e67e80",
+  "focusRing": "#e69875",
+  "activeIndicator": "#7fbbb3",
+  "overlay": "#80000000"
+}

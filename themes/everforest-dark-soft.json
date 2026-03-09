@@ -1,0 +1,21 @@
+{
+  "name": "Everforest Dark Soft",
+  "bgBase": "#333c43",
+  "bgBaseAlt": "#293136",
+  "bgDeep": "#293136",
+  "bgCard": "#3a464c",
+  "bgCardHover": "#434f55",
+  "bgBorder": "#555f66",
+  "textPrimary": "#ded4bf",
+  "textSecondary": "#abb5ae",
+  "textTertiary": "#919c94",
+  "textMuted": "#7a8478",
+  "textSubtle": "#919c94",
+  "accent": "#a7c080",
+  "success": "#83c092",
+  "warning": "#dbbc7f",
+  "danger": "#e67e80",
+  "focusRing": "#e69875",
+  "activeIndicator": "#7fbbb3",
+  "overlay": "#80000000"
+}
