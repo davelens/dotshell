@@ -93,7 +93,7 @@ Scope {
     var before = text.substring(0, idx)
     var match = text.substring(idx, idx + query.length)
     var after = text.substring(idx + query.length)
-    return before + '<span style="background-color: ' + Colors.yellow + '; color: ' + Colors.crust + ';">' + match + '</span>' + after
+    return before + '<span style="background-color: ' + Theme.warning + '; color: ' + Theme.bgDeep + ';">' + match + '</span>' + after
   }
 
   // Get visible categories (filtered by search)
@@ -363,7 +363,7 @@ Scope {
         bottom: true
       }
 
-      color: "#80000000"
+      color: Theme.overlay
       exclusionMode: ExclusionMode.Ignore
       WlrLayershell.namespace: "quickshell-settings"
       WlrLayershell.layer: WlrLayer.Overlay
@@ -453,7 +453,7 @@ Scope {
         anchors.centerIn: parent
         width: parent.width * 0.6
         height: parent.height * 0.7
-        color: Colors.base
+        color: Theme.bgBase
         radius: 8
 
         // Prevent clicks inside panel from closing
@@ -467,7 +467,7 @@ Scope {
           anchors.fill: parent
           color: "transparent"
           border.width: 1
-          border.color: Colors.surface2
+          border.color: Theme.bgBorder
           radius: parent.radius
           z: 100
         }
@@ -480,7 +480,7 @@ Scope {
           Rectangle {
             width: parent.width
             height: 56
-            color: Colors.mantle
+            color: Theme.bgBaseAlt
             radius: 8
 
             // Cover bottom corners
@@ -488,7 +488,7 @@ Scope {
               anchors.bottom: parent.bottom
               width: parent.width
               height: 8
-              color: Colors.mantle
+              color: Theme.bgBaseAlt
             }
 
             Row {
@@ -499,7 +499,7 @@ Scope {
               Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "󰍉"
-                color: Colors.overlay0
+                color: Theme.textMuted
                 font.pixelSize: 18
                 font.family: "Symbols Nerd Font"
               }
@@ -508,7 +508,7 @@ Scope {
                 id: searchInput
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 40
-                color: Colors.text
+                color: Theme.textPrimary
                 font.pixelSize: 14
                 clip: true
                 focus: true
@@ -523,7 +523,7 @@ Scope {
                 Text {
                   anchors.fill: parent
                   text: "Search settings..."
-                  color: Colors.overlay0
+                  color: Theme.textMuted
                   font.pixelSize: 14
                   visible: !searchInput.text && !searchInput.activeFocus
                 }
@@ -536,7 +536,7 @@ Scope {
               anchors.bottom: parent.bottom
               width: parent.width
               height: 1
-              color: Colors.surface0
+              color: Theme.bgCard
             }
           }
 
@@ -550,7 +550,7 @@ Scope {
               id: sidebar
               width: 200
               height: parent.height
-              color: root.focusMode === "categories" ? Colors.base : Colors.mantle
+              color: root.focusMode === "categories" ? Theme.bgBase : Theme.bgBaseAlt
               Behavior on color { ColorAnimation { duration: 150 } }
 
               // Cover bottom-left corner
@@ -588,8 +588,8 @@ Scope {
                     width: sidebar.width
                     height: visible ? 44 : 0
                     visible: root.matchesSearch(modelData)
-                    color: root.activeCategory === modelData.id ? Colors.surface0 :
-                         categoryArea.containsMouse ? Colors.surface0 : "transparent"
+                    color: root.activeCategory === modelData.id ? Theme.bgCard :
+                         categoryArea.containsMouse ? Theme.bgCard : "transparent"
 
                     Rectangle {
                       anchors.left: parent.left
@@ -597,7 +597,7 @@ Scope {
                       width: 3
                       height: 24
                       radius: 2
-                      color: Colors.blue
+                      color: Theme.accent
                       visible: root.activeCategory === modelData.id
                     }
 
@@ -611,7 +611,7 @@ Scope {
                         width: 20
                         anchors.verticalCenter: parent.verticalCenter
                         text: modelData.icon
-                        color: root.activeCategory === modelData.id ? Colors.blue : Colors.text
+                        color: root.activeCategory === modelData.id ? Theme.accent : Theme.textPrimary
                         font.pixelSize: 16
                         font.family: "Symbols Nerd Font"
                         horizontalAlignment: Text.AlignHCenter
@@ -620,7 +620,7 @@ Scope {
                       Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: modelData.name
-                        color: root.activeCategory === modelData.id ? Colors.text : Colors.subtext0
+                        color: root.activeCategory === modelData.id ? Theme.textPrimary : Theme.textSecondary
                         font.pixelSize: 14
                       }
                     }
@@ -651,7 +651,7 @@ Scope {
                 Text {
                   anchors.horizontalCenter: parent.horizontalCenter
                   text: "Profile: " + GeneralSettings.activeProfileName
-                  color: Colors.subtext0
+                  color: Theme.textSecondary
                   font.pixelSize: 11
                   visible: GeneralSettings.activeProfileName !== ""
                 }
@@ -668,8 +668,8 @@ Scope {
                     height: 32
                     text: "New Profile"
                     fontSize: 12
-                    backgroundColor: Colors.surface0
-                    hoverColor: Colors.surface1
+                    backgroundColor: Theme.bgCard
+                    hoverColor: Theme.bgCardHover
                     onClicked: root.activeOverlay = "newProfile"
                   }
 
@@ -679,7 +679,7 @@ Scope {
                     radius: 6
                     color: "transparent"
                     border.width: 2
-                    border.color: Colors.peach
+                    border.color: Theme.focusRing
                     visible: root.sidebarProfileFocus === 0
                   }
                 }
@@ -697,8 +697,8 @@ Scope {
                     height: 32
                     text: "Switch Profile"
                     fontSize: 12
-                    backgroundColor: Colors.surface0
-                    hoverColor: Colors.surface1
+                    backgroundColor: Theme.bgCard
+                    hoverColor: Theme.bgCardHover
                     onClicked: root.activeOverlay = "switchProfile"
                   }
 
@@ -708,7 +708,7 @@ Scope {
                     radius: 6
                     color: "transparent"
                     border.width: 2
-                    border.color: Colors.peach
+                    border.color: Theme.focusRing
                     visible: root.sidebarProfileFocus === 1
                   }
                 }
@@ -718,7 +718,7 @@ Scope {
                 anchors.right: parent.right
                 width: 1
                 height: parent.height
-                color: Colors.surface0
+                color: Theme.bgCard
               }
             }
 
@@ -727,7 +727,7 @@ Scope {
               id: contentArea
               width: parent.width - sidebar.width
               height: parent.height
-              color: root.focusMode === "content" ? Colors.base : Colors.mantle
+              color: root.focusMode === "content" ? Theme.bgBase : Theme.bgBaseAlt
               Behavior on color { ColorAnimation { duration: 150 } }
               radius: 8
 
@@ -764,7 +764,7 @@ Scope {
               Text {
                 anchors.centerIn: parent
                 text: ModuleRegistry.ready ? "Select a category" : "Loading modules..."
-                color: Colors.overlay0
+                color: Theme.textMuted
                 font.pixelSize: 14
                 visible: !contentLoader.source || contentLoader.status !== Loader.Ready
               }
@@ -775,7 +775,7 @@ Scope {
         // Profile overlay (scrim + content, fills the panel)
         Rectangle {
           anchors.fill: parent
-          color: "#80000000"
+          color: Theme.overlay
           radius: parent.radius
           visible: root.activeOverlay !== ""
           z: 200

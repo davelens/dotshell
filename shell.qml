@@ -64,7 +64,7 @@ Scope {
       }
 
       implicitHeight: 32
-      color: Colors.crust
+      color: Theme.bgDeep
 
       WlrLayershell.namespace: "quickshell-bar"
       WlrLayershell.layer: WlrLayer.Top
@@ -368,7 +368,7 @@ Scope {
                 radius: 6
                 color: "transparent"
                 border.width: 2
-                border.color: Colors.peach
+                border.color: Theme.focusRing
                 visible: panel.barFocusActive && (index + panel.rightOffset) === panel.barFocusIndex
               }
             }

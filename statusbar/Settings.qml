@@ -29,7 +29,7 @@ Item {
     var before = text.substring(0, idx)
     var match = text.substring(idx, idx + query.length)
     var after = text.substring(idx + query.length)
-    return before + '<span style="background-color: ' + Colors.yellow + '; color: ' + Colors.crust + ';">' + match + '</span>' + after
+    return before + '<span style="background-color: ' + Theme.warning + '; color: ' + Theme.bgDeep + ';">' + match + '</span>' + after
   }
 
   function startDrag(itemId, fromSection) {
@@ -120,10 +120,10 @@ Item {
     width: settingsRoot.width - 24
     height: 48
     radius: 6
-    color: Colors.surface0
+    color: Theme.bgCard
     opacity: 0.85
     border.width: 1
-    border.color: Colors.blue
+    border.color: Theme.accent
 
     Row {
       anchors.left: parent.left
@@ -134,7 +134,7 @@ Item {
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: settingsRoot.draggedItemIcon
-        color: Colors.blue
+        color: Theme.accent
         font.pixelSize: 18
         font.family: "Symbols Nerd Font"
         width: 24
@@ -144,7 +144,7 @@ Item {
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: settingsRoot.draggedItemName
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 14
       }
     }
@@ -173,7 +173,7 @@ Item {
       // Header
       Text {
         text: "Status Bar"
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 24
         font.bold: true
       }
@@ -198,7 +198,7 @@ Item {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               text: "Left:"
-              color: Colors.text
+              color: Theme.textPrimary
               font.pixelSize: 13
             }
 
@@ -215,14 +215,14 @@ Item {
               }
 
               background: Rectangle {
-                color: Colors.surface0
+                color: Theme.bgCard
                 radius: 4
               }
 
               contentItem: TextInput {
                 z: 2
                 text: leftMarginSpin.textFromValue(leftMarginSpin.value, leftMarginSpin.locale)
-                color: Colors.text
+                color: Theme.textPrimary
                 font.pixelSize: 13
                 horizontalAlignment: Qt.AlignHCenter
                 verticalAlignment: Qt.AlignVCenter
@@ -239,13 +239,13 @@ Item {
                 x: parent.width - width
                 height: parent.height
                 width: 24
-                color: leftMarginSpin.up.pressed ? Colors.surface2 : Colors.surface1
+                color: leftMarginSpin.up.pressed ? Theme.bgBorder : Theme.bgCardHover
                 radius: 4
 
                 Text {
                   anchors.centerIn: parent
                   text: "+"
-                  color: Colors.text
+                  color: Theme.textPrimary
                   font.pixelSize: 14
                 }
               }
@@ -254,13 +254,13 @@ Item {
                 x: 0
                 height: parent.height
                 width: 24
-                color: leftMarginSpin.down.pressed ? Colors.surface2 : Colors.surface1
+                color: leftMarginSpin.down.pressed ? Theme.bgBorder : Theme.bgCardHover
                 radius: 4
 
                 Text {
                   anchors.centerIn: parent
                   text: "-"
-                  color: Colors.text
+                  color: Theme.textPrimary
                   font.pixelSize: 14
                 }
               }
@@ -273,7 +273,7 @@ Item {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               text: "Right:"
-              color: Colors.text
+              color: Theme.textPrimary
               font.pixelSize: 13
             }
 
@@ -290,14 +290,14 @@ Item {
               }
 
               background: Rectangle {
-                color: Colors.surface0
+                color: Theme.bgCard
                 radius: 4
               }
 
               contentItem: TextInput {
                 z: 2
                 text: rightMarginSpin.textFromValue(rightMarginSpin.value, rightMarginSpin.locale)
-                color: Colors.text
+                color: Theme.textPrimary
                 font.pixelSize: 13
                 horizontalAlignment: Qt.AlignHCenter
                 verticalAlignment: Qt.AlignVCenter
@@ -314,13 +314,13 @@ Item {
                 x: parent.width - width
                 height: parent.height
                 width: 24
-                color: rightMarginSpin.up.pressed ? Colors.surface2 : Colors.surface1
+                color: rightMarginSpin.up.pressed ? Theme.bgBorder : Theme.bgCardHover
                 radius: 4
 
                 Text {
                   anchors.centerIn: parent
                   text: "+"
-                  color: Colors.text
+                  color: Theme.textPrimary
                   font.pixelSize: 14
                 }
               }
@@ -329,13 +329,13 @@ Item {
                 x: 0
                 height: parent.height
                 width: 24
-                color: rightMarginSpin.down.pressed ? Colors.surface2 : Colors.surface1
+                color: rightMarginSpin.down.pressed ? Theme.bgBorder : Theme.bgCardHover
                 radius: 4
 
                 Text {
                   anchors.centerIn: parent
                   text: "-"
-                  color: Colors.text
+                  color: Theme.textPrimary
                   font.pixelSize: 14
                 }
               }
@@ -352,7 +352,7 @@ Item {
           anchors.verticalCenter: parent.verticalCenter
           text: settingsRoot.highlightText("Popup stem connector", settingsRoot.searchQuery)
           textFormat: Text.RichText
-          color: Colors.text
+          color: Theme.textPrimary
           font.pixelSize: 14
         }
 
@@ -363,7 +363,7 @@ Item {
         }
       }
 
-      Rectangle { width: parent.width; height: 1; color: Colors.surface1 }
+      Rectangle { width: parent.width; height: 1; color: Theme.bgCardHover }
 
       // Left section
       Column {
@@ -397,7 +397,7 @@ Item {
         EmptyDropZone { sectionName: "left"; sectionItems: StatusbarManager.leftItems }
       }
 
-      Rectangle { width: parent.width; height: 1; color: Colors.surface1 }
+      Rectangle { width: parent.width; height: 1; color: Theme.bgCardHover }
 
       // Center section
       Column {
@@ -431,7 +431,7 @@ Item {
         EmptyDropZone { sectionName: "center"; sectionItems: StatusbarManager.centerItems }
       }
 
-      Rectangle { width: parent.width; height: 1; color: Colors.surface1 }
+      Rectangle { width: parent.width; height: 1; color: Theme.bgCardHover }
 
       // Right section
       Column {
@@ -469,7 +469,7 @@ Item {
       Rectangle {
         width: parent.width
         height: 1
-        color: Colors.surface2
+        color: Theme.bgBorder
       }
 
       // Reset button (with margin for focus ring visibility)
@@ -482,8 +482,8 @@ Item {
           text: "Reset to Defaults"
           width: 140
           height: 32
-          backgroundColor: Colors.surface1
-          hoverColor: Colors.surface2
+          backgroundColor: Theme.bgCardHover
+          hoverColor: Theme.bgBorder
           onClicked: StatusbarManager.resetToDefaults()
         }
       }
@@ -505,14 +505,14 @@ Item {
       color: "transparent"
       border.width: 2
       border.color: settingsRoot.isDragging && settingsRoot.dropSection === sectionName
-                      ? Colors.blue : Colors.surface2
+                      ? Theme.accent : Theme.bgBorder
       visible: settingsRoot.isDragging
     }
 
     Text {
       anchors.centerIn: parent
       text: settingsRoot.isDragging ? "Drop here" : ("No items in " + sectionName + " section")
-      color: Colors.overlay0
+      color: Theme.textMuted
       font.pixelSize: 13
     }
   }
@@ -532,7 +532,7 @@ Item {
       width: parent.width
       height: 3
       radius: 2
-      color: Colors.blue
+      color: Theme.accent
       visible: settingsRoot.isDragging
                 && settingsRoot.dropSection === wrapper.section
                 && settingsRoot.dropIndex === wrapper.itemIndex
@@ -552,7 +552,7 @@ Item {
       width: parent.width
       height: 3
       radius: 2
-      color: Colors.blue
+      color: Theme.accent
       visible: settingsRoot.isDragging
                 && settingsRoot.dropSection === wrapper.section
                 && settingsRoot.dropIndex === wrapper.itemIndex + 1
@@ -571,7 +571,7 @@ Item {
     width: parent.width
     height: 56
     radius: 6
-    color: item.enabled ? Colors.surface0 : Colors.mantle
+    color: item.enabled ? Theme.bgCard : Theme.bgBaseAlt
     opacity: settingsRoot.draggedItemId === item.id ? 0.3 : 1.0
 
     Row {
@@ -589,7 +589,7 @@ Item {
         Text {
           anchors.centerIn: parent
           text: "󰇙"
-          color: dragArea.pressed ? Colors.blue : (dragArea.containsMouse ? Colors.text : Colors.overlay0)
+          color: dragArea.pressed ? Theme.accent : (dragArea.containsMouse ? Theme.textPrimary : Theme.textMuted)
           font.pixelSize: 16
           font.family: "Symbols Nerd Font"
         }
@@ -628,7 +628,7 @@ Item {
           var mod = ModuleRegistry.getModule(item.id)
           return mod ? mod.icon : "?"
         }
-        color: item.enabled ? Colors.blue : Colors.overlay0
+        color: item.enabled ? Theme.accent : Theme.textMuted
         font.pixelSize: 18
         font.family: "Symbols Nerd Font"
         width: 24
@@ -642,7 +642,7 @@ Item {
           var mod = ModuleRegistry.getModule(item.id)
           return mod ? mod.name : item.id
         }
-        color: item.enabled ? Colors.text : Colors.overlay0
+        color: item.enabled ? Theme.textPrimary : Theme.textMuted
         font.pixelSize: 14
         width: 120
       }
@@ -655,7 +655,7 @@ Item {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: "L:"
-          color: Colors.overlay0
+          color: Theme.textMuted
           font.pixelSize: 11
         }
 
@@ -663,16 +663,16 @@ Item {
           width: 40
           height: 24
           radius: 4
-          color: Colors.surface1
+          color: Theme.bgCardHover
           border.width: leftMarginInput.activeFocus ? 2 : 0
-          border.color: Colors.peach
+          border.color: Theme.focusRing
 
           TextInput {
             id: leftMarginInput
             anchors.fill: parent
             anchors.margins: 4
             text: item.marginLeft
-            color: Colors.text
+            color: Theme.textPrimary
             font.pixelSize: 12
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
@@ -691,7 +691,7 @@ Item {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: "R:"
-          color: Colors.overlay0
+          color: Theme.textMuted
           font.pixelSize: 11
         }
 
@@ -699,16 +699,16 @@ Item {
           width: 40
           height: 24
           radius: 4
-          color: Colors.surface1
+          color: Theme.bgCardHover
           border.width: rightMarginInput.activeFocus ? 2 : 0
-          border.color: Colors.peach
+          border.color: Theme.focusRing
 
           TextInput {
             id: rightMarginInput
             anchors.fill: parent
             anchors.margins: 4
             text: item.marginRight
-            color: Colors.text
+            color: Theme.textPrimary
             font.pixelSize: 12
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter

@@ -8,7 +8,7 @@ DialogOverlay {
 
   Text {
     text: "Create a new profile from your current settings."
-    color: Colors.subtext0
+    color: Theme.textSecondary
     font.pixelSize: 13
     width: parent.width
     wrapMode: Text.WordWrap
@@ -21,7 +21,7 @@ DialogOverlay {
 
     Text {
       text: "Profile name"
-      color: Colors.subtext1
+      color: Theme.textTertiary
       font.pixelSize: 12
     }
 
@@ -29,15 +29,15 @@ DialogOverlay {
       width: parent.width
       height: 36
       radius: 6
-      color: Colors.surface0
+      color: Theme.bgCard
       border.width: nameInput.activeFocus ? 2 : 1
-      border.color: nameInput.activeFocus ? Colors.blue : Colors.surface2
+      border.color: nameInput.activeFocus ? Theme.accent : Theme.bgBorder
 
       TextInput {
         id: nameInput
         anchors.fill: parent
         anchors.margins: 8
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 14
         clip: true
         focus: true
@@ -47,7 +47,7 @@ DialogOverlay {
         Text {
           anchors.fill: parent
           text: "My Profile"
-          color: Colors.overlay0
+          color: Theme.textMuted
           font.pixelSize: 14
           visible: !nameInput.text && !nameInput.activeFocus
         }
@@ -66,7 +66,7 @@ DialogOverlay {
     // Preview of sanitized name
     Text {
       text: nameInput.text.trim() ? "Folder: " + previewSanitized(nameInput.text.trim()) : ""
-      color: Colors.overlay0
+      color: Theme.textMuted
       font.pixelSize: 11
       visible: nameInput.text.trim() !== ""
     }
@@ -80,9 +80,9 @@ DialogOverlay {
       height: 32
       text: "Create"
       fontSize: 12
-      backgroundColor: Colors.blue
-      textColor: Colors.crust
-      textHoverColor: Colors.crust
+      backgroundColor: Theme.accent
+      textColor: Theme.bgDeep
+      textHoverColor: Theme.bgDeep
       enabled: nameInput.text.trim() !== ""
       onClicked: {
         GeneralSettings.createProfile(nameInput.text.trim())
@@ -94,8 +94,8 @@ DialogOverlay {
       height: 32
       text: "Cancel"
       fontSize: 12
-      backgroundColor: Colors.surface0
-      hoverColor: Colors.surface1
+      backgroundColor: Theme.bgCard
+      hoverColor: Theme.bgCardHover
       onClicked: dialog.closeRequested()
     }
   }

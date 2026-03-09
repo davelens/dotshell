@@ -27,7 +27,7 @@ DialogOverlay {
 
     Text {
       text: "Available profiles"
-      color: Colors.subtext1
+      color: Theme.textTertiary
       font.pixelSize: 12
       font.bold: true
     }
@@ -36,9 +36,9 @@ DialogOverlay {
       width: parent.width
       height: profileListColumn.height + 12
       radius: 8
-      color: Colors.mantle
+      color: Theme.bgBaseAlt
       border.width: 1
-      border.color: Colors.surface2
+      border.color: Theme.bgBorder
 
       Column {
         id: profileListColumn
@@ -67,8 +67,8 @@ DialogOverlay {
           radius: 6
           activeFocusOnTab: true
           color: {
-            if (rowItem.modelData.dir === GeneralSettings.activeProfile) return Colors.surface0
-            if (activeFocus || profileHover.containsMouse) return Colors.surface0
+            if (rowItem.modelData.dir === GeneralSettings.activeProfile) return Theme.bgCard
+            if (activeFocus || profileHover.containsMouse) return Theme.bgCard
             return "transparent"
           }
 
@@ -79,7 +79,7 @@ DialogOverlay {
             radius: 8
             color: "transparent"
             border.width: 2
-            border.color: Colors.peach
+            border.color: Theme.focusRing
             visible: profileRow.activeFocus
           }
 
@@ -94,7 +94,7 @@ DialogOverlay {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               text: ""
-              color: Colors.blue
+              color: Theme.accent
               font.pixelSize: 14
               font.family: "Symbols Nerd Font"
               visible: rowItem.modelData.dir === GeneralSettings.activeProfile
@@ -103,7 +103,7 @@ DialogOverlay {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               text: rowItem.modelData.name
-              color: rowItem.modelData.dir === GeneralSettings.activeProfile ? Colors.text : Colors.subtext0
+              color: rowItem.modelData.dir === GeneralSettings.activeProfile ? Theme.textPrimary : Theme.textSecondary
               font.pixelSize: 14
             }
           }
@@ -148,7 +148,7 @@ DialogOverlay {
             radius: 16
             color: "transparent"
             border.width: 2
-            border.color: Colors.peach
+            border.color: Theme.focusRing
             visible: deleteBtn.activeFocus
           }
 
@@ -156,9 +156,9 @@ DialogOverlay {
             anchors.centerIn: parent
             text: switcher.confirmDeleteDir === rowItem.modelData.dir ? "?" : "󰩺"
             color: {
-              if (switcher.confirmDeleteDir === rowItem.modelData.dir) return Colors.red
-              if (deleteBtn.activeFocus || deleteHover.containsMouse) return Colors.red
-              return Colors.overlay0
+              if (switcher.confirmDeleteDir === rowItem.modelData.dir) return Theme.danger
+              if (deleteBtn.activeFocus || deleteHover.containsMouse) return Theme.danger
+              return Theme.textMuted
             }
             font.pixelSize: switcher.confirmDeleteDir === rowItem.modelData.dir ? 16 : 14
             font.family: switcher.confirmDeleteDir === rowItem.modelData.dir ? undefined : "Symbols Nerd Font"
@@ -197,10 +197,10 @@ DialogOverlay {
     height: 32
     text: switcher.confirmReset ? "Are you sure?" : "Reset to defaults"
     fontSize: 12
-    backgroundColor: Colors.red
-    hoverColor: Qt.darker(Colors.red, 1.1)
-    textColor: Colors.crust
-    textHoverColor: Colors.crust
+    backgroundColor: Theme.danger
+    hoverColor: Qt.darker(Theme.danger, 1.1)
+    textColor: Theme.bgDeep
+    textHoverColor: Theme.bgDeep
     onClicked: {
       if (switcher.confirmReset) {
         // Confirmed: reset active profile from repo defaults
