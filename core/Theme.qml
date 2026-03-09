@@ -19,7 +19,7 @@ Singleton {
   readonly property color _textPrimary: "#cdd6f4"
   readonly property color _textSecondary: "#a6adc8"
   readonly property color _textTertiary: "#bac2de"
-  readonly property color _textMuted: "#6c7086"
+  readonly property color _textMuted: "#8489a1"
   readonly property color _textSubtle: "#7f849c"
   readonly property color _accent: "#89b4fa"
   readonly property color _success: "#a6e3a1"
