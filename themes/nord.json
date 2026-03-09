@@ -1,0 +1,21 @@
+{
+  "name": "Nord",
+  "bgBase": "#282d38",
+  "bgBaseAlt": "#232831",
+  "bgDeep": "#20242c",
+  "bgCard": "#2e3440",
+  "bgCardHover": "#3b4252",
+  "bgBorder": "#434c5e",
+  "textPrimary": "#f0f4fc",
+  "textSecondary": "#e5e9f0",
+  "textTertiary": "#a4aab8",
+  "textMuted": "#6a7384",
+  "textSubtle": "#8b93a4",
+  "accent": "#88c0d0",
+  "success": "#a3be8c",
+  "warning": "#ebcb8b",
+  "danger": "#bf616a",
+  "focusRing": "#81a1c1",
+  "activeIndicator": "#8fbcbb",
+  "overlay": "#80000000"
+}
