@@ -35,7 +35,7 @@ Singleton {
   readonly property string themeFileName: GeneralSettings.theme + ".json"
 
   // User overrides in $XDG_DATA_HOME/dotshell/themes/ take precedence
-  readonly property string userThemePath: DataManager.dataDir + "/themes/"
+  readonly property string userThemePath: DataManager.themesDir + "/"
     + themeFileName
 
   // Bundled themes in the shell config directory

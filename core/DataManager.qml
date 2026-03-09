@@ -20,6 +20,7 @@ Singleton {
 
   readonly property string dataDir: (Quickshell.env("XDG_DATA_HOME") || (Quickshell.env("HOME") + "/.local/share")) + "/dotshell"
   readonly property string defaultsDir: dataDir + "/defaults"
+  readonly property string themesDir: dataDir + "/themes"
 
   // Active profile directory name (set by GeneralSettings)
   property string activeProfileDir: ""
@@ -63,7 +64,7 @@ Singleton {
   // Stage 1: create dataDir and defaultsDir
   Process {
     id: ensureDataDir
-    command: ["mkdir", "-p", dataManager.dataDir, dataManager.defaultsDir]
+    command: ["mkdir", "-p", dataManager.dataDir, dataManager.defaultsDir, dataManager.themesDir]
     onExited: {
       dataManager.dataDirReady = true
     }
