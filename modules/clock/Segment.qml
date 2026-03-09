@@ -14,7 +14,7 @@ Item {
   Text {
     id: timeText
     text: Time.time
-    color: Colors.text
+    color: Theme.textPrimary
     font.pixelSize: 14
   }
 
@@ -30,7 +30,7 @@ Item {
 
     Text {
       text: Time.date
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 14
     }
   }

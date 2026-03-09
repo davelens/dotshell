@@ -20,7 +20,7 @@ Variants {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         text: "Main display"
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 16
       }
 
@@ -28,8 +28,8 @@ Variants {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         text: "Configure"
-        textColor: Colors.overlay0
-        hoverColor: Colors.blue
+        textColor: Theme.textMuted
+        hoverColor: Theme.accent
         fontSize: 12
         onClicked: DisplayConfig.openSettings()
       }
@@ -51,16 +51,16 @@ Variants {
           bodyRadius: 4
           icon: modelData.name.startsWith("eDP") ? "󰌢" : "󰍹"
           iconSize: 18
-          iconColor: ScreenManager.isPrimary(modelData) ? Colors.blue : Colors.text
+          iconColor: ScreenManager.isPrimary(modelData) ? Theme.accent : Theme.textPrimary
           text: ScreenManager.friendlyName(modelData)
           fontSize: 14
           subtitle: modelData.name
           subtitleFontSize: 11
           rightIcon: ScreenManager.isPrimary(modelData) ? "󰄬" : ""
-          rightIconColor: Colors.blue
-          rightIconHoverColor: Colors.blue
-          backgroundColor: Colors.surface0
-          hoverBackgroundColor: Colors.surface1
+          rightIconColor: Theme.accent
+          rightIconHoverColor: Theme.accent
+          backgroundColor: Theme.bgCard
+          hoverBackgroundColor: Theme.bgCardHover
           onClicked: {
             ScreenManager.setPrimary(modelData)
             PopupManager.close()

@@ -7,7 +7,7 @@ BarButton {
   id: button
 
   icon: NotificationManager.getIcon()
-  iconColor: NotificationManager.isDndActive ? Colors.overlay0 : Colors.text
+  iconColor: NotificationManager.isDndActive ? Theme.textMuted : Theme.textPrimary
 
   onClicked: NotificationManager.togglePanel()
 
@@ -22,13 +22,13 @@ BarButton {
     width: Math.max(badgeText.width + 6, height)
     height: 14
     radius: 7
-    color: Colors.red
+    color: Theme.danger
 
     Text {
       id: badgeText
       anchors.centerIn: parent
       text: NotificationManager.unreadCount > 99 ? "99+" : NotificationManager.unreadCount.toString()
-      color: Colors.crust
+      color: Theme.bgDeep
       font.pixelSize: 9
       font.bold: true
     }

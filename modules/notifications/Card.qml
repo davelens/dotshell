@@ -44,9 +44,9 @@ Rectangle {
   bottomLeftRadius: 0
   topRightRadius: 8
   bottomRightRadius: 8
-  color: hovered || focused ? Colors.surface1 : Colors.crust
+  color: hovered || focused ? Theme.bgCardHover : Theme.bgDeep
   border.width: focused ? 2 : 2
-  border.color: focused ? Colors.peach : Colors.surface2
+  border.color: focused ? Theme.focusRing : Theme.bgBorder
 
   // Copy body text to clipboard
   Keys.onPressed: function(event) {
@@ -64,7 +64,7 @@ Rectangle {
   layer.enabled: true
   layer.effect: MultiEffect {
     shadowEnabled: true
-    shadowColor: "#80000000"
+    shadowColor: Theme.overlay
     shadowHorizontalOffset: 2
     shadowVerticalOffset: 2
     shadowBlur: 0.5
@@ -77,9 +77,9 @@ Rectangle {
     anchors.bottom: parent.bottom
     width: 3
     color: {
-      if (urgency === NotificationUrgency.Critical) return Colors.red
-      if (urgency === NotificationUrgency.Low) return Colors.surface2
-      return Colors.blue
+      if (urgency === NotificationUrgency.Critical) return Theme.danger
+      if (urgency === NotificationUrgency.Low) return Theme.bgBorder
+      return Theme.accent
     }
   }
 
@@ -112,7 +112,7 @@ Rectangle {
       Text {
         visible: appIcon === ""
         text: "󰀄"
-        color: Colors.overlay0
+        color: Theme.textMuted
         font.pixelSize: 16
         font.family: "Symbols Nerd Font"
         anchors.verticalCenter: parent.verticalCenter
@@ -120,7 +120,7 @@ Rectangle {
 
       Text {
         text: appName
-        color: Colors.overlay1
+        color: Theme.textSubtle
         font.pixelSize: 14
         anchors.verticalCenter: parent.verticalCenter
       }
@@ -130,7 +130,7 @@ Rectangle {
     Text {
       width: parent.width
       text: summary
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 15
       font.bold: true
       elide: Text.ElideRight
@@ -142,13 +142,13 @@ Rectangle {
       width: parent.width
       height: Math.min(implicitHeight, 36)  // ~2 lines at 14px
       text: body
-      color: Colors.subtext0
+      color: Theme.textSecondary
       font.pixelSize: 14
       wrapMode: Text.WordWrap
       readOnly: true
       selectByMouse: true
-      selectionColor: Colors.surface2
-      selectedTextColor: Colors.text
+      selectionColor: Theme.bgBorder
+      selectedTextColor: Theme.textPrimary
       visible: body !== ""
       clip: true
     }
@@ -178,13 +178,13 @@ Rectangle {
           width: actionLabel.implicitWidth + 16
           height: 26
           radius: 4
-          color: actionArea.containsMouse ? Colors.surface2 : Colors.surface0
+          color: actionArea.containsMouse ? Theme.bgBorder : Theme.bgCard
 
           Text {
             id: actionLabel
             anchors.centerIn: parent
             text: modelData.text
-            color: Colors.blue
+            color: Theme.accent
             font.pixelSize: 12
           }
 
@@ -220,7 +220,7 @@ Rectangle {
     Text {
       width: parent.width
       text: summary
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 13
       elide: Text.ElideRight
       maximumLineCount: 1
@@ -230,13 +230,13 @@ Rectangle {
     TextEdit {
       width: parent.width
       text: body
-      color: Colors.subtext0
+      color: Theme.textSecondary
       font.pixelSize: 12
       wrapMode: Text.WordWrap
       readOnly: true
       selectByMouse: true
-      selectionColor: Colors.surface2
-      selectedTextColor: Colors.text
+      selectionColor: Theme.bgBorder
+      selectedTextColor: Theme.textPrimary
       visible: body !== ""
     }
   }
@@ -250,8 +250,8 @@ Rectangle {
     anchors.topMargin: compact ? 6 : 8
     icon: "󰅖"
     iconSize: 14
-    iconColor: Colors.overlay0
-    hoverColor: Colors.red
+    iconColor: Theme.textMuted
+    hoverColor: Theme.danger
     onClicked: card.dismissed()
   }
 

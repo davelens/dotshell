@@ -6,7 +6,7 @@ BarButton {
   id: button
 
   icon: IdleInhibitorManager.inhibited ? "󰈈" : "󰈉"
-  iconColor: IdleInhibitorManager.inhibited ? Colors.blue : Colors.text
+  iconColor: IdleInhibitorManager.inhibited ? Theme.accent : Theme.textPrimary
 
   onClicked: {
     IdleInhibitorManager.toggle()

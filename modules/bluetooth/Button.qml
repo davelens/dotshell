@@ -6,5 +6,5 @@ import "../../core/components"
 BarButton {
   popupId: "bluetooth"
   icon: BluetoothManager.getIcon()
-  iconColor: BluetoothManager.powered ? Colors.text : Colors.overlay0
+  iconColor: BluetoothManager.powered ? Theme.textPrimary : Theme.textMuted
 }

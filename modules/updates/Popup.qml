@@ -60,7 +60,7 @@ Variants {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: UpdatesManager.getIcon()
-          color: UpdatesManager.totalCount > 0 ? Colors.green : Colors.overlay0
+          color: UpdatesManager.totalCount > 0 ? Theme.success : Theme.textMuted
           font.pixelSize: 20
           font.family: "Symbols Nerd Font"
         }
@@ -68,7 +68,7 @@ Variants {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: "System Updates"
-          color: Colors.text
+          color: Theme.textPrimary
           font.pixelSize: 16
         }
       }
@@ -82,7 +82,7 @@ Variants {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: "󰑐"
-          color: refreshArea.containsMouse ? Colors.blue : Colors.overlay0
+          color: refreshArea.containsMouse ? Theme.accent : Theme.textMuted
           font.pixelSize: 16
           font.family: "Symbols Nerd Font"
           visible: !UpdatesManager.checking
@@ -100,7 +100,7 @@ Variants {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: "󰔿"
-          color: Colors.blue
+          color: Theme.accent
           font.pixelSize: 16
           font.family: "Symbols Nerd Font"
           visible: UpdatesManager.checking
@@ -127,9 +127,9 @@ Variants {
         text: UpdatesManager.systemUpdating ? "Updating system..." : "System Update"
         width: 160
         height: 28
-        backgroundColor: UpdatesManager.totalCount > 0 && !UpdatesManager.systemUpdating ? Colors.green : Colors.surface1
-        textColor: UpdatesManager.totalCount > 0 && !UpdatesManager.systemUpdating ? Colors.crust : Colors.overlay0
-        hoverColor: UpdatesManager.totalCount > 0 && !UpdatesManager.systemUpdating ? Colors.teal : Colors.surface2
+        backgroundColor: UpdatesManager.totalCount > 0 && !UpdatesManager.systemUpdating ? Theme.success : Theme.bgCardHover
+        textColor: UpdatesManager.totalCount > 0 && !UpdatesManager.systemUpdating ? Theme.bgDeep : Theme.textMuted
+        hoverColor: UpdatesManager.totalCount > 0 && !UpdatesManager.systemUpdating ? Theme.activeIndicator : Theme.bgBorder
         enabled: UpdatesManager.totalCount > 0 && !UpdatesManager.systemUpdating && !UpdatesManager.checking
         opacity: enabled ? 1.0 : 0.5
         onClicked: UpdatesManager.systemUpdate()
@@ -140,7 +140,7 @@ Variants {
         anchors.leftMargin: 170
         anchors.verticalCenter: parent.verticalCenter
         text: "Full system upgrade (pacman + AUR)"
-        color: Colors.overlay0
+        color: Theme.textMuted
         font.pixelSize: 12
         visible: !UpdatesManager.systemUpdating
       }
@@ -150,7 +150,7 @@ Variants {
         anchors.leftMargin: 170
         anchors.verticalCenter: parent.verticalCenter
         text: "Running paru -Syu... All other updates are blocked."
-        color: Colors.yellow
+        color: Theme.warning
         font.pixelSize: 12
         visible: UpdatesManager.systemUpdating
       }
@@ -160,7 +160,7 @@ Variants {
     Rectangle {
       width: parent.width
       height: 1
-      color: Colors.surface1
+      color: Theme.bgCardHover
     }
 
     // Checking state
@@ -172,7 +172,7 @@ Variants {
       Text {
         anchors.centerIn: parent
         text: "Checking for updates..."
-        color: Colors.overlay0
+        color: Theme.textMuted
         font.pixelSize: 14
       }
     }
@@ -186,7 +186,7 @@ Variants {
       Text {
         width: parent.width
         text: "System is up to date"
-        color: Colors.overlay0
+        color: Theme.textMuted
         font.pixelSize: 15
         horizontalAlignment: Text.AlignHCenter
         topPadding: 8
@@ -195,7 +195,7 @@ Variants {
       Text {
         width: parent.width
         text: "No pending updates"
-        color: Colors.overlay1
+        color: Theme.textSubtle
         font.pixelSize: 13
         horizontalAlignment: Text.AlignHCenter
         bottomPadding: 8
@@ -224,9 +224,9 @@ Variants {
           height: 26
           text: "Update all"
           fontSize: 12
-          backgroundColor: UpdatesManager.pacmanUpdates.length > 0 && !UpdatesManager.blocked ? Colors.surface1 : Colors.mantle
-          textColor: UpdatesManager.pacmanUpdates.length > 0 && !UpdatesManager.blocked ? Colors.text : Colors.overlay0
-          hoverColor: Colors.surface2
+          backgroundColor: UpdatesManager.pacmanUpdates.length > 0 && !UpdatesManager.blocked ? Theme.bgCardHover : Theme.bgBaseAlt
+          textColor: UpdatesManager.pacmanUpdates.length > 0 && !UpdatesManager.blocked ? Theme.textPrimary : Theme.textMuted
+          hoverColor: Theme.bgBorder
           enabled: UpdatesManager.pacmanUpdates.length > 0 && !UpdatesManager.blocked
           opacity: enabled ? 1.0 : 0.4
           onClicked: UpdatesManager.updateSource("pacman")
@@ -256,7 +256,7 @@ Variants {
                 width: parent.width
                 height: popup.rowHeight
                 radius: 4
-                color: pacPkgMouse.containsMouse ? Colors.surface0 : "transparent"
+                color: pacPkgMouse.containsMouse ? Theme.bgCard : "transparent"
 
                 Column {
                   anchors.left: parent.left
@@ -269,7 +269,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.name
-                    color: Colors.text
+                    color: Theme.textPrimary
                     font.pixelSize: 13
                     elide: Text.ElideRight
                   }
@@ -277,7 +277,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.currentVersion + " \u2192 " + modelData.newVersion
-                    color: Colors.overlay0
+                    color: Theme.textMuted
                     font.pixelSize: 10
                     elide: Text.ElideMiddle
                   }
@@ -290,9 +290,9 @@ Variants {
                   anchors.verticalCenter: parent.verticalCenter
                   text: "󰇚"
                   color: {
-                    if (UpdatesManager.blocked) return Colors.surface2
-                    if (UpdatesManager.isUpdating(modelData.name)) return Colors.yellow
-                    return pacPkgMouse.containsMouse ? Colors.green : Colors.overlay0
+                    if (UpdatesManager.blocked) return Theme.bgBorder
+                    if (UpdatesManager.isUpdating(modelData.name)) return Theme.warning
+                    return pacPkgMouse.containsMouse ? Theme.success : Theme.textMuted
                   }
                   font.pixelSize: 13
                   font.family: "Symbols Nerd Font"
@@ -316,7 +316,7 @@ Variants {
             Text {
               visible: UpdatesManager.pacmanUpdates.length === 0
               text: "No updates"
-              color: Colors.overlay0
+              color: Theme.textMuted
               font.pixelSize: 12
               topPadding: 4
             }
@@ -325,7 +325,7 @@ Variants {
       }
 
       // Separator
-      Rectangle { width: 1; height: parent.height; color: Colors.surface1 }
+      Rectangle { width: 1; height: parent.height; color: Theme.bgCardHover }
 
       // AUR column
       Column {
@@ -341,9 +341,9 @@ Variants {
           height: 26
           text: "Update all"
           fontSize: 12
-          backgroundColor: UpdatesManager.aurUpdates.length > 0 && !UpdatesManager.blocked ? Colors.surface1 : Colors.mantle
-          textColor: UpdatesManager.aurUpdates.length > 0 && !UpdatesManager.blocked ? Colors.text : Colors.overlay0
-          hoverColor: Colors.surface2
+          backgroundColor: UpdatesManager.aurUpdates.length > 0 && !UpdatesManager.blocked ? Theme.bgCardHover : Theme.bgBaseAlt
+          textColor: UpdatesManager.aurUpdates.length > 0 && !UpdatesManager.blocked ? Theme.textPrimary : Theme.textMuted
+          hoverColor: Theme.bgBorder
           enabled: UpdatesManager.aurUpdates.length > 0 && !UpdatesManager.blocked
           opacity: enabled ? 1.0 : 0.4
           onClicked: UpdatesManager.updateSource("aur")
@@ -372,7 +372,7 @@ Variants {
                 width: parent.width
                 height: popup.rowHeight
                 radius: 4
-                color: aurPkgMouse.containsMouse ? Colors.surface0 : "transparent"
+                color: aurPkgMouse.containsMouse ? Theme.bgCard : "transparent"
 
                 Column {
                   anchors.left: parent.left
@@ -385,7 +385,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.name
-                    color: Colors.text
+                    color: Theme.textPrimary
                     font.pixelSize: 13
                     elide: Text.ElideRight
                   }
@@ -393,7 +393,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.currentVersion + " \u2192 " + modelData.newVersion
-                    color: Colors.overlay0
+                    color: Theme.textMuted
                     font.pixelSize: 10
                     elide: Text.ElideMiddle
                   }
@@ -406,9 +406,9 @@ Variants {
                   anchors.verticalCenter: parent.verticalCenter
                   text: "󰇚"
                   color: {
-                    if (UpdatesManager.blocked) return Colors.surface2
-                    if (UpdatesManager.isUpdating(modelData.name)) return Colors.yellow
-                    return aurPkgMouse.containsMouse ? Colors.green : Colors.overlay0
+                    if (UpdatesManager.blocked) return Theme.bgBorder
+                    if (UpdatesManager.isUpdating(modelData.name)) return Theme.warning
+                    return aurPkgMouse.containsMouse ? Theme.success : Theme.textMuted
                   }
                   font.pixelSize: 13
                   font.family: "Symbols Nerd Font"
@@ -431,7 +431,7 @@ Variants {
             Text {
               visible: UpdatesManager.aurUpdates.length === 0
               text: "No updates"
-              color: Colors.overlay0
+              color: Theme.textMuted
               font.pixelSize: 12
               topPadding: 4
             }
@@ -440,7 +440,7 @@ Variants {
       }
 
       // Separator
-      Rectangle { width: 1; height: parent.height; color: Colors.surface1 }
+      Rectangle { width: 1; height: parent.height; color: Theme.bgCardHover }
 
       // Flatpak column
       Column {
@@ -456,9 +456,9 @@ Variants {
           height: 26
           text: "Update all"
           fontSize: 12
-          backgroundColor: UpdatesManager.flatpakUpdates.length > 0 && !UpdatesManager.blocked ? Colors.surface1 : Colors.mantle
-          textColor: UpdatesManager.flatpakUpdates.length > 0 && !UpdatesManager.blocked ? Colors.text : Colors.overlay0
-          hoverColor: Colors.surface2
+          backgroundColor: UpdatesManager.flatpakUpdates.length > 0 && !UpdatesManager.blocked ? Theme.bgCardHover : Theme.bgBaseAlt
+          textColor: UpdatesManager.flatpakUpdates.length > 0 && !UpdatesManager.blocked ? Theme.textPrimary : Theme.textMuted
+          hoverColor: Theme.bgBorder
           enabled: UpdatesManager.flatpakUpdates.length > 0 && !UpdatesManager.blocked
           opacity: enabled ? 1.0 : 0.4
           onClicked: UpdatesManager.updateSource("flatpak")
@@ -487,7 +487,7 @@ Variants {
                 width: parent.width
                 height: popup.rowHeight
                 radius: 4
-                color: fpPkgMouse.containsMouse ? Colors.surface0 : "transparent"
+                color: fpPkgMouse.containsMouse ? Theme.bgCard : "transparent"
 
                 Column {
                   anchors.left: parent.left
@@ -500,7 +500,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.name
-                    color: Colors.text
+                    color: Theme.textPrimary
                     font.pixelSize: 13
                     elide: Text.ElideRight
                   }
@@ -508,7 +508,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.newVersion ? modelData.newVersion : modelData.appId
-                    color: Colors.overlay0
+                    color: Theme.textMuted
                     font.pixelSize: 10
                     elide: Text.ElideMiddle
                   }
@@ -521,9 +521,9 @@ Variants {
                   anchors.verticalCenter: parent.verticalCenter
                   text: "󰇚"
                   color: {
-                    if (UpdatesManager.blocked) return Colors.surface2
-                    if (UpdatesManager.isUpdating(modelData.name)) return Colors.yellow
-                    return fpPkgMouse.containsMouse ? Colors.green : Colors.overlay0
+                    if (UpdatesManager.blocked) return Theme.bgBorder
+                    if (UpdatesManager.isUpdating(modelData.name)) return Theme.warning
+                    return fpPkgMouse.containsMouse ? Theme.success : Theme.textMuted
                   }
                   font.pixelSize: 13
                   font.family: "Symbols Nerd Font"
@@ -546,7 +546,7 @@ Variants {
             Text {
               visible: UpdatesManager.flatpakUpdates.length === 0
               text: "No updates"
-              color: Colors.overlay0
+              color: Theme.textMuted
               font.pixelSize: 12
               topPadding: 4
             }

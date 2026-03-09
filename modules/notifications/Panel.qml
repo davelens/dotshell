@@ -155,7 +155,7 @@ Variants {
       anchors.right: parent.right
       anchors.rightMargin: NotificationManager.panelOpen ? 0 : -width
       width: 380
-      color: Colors.base
+      color: Theme.bgBase
 
       Behavior on anchors.rightMargin {
         NumberAnimation {
@@ -171,7 +171,7 @@ Variants {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: 1
-        color: Colors.surface0
+        color: Theme.bgCard
       }
 
       Column {
@@ -189,7 +189,7 @@ Variants {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             text: "Notifications"
-            color: Colors.text
+            color: Theme.textPrimary
             font.pixelSize: 20
             font.bold: true
           }
@@ -199,7 +199,7 @@ Variants {
             anchors.verticalCenter: parent.verticalCenter
             icon: "󰅖"
             iconSize: 18
-            hoverColor: Colors.red
+            hoverColor: Theme.danger
             onClicked: NotificationManager.closePanel()
           }
         }
@@ -209,7 +209,7 @@ Variants {
           width: parent.width
           height: dndColumn.height + 24
           radius: 8
-          color: Colors.surface0
+          color: Theme.bgCard
 
           Column {
             id: dndColumn
@@ -242,7 +242,7 @@ Variants {
 
                   Text {
                     text: "Do Not Disturb"
-                    color: Colors.text
+                    color: Theme.textPrimary
                     font.pixelSize: 14
                   }
 
@@ -250,7 +250,7 @@ Variants {
                     text: NotificationManager.isDndActive
                       ? (NotificationManager.dndEnabled ? "Enabled manually" : "Until " + NotificationManager.formatTime(NotificationManager.dndEndHour, NotificationManager.dndEndMinute))
                       : NotificationManager.dndScheduleText
-                    color: Colors.overlay0
+                    color: Theme.textMuted
                     font.pixelSize: 12
                   }
                 }
@@ -261,8 +261,8 @@ Variants {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 text: "Configure"
-                textColor: Colors.overlay0
-                hoverColor: Colors.blue
+                textColor: Theme.textMuted
+                hoverColor: Theme.accent
                 fontSize: 12
                 onClicked: NotificationManager.openSettingsNotifications()
               }
@@ -293,7 +293,7 @@ Variants {
                 Text {
                   anchors.horizontalCenter: parent.horizontalCenter
                   text: "󰂚"
-                  color: Colors.overlay0
+                  color: Theme.textMuted
                   font.pixelSize: 48
                   font.family: "Symbols Nerd Font"
                 }
@@ -301,7 +301,7 @@ Variants {
                 Text {
                   anchors.horizontalCenter: parent.horizontalCenter
                   text: "All caught up!"
-                  color: Colors.overlay0
+                  color: Theme.textMuted
                   font.pixelSize: 14
                 }
               }
@@ -328,7 +328,7 @@ Variants {
                   iconSize: 12
                   text: groupColumn.modelData.appName + " (" + groupColumn.modelData.notifications.length + ")"
                   fontSize: 13
-                  hoverBackgroundColor: Colors.surface0
+                  hoverBackgroundColor: Theme.bgCard
                   onClicked: NotificationManager.toggleGroup(groupColumn.modelData.appName)
                 }
 
@@ -376,10 +376,10 @@ Variants {
           height: 40
           text: "Clear All Notifications"
           fontSize: 13
-          backgroundColor: Colors.surface0
-          hoverColor: Colors.surface1
-          textColor: Colors.text
-          textHoverColor: Colors.red
+          backgroundColor: Theme.bgCard
+          hoverColor: Theme.bgCardHover
+          textColor: Theme.textPrimary
+          textHoverColor: Theme.danger
           visible: NotificationManager.history.length > 0
           onClicked: NotificationManager.clearHistory()
         }

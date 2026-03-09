@@ -71,7 +71,7 @@ Variants {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: WirelessManager.getIcon()
-          color: WirelessManager.enabled ? Colors.blue : Colors.overlay0
+          color: WirelessManager.enabled ? Theme.accent : Theme.textMuted
           font.pixelSize: 20
           font.family: "Symbols Nerd Font"
         }
@@ -79,7 +79,7 @@ Variants {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: "Wi-Fi"
-          color: Colors.text
+          color: Theme.textPrimary
           font.pixelSize: 16
         }
       }
@@ -96,7 +96,7 @@ Variants {
     Rectangle {
       width: parent.width
       height: 1
-      color: Colors.surface1
+      color: Theme.bgCardHover
       visible: WirelessManager.enabled
     }
 
@@ -116,14 +116,14 @@ Variants {
         bodyRadius: 4
         icon: WirelessManager.getIcon()
         iconSize: 18
-        iconColor: Colors.green
+        iconColor: Theme.success
         text: WirelessManager.connectedNetwork ? WirelessManager.connectedNetwork.ssid : ""
         fontSize: 15
         rightIcon: "󰅖"
-        rightIconColor: Colors.overlay0
-        rightIconHoverColor: Colors.red
-        backgroundColor: Colors.surface1
-        hoverBackgroundColor: Colors.surface1
+        rightIconColor: Theme.textMuted
+        rightIconHoverColor: Theme.danger
+        backgroundColor: Theme.bgCardHover
+        hoverBackgroundColor: Theme.bgCardHover
         onClicked: WirelessManager.disconnect()
       }
 
@@ -135,13 +135,13 @@ Variants {
 
         Text {
           text: "Uptime: " + WirelessManager.getConnectionDurationLong()
-          color: Colors.overlay0
+          color: Theme.textMuted
           font.pixelSize: 14
         }
 
         Text {
           text: "Down: " + WirelessManager.formatSpeed(WirelessManager.downloadSpeed) + "  Up: " + WirelessManager.formatSpeed(WirelessManager.uploadSpeed)
-          color: Colors.overlay0
+          color: Theme.textMuted
           font.pixelSize: 14
         }
       }
@@ -150,7 +150,7 @@ Variants {
     Rectangle {
       width: parent.width
       height: 1
-      color: Colors.surface1
+      color: Theme.bgCardHover
       visible: WirelessManager.connectedNetwork !== null
     }
 
@@ -173,7 +173,7 @@ Variants {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: "󰔟"
-          color: Colors.blue
+          color: Theme.accent
           font.pixelSize: 14
           font.family: "Symbols Nerd Font"
           visible: WirelessManager.scanning
@@ -194,7 +194,7 @@ Variants {
         anchors.verticalCenter: parent.verticalCenter
         icon: "󰑐"
         iconSize: 16
-        hoverColor: Colors.blue
+        hoverColor: Theme.accent
         visible: !WirelessManager.scanning
         onClicked: WirelessManager.startScan()
       }
@@ -242,11 +242,11 @@ Variants {
               bodyRadius: 4
               icon: WirelessManager.getSignalIcon(modelData.signal)
               iconSize: 18
-              iconColor: isConnecting ? Colors.blue : Colors.overlay0
+              iconColor: isConnecting ? Theme.accent : Theme.textMuted
               text: isConnecting ? modelData.ssid + "  —  Connecting..." : modelData.ssid
               fontSize: 15
               rightIcon: modelData.security ? "󰌾" : ""
-              hoverBackgroundColor: Colors.surface0
+              hoverBackgroundColor: Theme.bgCard
               onClicked: {
                 if (!WirelessManager.busy) WirelessManager.connect(modelData.ssid)
               }
@@ -271,9 +271,9 @@ Variants {
                 width: parent.width
                 height: 36
                 radius: 4
-                color: Colors.surface0
+                color: Theme.bgCard
                 border.width: 1
-                border.color: passwordInput.activeFocus ? Colors.blue : Colors.surface1
+                border.color: passwordInput.activeFocus ? Theme.accent : Theme.bgCardHover
 
                 Row {
                   anchors.fill: parent
@@ -285,7 +285,7 @@ Variants {
                     id: passwordInput
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width - toggleVisibility.width - connectBtn.width - 12
-                    color: Colors.text
+                    color: Theme.textPrimary
                     font.pixelSize: 14
                     clip: true
                     echoMode: TextInput.Password
@@ -294,7 +294,7 @@ Variants {
                       anchors.fill: parent
                       anchors.verticalCenter: parent.verticalCenter
                       text: "Enter password"
-                      color: Colors.overlay0
+                      color: Theme.textMuted
                       font.pixelSize: 14
                       visible: !passwordInput.text
                     }
@@ -317,7 +317,7 @@ Variants {
                     id: toggleVisibility
                     anchors.verticalCenter: parent.verticalCenter
                     text: passwordInput.echoMode === TextInput.Password ? "󰈈" : "󰈉"
-                    color: toggleMouse.containsMouse ? Colors.text : Colors.overlay0
+                    color: toggleMouse.containsMouse ? Theme.textPrimary : Theme.textMuted
                     font.pixelSize: 16
                     font.family: "Symbols Nerd Font"
                     width: 28
@@ -344,14 +344,14 @@ Variants {
                     height: 28
                     radius: 4
                     color: connectBtnMouse.containsMouse && passwordInput.text
-                      ? Colors.blue : "transparent"
+                      ? Theme.accent : "transparent"
 
                     Text {
                       anchors.centerIn: parent
                       text: "󰁔"
                       color: passwordInput.text
-                        ? (connectBtnMouse.containsMouse ? Colors.base : Colors.blue)
-                        : Colors.surface2
+                        ? (connectBtnMouse.containsMouse ? Theme.bgBase : Theme.accent)
+                        : Theme.bgBorder
                       font.pixelSize: 16
                       font.family: "Symbols Nerd Font"
                     }
@@ -375,7 +375,7 @@ Variants {
               Text {
                 width: parent.width
                 text: WirelessManager.connectError
-                color: Colors.red
+                color: Theme.danger
                 font.pixelSize: 12
                 leftPadding: 10
                 wrapMode: Text.WordWrap
@@ -406,7 +406,7 @@ Variants {
       Text {
         width: parent.width
         text: "Wi-Fi is off"
-        color: Colors.overlay0
+        color: Theme.textMuted
         font.pixelSize: 15
         horizontalAlignment: Text.AlignHCenter
         topPadding: 8
@@ -415,7 +415,7 @@ Variants {
       Text {
         width: parent.width
         text: "Toggle the switch above to enable"
-        color: Colors.overlay1
+        color: Theme.textSubtle
         font.pixelSize: 13
         horizontalAlignment: Text.AlignHCenter
         bottomPadding: 8

@@ -70,7 +70,7 @@ Variants {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: BluetoothManager.getIcon()
-          color: BluetoothManager.powered ? Colors.blue : Colors.overlay0
+          color: BluetoothManager.powered ? Theme.accent : Theme.textMuted
           font.pixelSize: 20
           font.family: "Symbols Nerd Font"
         }
@@ -78,7 +78,7 @@ Variants {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: "Bluetooth"
-          color: Colors.text
+          color: Theme.textPrimary
           font.pixelSize: 16
         }
       }
@@ -95,7 +95,7 @@ Variants {
     Rectangle {
       width: parent.width
       height: 1
-      color: Colors.surface1
+      color: Theme.bgCardHover
       visible: BluetoothManager.powered
     }
 
@@ -120,14 +120,14 @@ Variants {
           bodyRadius: 4
           icon: "󰂱"
           iconSize: 18
-          iconColor: Colors.green
+          iconColor: Theme.success
           text: modelData.name
           fontSize: 15
           rightIcon: "󰅖"
-          rightIconColor: Colors.overlay0
-          rightIconHoverColor: Colors.red
-          backgroundColor: Colors.surface1
-          hoverBackgroundColor: Colors.surface1
+          rightIconColor: Theme.textMuted
+          rightIconHoverColor: Theme.danger
+          backgroundColor: Theme.bgCardHover
+          hoverBackgroundColor: Theme.bgCardHover
           onClicked: BluetoothManager.disconnect(modelData.address)
         }
       }
@@ -136,7 +136,7 @@ Variants {
     Rectangle {
       width: parent.width
       height: 1
-      color: Colors.surface1
+      color: Theme.bgCardHover
       visible: BluetoothManager.connectedDevices.length > 0
     }
 
@@ -159,7 +159,7 @@ Variants {
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: "󰔟"
-          color: Colors.blue
+          color: Theme.accent
           font.pixelSize: 14
           font.family: "Symbols Nerd Font"
           visible: BluetoothManager.scanning
@@ -180,7 +180,7 @@ Variants {
         anchors.verticalCenter: parent.verticalCenter
         icon: "󰑐"
         iconSize: 16
-        hoverColor: Colors.blue
+        hoverColor: Theme.accent
         visible: !BluetoothManager.scanning
         onClicked: BluetoothManager.startScan()
       }
@@ -221,10 +221,10 @@ Variants {
               bodyRadius: 4
               icon: modelData.paired ? "󰂰" : "󰂯"
               iconSize: 18
-              iconColor: isConnecting ? Colors.blue : (modelData.paired ? Colors.blue : Colors.overlay0)
+              iconColor: isConnecting ? Theme.accent : (modelData.paired ? Theme.accent : Theme.textMuted)
               text: isConnecting ? modelData.name + "  —  Connecting..." : modelData.name
               fontSize: 15
-              hoverBackgroundColor: Colors.surface0
+              hoverBackgroundColor: Theme.bgCard
               onClicked: {
                 if (!BluetoothManager.busy) BluetoothManager.connect(modelData.address)
               }
@@ -234,7 +234,7 @@ Variants {
             Text {
               width: parent.width
               text: BluetoothManager.connectError
-              color: Colors.red
+              color: Theme.danger
               font.pixelSize: 12
               leftPadding: 10
               topPadding: 4
@@ -266,7 +266,7 @@ Variants {
       Text {
         width: parent.width
         text: "Bluetooth is off"
-        color: Colors.overlay0
+        color: Theme.textMuted
         font.pixelSize: 15
         horizontalAlignment: Text.AlignHCenter
         topPadding: 8
@@ -275,7 +275,7 @@ Variants {
       Text {
         width: parent.width
         text: "Toggle the switch above to enable"
-        color: Colors.overlay1
+        color: Theme.textSubtle
         font.pixelSize: 13
         horizontalAlignment: Text.AlignHCenter
         bottomPadding: 8

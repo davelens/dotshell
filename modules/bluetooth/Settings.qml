@@ -26,7 +26,7 @@ ScrollView {
     var before = text.substring(0, idx)
     var match = text.substring(idx, idx + query.length)
     var after = text.substring(idx + query.length)
-    return before + '<span style="background-color: ' + Colors.yellow + '; color: ' + Colors.crust + ';">' + match + '</span>' + after
+    return before + '<span style="background-color: ' + Theme.warning + '; color: ' + Theme.bgDeep + ';">' + match + '</span>' + after
   }
 
   Column {
@@ -38,7 +38,7 @@ ScrollView {
 
       Text {
         text: "Bluetooth"
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 24
         font.bold: true
       }
@@ -71,7 +71,7 @@ ScrollView {
           width: parent.width
           height: 64
           radius: 8
-          color: Colors.surface0
+          color: Theme.bgCard
 
           Row {
             anchors.left: parent.left
@@ -82,7 +82,7 @@ ScrollView {
             Text {
               anchors.verticalCenter: parent.verticalCenter
               text: "󰂱"
-              color: Colors.blue
+              color: Theme.accent
               font.pixelSize: 18
               font.family: "Symbols Nerd Font"
             }
@@ -93,14 +93,14 @@ ScrollView {
 
               Text {
                 text: modelData.name
-                color: Colors.text
+                color: Theme.textPrimary
                 font.pixelSize: 14
               }
 
               Text {
                 text: settingsRoot.highlightText("Connected", settingsRoot.searchQuery)
                 textFormat: Text.RichText
-                color: Colors.green
+                color: Theme.success
                 font.pixelSize: 12
               }
             }
@@ -121,7 +121,7 @@ ScrollView {
     Rectangle {
       width: parent.width
       height: 1
-      color: Colors.surface1
+      color: Theme.bgCardHover
       visible: BluetoothManager.powered && BluetoothManager.connectedDevices.length > 0
     }
 
@@ -163,7 +163,7 @@ ScrollView {
               property bool isConnecting: BluetoothManager.connectingAddress === modelData.address
 
               icon: modelData.paired ? "󰂰" : "󰂯"
-              iconColor: isConnecting ? Colors.blue : (modelData.paired ? Colors.blue : Colors.overlay0)
+              iconColor: isConnecting ? Theme.accent : (modelData.paired ? Theme.accent : Theme.textMuted)
               text: isConnecting ? modelData.name + "  —  Connecting..." : modelData.name
               subtitle: isConnecting ? "" : (modelData.paired ? "Paired" : "Not paired")
               onClicked: {
@@ -177,7 +177,7 @@ ScrollView {
             Text {
               width: parent.width
               text: BluetoothManager.connectError
-              color: Colors.red
+              color: Theme.danger
               font.pixelSize: 12
               leftPadding: 10
               topPadding: 4

@@ -14,7 +14,7 @@ BarButton {
     var __ = WirelessManager.connectedNetwork
     return WirelessManager.getIcon()
   }
-  iconColor: WirelessManager.enabled ? Colors.text : Colors.overlay0
+  iconColor: WirelessManager.enabled ? Theme.textPrimary : Theme.textMuted
 
   // Bar icon tooltip
   TooltipBase {
@@ -27,7 +27,7 @@ BarButton {
 
       Text {
         text: "Connected to " + (WirelessManager.connectedNetwork ? WirelessManager.connectedNetwork.ssid : "")
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 13
         elide: Text.ElideRight
         width: parent.width
@@ -35,7 +35,7 @@ BarButton {
 
       Text {
         text: "Uptime: " + WirelessManager.getConnectionDurationLong()
-        color: Colors.overlay0
+        color: Theme.textMuted
         font.pixelSize: 12
       }
 
@@ -44,13 +44,13 @@ BarButton {
 
         Text {
           text: "Down: " + WirelessManager.formatSpeed(WirelessManager.downloadSpeed)
-          color: Colors.overlay0
+          color: Theme.textMuted
           font.pixelSize: 12
         }
 
         Text {
           text: "Up: " + WirelessManager.formatSpeed(WirelessManager.uploadSpeed)
-          color: Colors.overlay0
+          color: Theme.textMuted
           font.pixelSize: 12
         }
       }

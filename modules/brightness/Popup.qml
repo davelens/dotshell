@@ -38,7 +38,7 @@ Variants {
           Text {
             anchors.verticalCenter: parent.verticalCenter
             text: BrightnessManager.getIcon(brightnessSlider.value)
-            color: Colors.text
+            color: Theme.textPrimary
             font.pixelSize: 20
             font.family: "Symbols Nerd Font"
           }
@@ -52,8 +52,8 @@ Variants {
             to: 1
             stepSize: 0.02
             value: parent.displayBrightness
-            accentColor: Colors.yellow
-            trackColor: Colors.surface0
+            accentColor: Theme.warning
+            trackColor: Theme.bgCard
             trackHeight: 8
             handleSize: 14
             onMoved: BrightnessManager.setBrightness(parent.displayId, value)
@@ -62,7 +62,7 @@ Variants {
           Text {
             anchors.verticalCenter: parent.verticalCenter
             text: Math.round(brightnessSlider.value * 100) + "%"
-            color: Colors.yellow
+            color: Theme.warning
             font.pixelSize: 16
             width: 44
             horizontalAlignment: Text.AlignRight
@@ -80,7 +80,7 @@ Variants {
       Text {
         width: parent.width
         text: !BrightnessManager.ready ? "Detecting displays..." : "No controllable displays"
-        color: Colors.overlay0
+        color: Theme.textMuted
         font.pixelSize: 15
         horizontalAlignment: Text.AlignHCenter
         topPadding: 8
@@ -90,7 +90,7 @@ Variants {
         width: parent.width
         visible: BrightnessManager.ready
         text: "Your GPU driver may not support DDC/CI"
-        color: Colors.overlay1
+        color: Theme.textSubtle
         font.pixelSize: 13
         horizontalAlignment: Text.AlignHCenter
         bottomPadding: 8

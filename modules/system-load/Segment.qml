@@ -18,7 +18,7 @@ Item {
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: ""
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 16
       font.family: "Symbols Nerd Font"
     }
@@ -26,14 +26,14 @@ Item {
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: SystemLoadManager.cpuPercent + "%"
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 14
     }
 
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: "󰧑"
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 16
       font.family: "Symbols Nerd Font"
       leftPadding: 6
@@ -42,7 +42,7 @@ Item {
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: SystemLoadManager.ramPercent + "%"
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 14
     }
   }
@@ -62,13 +62,13 @@ Item {
 
       Text {
         text: "CPU: " + SystemLoadManager.cpuPercent + "%"
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 14
       }
 
       Text {
         text: "Memory: " + SystemLoadManager.ramUsedGb.toFixed(1) + " / " + SystemLoadManager.ramTotalGb.toFixed(1) + " GB (" + SystemLoadManager.ramPercent + "%)"
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 14
       }
     }

@@ -14,7 +14,7 @@ BarButton {
   popupId: "volume"
   icon: getVolumeIcon(volume, muted)
   iconSize: 24
-  iconColor: muted ? Colors.overlay0 : Colors.text
+  iconColor: muted ? Theme.textMuted : Theme.textPrimary
 
   function getVolumeIcon(volume, muted) {
     if (muted || volume === 0) return "󰝟"

@@ -64,7 +64,7 @@ ScrollView {
     var before = text.substring(0, idx)
     var match = text.substring(idx, idx + query.length)
     var after = text.substring(idx + query.length)
-    return before + '<span style="background-color: ' + Colors.yellow + '; color: ' + Colors.crust + ';">' + match + '</span>' + after
+    return before + '<span style="background-color: ' + Theme.warning + '; color: ' + Theme.bgDeep + ';">' + match + '</span>' + after
   }
 
   // Parse swaymsg output JSON
@@ -316,7 +316,7 @@ ScrollView {
 
     Text {
       text: "Displays"
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 24
       font.bold: true
     }
@@ -333,7 +333,7 @@ ScrollView {
       width: parent.width
       height: 320
       radius: 8
-      color: Colors.crust
+      color: Theme.bgDeep
       clip: true
 
       // Hit-test: find which monitor index is at a canvas position
@@ -461,15 +461,15 @@ ScrollView {
 
             radius: 4
             color: {
-              if (!monitorData || !monitorData.active) return Colors.surface0
-              if (isSelected) return Colors.surface1
-              return Colors.surface0
+              if (!monitorData || !monitorData.active) return Theme.bgCard
+              if (isSelected) return Theme.bgCardHover
+              return Theme.bgCard
             }
             border.width: isSelected ? 2 : 1
             border.color: {
-              if (!monitorData || !monitorData.active) return Colors.surface2
-              if (isSelected) return Colors.blue
-              return Colors.overlay0
+              if (!monitorData || !monitorData.active) return Theme.bgBorder
+              if (isSelected) return Theme.accent
+              return Theme.textMuted
             }
             opacity: {
               if (!monitorData || !monitorData.active) return 0.4
@@ -486,7 +486,7 @@ ScrollView {
               Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: monitorData ? (monitorData.name.startsWith("eDP") ? "󰌢" : "󰍹") : ""
-                color: monitorData && monitorData.active ? Colors.text : Colors.overlay0
+                color: monitorData && monitorData.active ? Theme.textPrimary : Theme.textMuted
                 font.pixelSize: Math.min(16, monitorRect.height * 0.3)
                 font.family: "Symbols Nerd Font"
               }
@@ -494,7 +494,7 @@ ScrollView {
               Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: monitorData ? monitorData.friendlyName : ""
-                color: monitorData && monitorData.active ? Colors.text : Colors.overlay0
+                color: monitorData && monitorData.active ? Theme.textPrimary : Theme.textMuted
                 font.pixelSize: Math.min(11, monitorRect.height * 0.18)
                 elide: Text.ElideRight
                 width: monitorRect.width - 8
@@ -504,7 +504,7 @@ ScrollView {
               Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: monitorData ? monitorData.rawWidth + "x" + monitorData.rawHeight : ""
-                color: Colors.overlay0
+                color: Theme.textMuted
                 font.pixelSize: Math.min(9, monitorRect.height * 0.14)
               }
             }
@@ -524,10 +524,10 @@ ScrollView {
           width: draggedItem ? draggedItem.width * settingsRoot.cachedScale : 0
           height: draggedItem ? draggedItem.height * settingsRoot.cachedScale : 0
           radius: 4
-          color: Colors.blue
+          color: Theme.accent
           opacity: 0.15
           border.width: 2
-          border.color: Colors.blue
+          border.color: Theme.accent
         }
       }
 
@@ -540,7 +540,7 @@ ScrollView {
         y: 0
         width: 1
         height: parent.height
-        color: Colors.blue
+        color: Theme.accent
         opacity: 0.5
         z: 10
       }
@@ -554,7 +554,7 @@ ScrollView {
           : 0
         width: parent.width
         height: 1
-        color: Colors.blue
+        color: Theme.accent
         opacity: 0.5
         z: 10
       }
@@ -583,15 +583,15 @@ ScrollView {
 
       FocusButton {
         text: "Apply"
-        backgroundColor: Colors.blue
-        textColor: Colors.crust
-        textHoverColor: Colors.crust
+        backgroundColor: Theme.accent
+        textColor: Theme.bgDeep
+        textHoverColor: Theme.bgDeep
         onClicked: settingsRoot.applyLayout()
       }
 
       FocusButton {
         text: "Reset"
-        backgroundColor: Colors.surface2
+        backgroundColor: Theme.bgBorder
         onClicked: fetchProc.running = true
       }
     }
@@ -606,7 +606,7 @@ ScrollView {
       width: parent.width
       height: primaryColumn.height + 24
       radius: 8
-      color: Colors.surface0
+      color: Theme.bgCard
 
       Column {
         id: primaryColumn
@@ -632,16 +632,16 @@ ScrollView {
             bodyRadius: 4
             icon: modelData.name.startsWith("eDP") ? "󰌢" : "󰍹"
             iconSize: 16
-            iconColor: ScreenManager.isPrimary(modelData) ? Colors.blue : Colors.text
+            iconColor: ScreenManager.isPrimary(modelData) ? Theme.accent : Theme.textPrimary
             text: ScreenManager.friendlyName(modelData)
             fontSize: 14
             subtitle: modelData.name
             subtitleFontSize: 11
             rightIcon: ScreenManager.isPrimary(modelData) ? "󰄬" : ""
-            rightIconColor: Colors.blue
-            rightIconHoverColor: Colors.blue
-            backgroundColor: Colors.surface1
-            hoverBackgroundColor: Colors.surface2
+            rightIconColor: Theme.accent
+            rightIconHoverColor: Theme.accent
+            backgroundColor: Theme.bgCardHover
+            hoverBackgroundColor: Theme.bgBorder
             onClicked: ScreenManager.setPrimary(modelData)
           }
         }

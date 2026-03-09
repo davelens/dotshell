@@ -24,7 +24,7 @@ ScrollView {
     var before = text.substring(0, idx)
     var match = text.substring(idx, idx + query.length)
     var after = text.substring(idx + query.length)
-    return before + '<span style="background-color: ' + Colors.yellow + '; color: ' + Colors.crust + ';">' + match + '</span>' + after
+    return before + '<span style="background-color: ' + Theme.warning + '; color: ' + Theme.bgDeep + ';">' + match + '</span>' + after
   }
 
   Column {
@@ -33,7 +33,7 @@ ScrollView {
 
     Text {
       text: "Screen Recording"
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 24
       font.bold: true
     }
@@ -48,7 +48,7 @@ ScrollView {
       width: parent.width
       height: processColumn.height + 24
       radius: 8
-      color: Colors.surface0
+      color: Theme.bgCard
 
       Column {
         id: processColumn
@@ -69,15 +69,15 @@ ScrollView {
           width: parent.width
           height: 36
           radius: 6
-          color: Colors.surface1
+          color: Theme.bgCardHover
           border.width: processInput.activeFocus ? 2 : 1
-          border.color: processInput.activeFocus ? Colors.peach : Colors.surface2
+          border.color: processInput.activeFocus ? Theme.focusRing : Theme.bgBorder
 
           TextInput {
             id: processInput
             anchors.fill: parent
             anchors.margins: 8
-            color: Colors.text
+            color: Theme.textPrimary
             font.pixelSize: 14
             verticalAlignment: TextInput.AlignVCenter
             activeFocusOnTab: true
@@ -90,7 +90,7 @@ ScrollView {
               anchors.fill: parent
               anchors.verticalCenter: parent.verticalCenter
               text: "e.g. gpu-screen-recorder"
-              color: Colors.overlay0
+              color: Theme.textMuted
               font.pixelSize: 14
               verticalAlignment: Text.AlignVCenter
               visible: !processInput.text && !processInput.activeFocus

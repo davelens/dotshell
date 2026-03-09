@@ -25,7 +25,7 @@ ScrollView {
     var before = text.substring(0, idx)
     var match = text.substring(idx, idx + query.length)
     var after = text.substring(idx + query.length)
-    return before + '<span style="background-color: ' + Colors.yellow + '; color: ' + Colors.crust + ';">' + match + '</span>' + after
+    return before + '<span style="background-color: ' + Theme.warning + '; color: ' + Theme.bgDeep + ';">' + match + '</span>' + after
   }
 
   Column {
@@ -34,7 +34,7 @@ ScrollView {
 
     Text {
       text: "Notifications"
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 24
       font.bold: true
     }
@@ -44,7 +44,7 @@ ScrollView {
       width: parent.width
       height: previewColumn.height + 32
       radius: 8
-      color: Colors.mantle
+      color: Theme.bgBaseAlt
 
       Column {
         id: previewColumn
@@ -93,7 +93,7 @@ ScrollView {
       width: parent.width
       height: popupSettingsColumn.height + 24
       radius: 8
-      color: Colors.surface0
+      color: Theme.bgCard
 
       Column {
         id: popupSettingsColumn
@@ -116,7 +116,7 @@ ScrollView {
               anchors.left: parent.left
               anchors.verticalCenter: parent.verticalCenter
               text: "Auto-dismiss timeout"
-              color: Colors.subtext1
+              color: Theme.textTertiary
               font.pixelSize: 15
             }
 
@@ -124,7 +124,7 @@ ScrollView {
               anchors.right: parent.right
               anchors.verticalCenter: parent.verticalCenter
               text: (NotificationManager.popupTimeout / 1000) + "s"
-              color: Colors.text
+              color: Theme.textPrimary
               font.pixelSize: 15
             }
           }
@@ -151,7 +151,7 @@ ScrollView {
       width: parent.width
       height: historySettingsColumn.height + 24
       radius: 8
-      color: Colors.surface0
+      color: Theme.bgCard
 
       Column {
         id: historySettingsColumn
@@ -174,7 +174,7 @@ ScrollView {
               anchors.left: parent.left
               anchors.verticalCenter: parent.verticalCenter
               text: "Maximum history size"
-              color: Colors.subtext1
+              color: Theme.textTertiary
               font.pixelSize: 15
             }
 
@@ -182,7 +182,7 @@ ScrollView {
               anchors.right: parent.right
               anchors.verticalCenter: parent.verticalCenter
               text: NotificationManager.maxHistorySize + " notifications"
-              color: Colors.text
+              color: Theme.textPrimary
               font.pixelSize: 15
             }
           }
@@ -201,8 +201,8 @@ ScrollView {
         FocusButton {
           width: 140
           text: "Clear History"
-          backgroundColor: Colors.surface2
-          textHoverColor: Colors.red
+          backgroundColor: Theme.bgBorder
+          textHoverColor: Theme.danger
           visible: NotificationManager.getTotalHistoryCount() > 0
           onClicked: NotificationManager.clearHistory()
         }
@@ -219,7 +219,7 @@ ScrollView {
       width: parent.width
       height: dndSettingsColumn.height + 24
       radius: 8
-      color: Colors.surface0
+      color: Theme.bgCard
 
       Column {
         id: dndSettingsColumn
@@ -243,7 +243,7 @@ ScrollView {
           Text {
             anchors.verticalCenter: parent.verticalCenter
             text: "Enable DND schedule"
-            color: Colors.text
+            color: Theme.textPrimary
             font.pixelSize: 14
           }
         }
@@ -261,7 +261,7 @@ ScrollView {
             Text {
               width: 80
               text: "Start time"
-              color: Colors.text
+              color: Theme.textPrimary
               font.pixelSize: 14
               anchors.verticalCenter: parent.verticalCenter
             }
@@ -281,7 +281,7 @@ ScrollView {
             Text {
               width: 80
               text: "End time"
-              color: Colors.text
+              color: Theme.textPrimary
               font.pixelSize: 14
               anchors.verticalCenter: parent.verticalCenter
             }
@@ -313,7 +313,7 @@ ScrollView {
       width: parent.width
       height: advancedSettingsColumn.height + 24
       radius: 8
-      color: Colors.surface0
+      color: Theme.bgCard
 
       Column {
         id: advancedSettingsColumn
@@ -340,7 +340,7 @@ ScrollView {
 
             Text {
               text: "Critical notifications bypass DND"
-              color: Colors.text
+              color: Theme.textPrimary
               font.pixelSize: 14
             }
 

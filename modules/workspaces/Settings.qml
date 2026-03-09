@@ -21,7 +21,7 @@ ScrollView {
     var before = text.substring(0, idx)
     var match = text.substring(idx, idx + query.length)
     var after = text.substring(idx + query.length)
-    return before + '<span style="background-color: ' + Colors.yellow + '; color: ' + Colors.crust + ';">' + match + '</span>' + after
+    return before + '<span style="background-color: ' + Theme.warning + '; color: ' + Theme.bgDeep + ';">' + match + '</span>' + after
   }
 
   Column {
@@ -30,7 +30,7 @@ ScrollView {
 
     Text {
       text: "Workspaces"
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 24
       font.bold: true
     }
@@ -45,7 +45,7 @@ ScrollView {
       width: parent.width
       height: backendColumn.height + 24
       radius: 8
-      color: Colors.surface0
+      color: Theme.bgCard
 
       Column {
         id: backendColumn
@@ -88,7 +88,7 @@ ScrollView {
       width: parent.width
       height: detectionColumn.height + 24
       radius: 8
-      color: Colors.surface0
+      color: Theme.bgCard
 
       Column {
         id: detectionColumn
@@ -116,7 +116,7 @@ ScrollView {
           Text {
             anchors.verticalCenter: parent.verticalCenter
             text: "Detect active workspaces"
-            color: Colors.text
+            color: Theme.textPrimary
             font.pixelSize: 14
           }
         }
@@ -133,7 +133,7 @@ ScrollView {
       width: parent.width
       height: modeColumn.height + 24
       radius: 8
-      color: Colors.surface0
+      color: Theme.bgCard
 
       Column {
         id: modeColumn
@@ -173,7 +173,7 @@ ScrollView {
       width: parent.width
       height: countColumn.height + 24
       radius: 8
-      color: Colors.surface0
+      color: Theme.bgCard
       opacity: WorkspacesManager.autoDetect ? 0.4 : 1.0
 
       Column {
@@ -198,7 +198,7 @@ ScrollView {
           Text {
             anchors.verticalCenter: parent.verticalCenter
             text: "Count:"
-            color: Colors.text
+            color: Theme.textPrimary
             font.pixelSize: 13
           }
 
@@ -216,14 +216,14 @@ ScrollView {
             }
 
             background: Rectangle {
-              color: Colors.surface1
+              color: Theme.bgCardHover
               radius: 4
             }
 
             contentItem: TextInput {
               z: 2
               text: countSpin.textFromValue(countSpin.value, countSpin.locale)
-              color: Colors.text
+              color: Theme.textPrimary
               font.pixelSize: 13
               horizontalAlignment: Qt.AlignHCenter
               verticalAlignment: Qt.AlignVCenter
@@ -240,13 +240,13 @@ ScrollView {
               x: parent.width - width
               height: parent.height
               width: 24
-              color: countSpin.up.pressed ? Colors.surface2 : Colors.surface1
+              color: countSpin.up.pressed ? Theme.bgBorder : Theme.bgCardHover
               radius: 4
 
               Text {
                 anchors.centerIn: parent
                 text: "+"
-                color: Colors.text
+                color: Theme.textPrimary
                 font.pixelSize: 14
               }
             }
@@ -255,13 +255,13 @@ ScrollView {
               x: 0
               height: parent.height
               width: 24
-              color: countSpin.down.pressed ? Colors.surface2 : Colors.surface1
+              color: countSpin.down.pressed ? Theme.bgBorder : Theme.bgCardHover
               radius: 4
 
               Text {
                 anchors.centerIn: parent
                 text: "-"
-                color: Colors.text
+                color: Theme.textPrimary
                 font.pixelSize: 14
               }
             }
@@ -285,7 +285,7 @@ ScrollView {
         width: parent.width
         height: iconsColumn.height + 24
         radius: 8
-        color: Colors.surface0
+        color: Theme.bgCard
 
         Column {
           id: iconsColumn
@@ -311,7 +311,7 @@ ScrollView {
               Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "Workspace " + (index + 1)
-                color: Colors.text
+                color: Theme.textPrimary
                 font.pixelSize: 13
                 width: 100
               }
@@ -320,16 +320,16 @@ ScrollView {
                 width: 48
                 height: 32
                 radius: 6
-                color: Colors.surface1
+                color: Theme.bgCardHover
                 border.width: iconInput.activeFocus ? 2 : 1
-                border.color: iconInput.activeFocus ? Colors.peach : Colors.surface2
+                border.color: iconInput.activeFocus ? Theme.focusRing : Theme.bgBorder
 
                 TextInput {
                   id: iconInput
                   anchors.fill: parent
                   anchors.margins: 4
                   text: WorkspacesManager.icons[String(index + 1)] || ""
-                  color: Colors.text
+                  color: Theme.textPrimary
                   font.pixelSize: 18
                   font.family: "Symbols Nerd Font"
                   horizontalAlignment: Text.AlignHCenter
@@ -352,7 +352,7 @@ ScrollView {
                   var icon = WorkspacesManager.icons[String(index + 1)]
                   return icon ? icon : String(index + 1)
                 }
-                color: Colors.overlay0
+                color: Theme.textMuted
                 font.pixelSize: 18
                 font.family: "Symbols Nerd Font"
               }

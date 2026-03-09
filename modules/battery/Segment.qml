@@ -53,11 +53,11 @@ Item {
   }
 
   function getBatteryColor(percentage, charging, fullyCharged) {
-    if (charging || fullyCharged) return Colors.green
-    if (percentage <= 10) return Colors.red
-    if (percentage <= 25) return Colors.peach
-    if (percentage <= 50) return Colors.yellow
-    return Colors.green
+    if (charging || fullyCharged) return Theme.success
+    if (percentage <= 10) return Theme.danger
+    if (percentage <= 25) return Theme.warning
+    if (percentage <= 50) return Theme.warning
+    return Theme.success
   }
 
   Row {
@@ -75,7 +75,7 @@ Item {
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: Math.round(battery.percentage) + "%"
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 14
     }
   }
@@ -92,7 +92,7 @@ Item {
     visible: hoverArea.containsMouse || battery.barFocused
 
     Text {
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 14
 
       text: {

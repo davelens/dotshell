@@ -58,7 +58,7 @@ Item {
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: root.activePlayer && root.activePlayer.isPlaying ? "󰐊" : "󰏤"
-      color: Colors.blue
+      color: Theme.accent
       font.pixelSize: 14
       font.family: "Symbols Nerd Font"
     }
@@ -67,7 +67,7 @@ Item {
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: root.getSourceName()
-      color: Colors.overlay0
+      color: Theme.textMuted
       font.pixelSize: 12
     }
 
@@ -82,7 +82,7 @@ Item {
         if (artist && title) return artist + " - " + title
         return title || artist
       }
-      color: Colors.text
+      color: Theme.textPrimary
       font.pixelSize: 13
       elide: Text.ElideRight
       width: Math.min(implicitWidth, root.screen.width * 0.3)

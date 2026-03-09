@@ -51,7 +51,7 @@ Row {
       width: 28
       height: 24
       radius: 4
-      color: isFocused ? Colors.surface1 : (workspaceArea.containsMouse ? Colors.surface0 : "transparent")
+      color: isFocused ? Theme.bgCardHover : (workspaceArea.containsMouse ? Theme.bgCard : "transparent")
 
       Text {
         anchors.centerIn: parent
@@ -64,7 +64,7 @@ Row {
           // icons mode
           return WorkspacesManager.icons[workspaceRect.modelData] || workspaceRect.modelData
         }
-        color: workspaceRect.isFocused ? Colors.blue : (workspaceRect.hasWindows ? Colors.text : Colors.overlay0)
+        color: workspaceRect.isFocused ? Theme.accent : (workspaceRect.hasWindows ? Theme.textPrimary : Theme.textMuted)
         font.pixelSize: WorkspacesManager.displayMode === "dots" ? 12 : 18
         font.family: "Symbols Nerd Font"
       }

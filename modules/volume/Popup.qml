@@ -81,8 +81,8 @@ Variants {
       FocusIconButton {
         anchors.verticalCenter: parent.verticalCenter
         icon: parent.muted ? "󰝟" : "󰕾"
-        iconColor: parent.muted ? Colors.red : Colors.text
-        hoverColor: parent.muted ? Colors.red : Colors.blue
+        iconColor: parent.muted ? Theme.danger : Theme.textPrimary
+        hoverColor: parent.muted ? Theme.danger : Theme.accent
         iconSize: 20
         onClicked: {
           if (Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio) {
@@ -99,8 +99,8 @@ Variants {
         to: 1
         stepSize: 0.02
         value: parent.volume
-        accentColor: Colors.blue
-        trackColor: Colors.surface0
+        accentColor: Theme.accent
+        trackColor: Theme.bgCard
         trackHeight: 8
         handleSize: 14
         onMoved: {
@@ -113,7 +113,7 @@ Variants {
       Text {
         anchors.verticalCenter: parent.verticalCenter
         text: Math.round(parent.volume * 100) + "%"
-        color: Colors.blue
+        color: Theme.accent
         font.pixelSize: 16
         width: 44
         horizontalAlignment: Text.AlignRight
@@ -135,7 +135,7 @@ Variants {
     Rectangle {
       width: parent.width
       height: 1
-      color: Colors.surface1
+      color: Theme.bgCardHover
     }
 
     // Input devices

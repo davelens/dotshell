@@ -23,7 +23,7 @@ ScrollView {
     var before = text.substring(0, idx)
     var match = text.substring(idx, idx + query.length)
     var after = text.substring(idx + query.length)
-    return before + '<span style="background-color: ' + Colors.yellow + '; color: ' + Colors.crust + ';">' + match + '</span>' + after
+    return before + '<span style="background-color: ' + Theme.warning + '; color: ' + Theme.bgDeep + ';">' + match + '</span>' + after
   }
 
   Column {
@@ -35,7 +35,7 @@ ScrollView {
 
       Text {
         text: "Wireless"
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 24
         font.bold: true
       }
@@ -61,7 +61,7 @@ ScrollView {
         width: parent.width
         height: 80
         radius: 8
-        color: Colors.surface0
+        color: Theme.bgCard
 
         Column {
           anchors.left: parent.left
@@ -71,14 +71,14 @@ ScrollView {
 
           Text {
             text: WirelessManager.connectedNetwork ? WirelessManager.connectedNetwork.ssid : ""
-            color: Colors.text
+            color: Theme.textPrimary
             font.pixelSize: 16
           }
 
           Text {
             text: settingsRoot.highlightText("Connected", settingsRoot.searchQuery)
             textFormat: Text.RichText
-            color: Colors.green
+            color: Theme.success
             font.pixelSize: 12
           }
 
@@ -87,13 +87,13 @@ ScrollView {
 
             Text {
               text: "Down: " + WirelessManager.formatSpeed(WirelessManager.downloadSpeed)
-              color: Colors.overlay0
+              color: Theme.textMuted
               font.pixelSize: 12
             }
 
             Text {
               text: "Up: " + WirelessManager.formatSpeed(WirelessManager.uploadSpeed)
-              color: Colors.overlay0
+              color: Theme.textMuted
               font.pixelSize: 12
             }
           }
@@ -113,7 +113,7 @@ ScrollView {
     Rectangle {
       width: parent.width
       height: 1
-      color: Colors.surface1
+      color: Theme.bgCardHover
       visible: WirelessManager.connectedNetwork !== null
     }
 
@@ -156,7 +156,7 @@ ScrollView {
               property bool isConnecting: WirelessManager.connectingSSID === modelData.ssid
 
               icon: WirelessManager.getSignalIcon(modelData.signal)
-              iconColor: isConnecting ? Colors.blue : Colors.overlay0
+              iconColor: isConnecting ? Theme.accent : Theme.textMuted
               text: isConnecting ? modelData.ssid + "  —  Connecting..." : modelData.ssid
               rightIcon: modelData.security ? "󰌾" : ""
               onClicked: {
@@ -180,7 +180,7 @@ ScrollView {
 
               Text {
                 text: "Password required for " + modelData.ssid
-                color: Colors.subtext0
+                color: Theme.textSecondary
                 font.pixelSize: 12
                 leftPadding: 2
               }
@@ -189,9 +189,9 @@ ScrollView {
                 width: parent.width
                 height: 36
                 radius: 4
-                color: Colors.surface0
+                color: Theme.bgCard
                 border.width: 1
-                border.color: settingsPasswordInput.activeFocus ? Colors.blue : Colors.surface1
+                border.color: settingsPasswordInput.activeFocus ? Theme.accent : Theme.bgCardHover
 
                 Row {
                   anchors.fill: parent
@@ -203,7 +203,7 @@ ScrollView {
                     id: settingsPasswordInput
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width - settingsToggleVis.width - settingsConnectBtn.width - 12
-                    color: Colors.text
+                    color: Theme.textPrimary
                     font.pixelSize: 14
                     clip: true
                     echoMode: TextInput.Password
@@ -212,7 +212,7 @@ ScrollView {
                       anchors.fill: parent
                       anchors.verticalCenter: parent.verticalCenter
                       text: "Enter password"
-                      color: Colors.overlay0
+                      color: Theme.textMuted
                       font.pixelSize: 14
                       visible: !settingsPasswordInput.text
                     }
@@ -235,7 +235,7 @@ ScrollView {
                     id: settingsToggleVis
                     anchors.verticalCenter: parent.verticalCenter
                     text: settingsPasswordInput.echoMode === TextInput.Password ? "󰈈" : "󰈉"
-                    color: settingsToggleMouse.containsMouse ? Colors.text : Colors.overlay0
+                    color: settingsToggleMouse.containsMouse ? Theme.textPrimary : Theme.textMuted
                     font.pixelSize: 16
                     font.family: "Symbols Nerd Font"
                     width: 28
@@ -262,14 +262,14 @@ ScrollView {
                     height: 28
                     radius: 4
                     color: settingsConnectMouse.containsMouse && settingsPasswordInput.text
-                      ? Colors.blue : "transparent"
+                      ? Theme.accent : "transparent"
 
                     Text {
                       anchors.centerIn: parent
                       text: "󰁔"
                       color: settingsPasswordInput.text
-                        ? (settingsConnectMouse.containsMouse ? Colors.base : Colors.blue)
-                        : Colors.surface2
+                        ? (settingsConnectMouse.containsMouse ? Theme.bgBase : Theme.accent)
+                        : Theme.bgBorder
                       font.pixelSize: 16
                       font.family: "Symbols Nerd Font"
                     }
@@ -293,7 +293,7 @@ ScrollView {
               Text {
                 width: parent.width
                 text: WirelessManager.connectError
-                color: Colors.red
+                color: Theme.danger
                 font.pixelSize: 12
                 leftPadding: 10
                 wrapMode: Text.WordWrap

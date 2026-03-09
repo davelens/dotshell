@@ -12,7 +12,7 @@ BarButton {
   popupId: "updates"
 
   icon: UpdatesManager.getIcon()
-  iconColor: Colors.green
+  iconColor: Theme.success
 
   // Hover tooltip showing update count breakdown
   TooltipBase {
@@ -26,7 +26,7 @@ BarButton {
       Text {
         visible: UpdatesManager.checking || UpdatesManager.totalCount === 0
         text: UpdatesManager.checking ? "Checking for updates..." : "System up to date"
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 13
       }
 
@@ -34,21 +34,21 @@ BarButton {
       Text {
         visible: UpdatesManager.pacmanUpdates.length > 0
         text: UpdatesManager.pacmanUpdates.length + " system update" + (UpdatesManager.pacmanUpdates.length !== 1 ? "s" : "")
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 13
       }
 
       Text {
         visible: UpdatesManager.aurUpdates.length > 0
         text: UpdatesManager.aurUpdates.length + " package update" + (UpdatesManager.aurUpdates.length !== 1 ? "s" : "")
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 13
       }
 
       Text {
         visible: UpdatesManager.flatpakUpdates.length > 0
         text: UpdatesManager.flatpakUpdates.length + " flatpak update" + (UpdatesManager.flatpakUpdates.length !== 1 ? "s" : "")
-        color: Colors.text
+        color: Theme.textPrimary
         font.pixelSize: 13
       }
     }

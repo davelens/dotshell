@@ -12,7 +12,7 @@ BarButton {
   property bool showInBar: recording
 
   icon: "󰑊"
-  iconColor: Colors.red
+  iconColor: Theme.danger
 
   onClicked: {
     stopping = true

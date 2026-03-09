@@ -5,7 +5,7 @@ import "../../core/components"
 
 BarButton {
   icon: "󰐥"
-  iconColor: Colors.blue
+  iconColor: Theme.accent
 
   Process {
     id: powerMenuProc
