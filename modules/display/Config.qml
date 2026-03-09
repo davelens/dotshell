@@ -16,7 +16,7 @@ Singleton {
 
   Process {
     id: settingsIpcProc
-    command: ["qs", "ipc", "call", "settings", "showCategory", "display"]
+    command: ["qs", "-p", Quickshell.shellDir, "ipc", "call", "settings", "showCategory", "display"]
   }
 
   // Rotate a screen. degrees: 0, 90, 180, 270
