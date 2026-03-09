@@ -31,6 +31,7 @@ Singleton {
   property color focusRing
   property color activeIndicator
   property color overlay
+  property color knob
 
   readonly property string themeFileName: GeneralSettings.theme + ".json"
 
@@ -46,6 +47,11 @@ Singleton {
   property string resolvedThemePath: ""
   property bool pathReady: false
 
+  // Pending paths for the current resolve operation — stored here so the
+  // async SplitParser callback uses the exact paths the command was built with.
+  property string _pendingUserPath: ""
+  property string _pendingBundledPath: ""
+
   // Resolve which file to use: prefer user override, fall back to bundled.
   // Uses sh -c so we can do the conditional in a single process.
   Process {
@@ -56,8 +62,8 @@ Singleton {
     stdout: SplitParser {
       onRead: data => {
         theme.resolvedThemePath = data.trim() === "user"
-          ? theme.userThemePath
-          : theme.bundledThemePath
+          ? theme._pendingUserPath
+          : theme._pendingBundledPath
         theme.pathReady = true
       }
     }
@@ -78,12 +84,32 @@ Singleton {
     }
   }
 
-  // Re-resolve when theme name changes (e.g. via IPC)
-  onThemeFileNameChanged: {
+  // Re-resolve when theme name changes (e.g. via IPC).
+  // Compute paths directly from GeneralSettings.theme — the readonly binding
+  // chain (themeFileName → userThemePath/bundledThemePath) may not have
+  // propagated yet in this event loop tick.
+  function resolveTheme() {
     pathReady = false
     resolvedThemePath = ""
+
+    var fileName = GeneralSettings.theme + ".json"
+    _pendingUserPath = DataManager.themesDir + "/" + fileName
+    _pendingBundledPath = Quickshell.shellDir + "/themes/" + fileName
+
+    resolveProcess.command = ["sh", "-c",
+      "if [ -f '" + _pendingUserPath + "' ]; then echo user; else echo bundled; fi"]
+    resolveProcess.running = true
+  }
+
+  // Initial boot: seed pending paths from the declarative bindings
+  Component.onCompleted: {
+    _pendingUserPath = userThemePath
+    _pendingBundledPath = bundledThemePath
+  }
+
+  onThemeFileNameChanged: {
     if (DataManager.dataDirReady && GeneralSettings.ready)
-      resolveProcess.running = true
+      resolveTheme()
   }
 
   function applyTheme(text) {
@@ -112,6 +138,7 @@ Singleton {
       focusRing = t.focusRing
       activeIndicator = t.activeIndicator
       overlay = t.overlay
+      knob = t.knob
     } catch (e) {
       console.error("[Theme] Failed to parse theme:", e)
     }
