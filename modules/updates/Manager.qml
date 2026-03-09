@@ -195,7 +195,7 @@ Singleton {
   // Check for pacman updates
   Process {
     id: checkPacmanProc
-    command: ["checkupdates"]
+    command: ["bash", "-c", "checkupdates | grep -Fw -f <(pacman -Qqe)"]
     property string output: ""
     onStarted: output = ""
     stdout: SplitParser {
@@ -229,7 +229,7 @@ Singleton {
   // Check for AUR updates
   Process {
     id: checkAurProc
-    command: ["paru", "-Qua"]
+    command: ["bash", "-c", "paru -Qua | grep -Fw -f <(pacman -Qqem)"]
     property string output: ""
     onStarted: output = ""
     stdout: SplitParser {
@@ -263,7 +263,7 @@ Singleton {
   // Check for flatpak updates
   Process {
     id: checkFlatpakProc
-    command: ["flatpak", "remote-ls", "--updates", "--columns=name,application,version"]
+    command: ["flatpak", "remote-ls", "--updates", "--app", "--columns=name,application,version"]
     property string output: ""
     onStarted: output = ""
     stdout: SplitParser {
