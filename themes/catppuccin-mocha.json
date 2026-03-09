@@ -16,7 +16,7 @@
     "success": "green",
     "warning": "yellow",
     "danger": "red",
-    "focusRing": "peach",
+    "focusRing": "mauve",
     "activeIndicator": "teal",
     "overlay": "n/a (semi-transparent black)"
   },
@@ -35,7 +35,7 @@
   "success": "#a6e3a1",
   "warning": "#f9e2af",
   "danger": "#f38ba8",
-  "focusRing": "#fab387",
+  "focusRing": "#cba6f7",
   "activeIndicator": "#94e2d5",
   "overlay": "#80000000"
 }

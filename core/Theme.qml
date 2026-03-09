@@ -25,7 +25,7 @@ Singleton {
   readonly property color _success: "#a6e3a1"
   readonly property color _warning: "#f9e2af"
   readonly property color _danger: "#f38ba8"
-  readonly property color _focusRing: "#fab387"
+  readonly property color _focusRing: "#cba6f7"
   readonly property color _activeIndicator: "#94e2d5"
   readonly property color _overlay: "#80000000"
 
