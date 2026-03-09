@@ -18,7 +18,8 @@
     "danger": "red",
     "focusRing": "mauve",
     "activeIndicator": "teal",
-    "overlay": "n/a (semi-transparent black)"
+    "overlay": "n/a (semi-transparent black)",
+    "knob": "text"
   },
   "bgBase": "#1e1e2e",
   "bgBaseAlt": "#181825",
@@ -37,5 +38,6 @@
   "danger": "#f38ba8",
   "focusRing": "#cba6f7",
   "activeIndicator": "#94e2d5",
-  "overlay": "#80000000"
+  "overlay": "#80000000",
+  "knob": "#cdd6f4"
 }

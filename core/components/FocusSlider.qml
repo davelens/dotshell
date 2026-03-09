@@ -86,7 +86,7 @@ Item {
       width: slider.handleSize
       height: slider.handleSize
       radius: slider.handleSize / 2
-      color: Theme.textPrimary
+      color: Theme.knob
     }
   }
 

@@ -18,7 +18,8 @@
     "danger": "love",
     "focusRing": "rose",
     "activeIndicator": "pine",
-    "overlay": "n/a (semi-transparent black)"
+    "overlay": "n/a (semi-transparent black)",
+    "knob": "text"
   },
   "bgBase": "#232136",
   "bgBaseAlt": "#1f1d30",
@@ -37,5 +38,6 @@
   "danger": "#eb6f92",
   "focusRing": "#ea9a97",
   "activeIndicator": "#3e8fb0",
-  "overlay": "#80000000"
+  "overlay": "#80000000",
+  "knob": "#e0def4"
 }

@@ -53,7 +53,7 @@ Item {
       width: 16
       height: 16
       radius: 8
-      color: Theme.textPrimary
+      color: Theme.knob
 
       Behavior on x { NumberAnimation { duration: 150 } }
     }

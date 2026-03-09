@@ -17,5 +17,6 @@
   "danger": "#f7768e",
   "focusRing": "#ff9e64",
   "activeIndicator": "#1abc9c",
-  "overlay": "#80000000"
+  "overlay": "#80000000",
+  "knob": "#c0caf5"
 }
