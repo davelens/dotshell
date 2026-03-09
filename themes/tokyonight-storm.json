@@ -1,0 +1,21 @@
+{
+  "name": "Tokyo Night Storm",
+  "bgBase": "#24283b",
+  "bgBaseAlt": "#1f2335",
+  "bgDeep": "#1b1e2d",
+  "bgCard": "#292e42",
+  "bgCardHover": "#3b4261",
+  "bgBorder": "#3b4261",
+  "textPrimary": "#c0caf5",
+  "textSecondary": "#a9b1d6",
+  "textTertiary": "#737aa2",
+  "textMuted": "#858fb9",
+  "textSubtle": "#737aa2",
+  "accent": "#7aa2f7",
+  "success": "#9ece6a",
+  "warning": "#e0af68",
+  "danger": "#f7768e",
+  "focusRing": "#ff9e64",
+  "activeIndicator": "#1abc9c",
+  "overlay": "#80000000"
+}

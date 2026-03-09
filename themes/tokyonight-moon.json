@@ -1,0 +1,21 @@
+{
+  "name": "Tokyo Night Moon",
+  "bgBase": "#222436",
+  "bgBaseAlt": "#1e2030",
+  "bgDeep": "#191b29",
+  "bgCard": "#2f334d",
+  "bgCardHover": "#3b4261",
+  "bgBorder": "#3b4261",
+  "textPrimary": "#c8d3f5",
+  "textSecondary": "#828bb8",
+  "textTertiary": "#737aa2",
+  "textMuted": "#909ac9",
+  "textSubtle": "#737aa2",
+  "accent": "#82aaff",
+  "success": "#c3e88d",
+  "warning": "#ffc777",
+  "danger": "#ff757f",
+  "focusRing": "#ff966c",
+  "activeIndicator": "#4fd6be",
+  "overlay": "#80000000"
+}
