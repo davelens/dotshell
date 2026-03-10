@@ -1,0 +1,374 @@
+#!/usr/bin/env bash
+
+# This is a CLI companion to dotshell. It's intended to be a functional,
+# autocompleted replacement for `qs ipc call` instructions.
+
+set -euo pipefail
+
+readonly CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dotshell"
+readonly DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/dotshell"
+readonly BUNDLED_THEMES_DIR="$CONFIG_DIR/themes"
+readonly USER_THEMES_DIR="$DATA_DIR/themes"
+readonly GENERAL_JSON="$DATA_DIR/general.json"
+
+# -- helpers -----------------------------------------------------------------
+
+die() {
+  echo "error: $*" >&2
+  exit 1
+}
+
+ipc() { qs -p "$CONFIG_DIR" ipc call "$@"; }
+
+# Read the active theme name from general.json (falls back to catppuccin-mocha)
+active_theme() {
+  local name=""
+  if [[ -f "$GENERAL_JSON" ]]; then
+    name="$(sed -n 's/.*"theme" *: *"\([^"]*\)".*/\1/p' "$GENERAL_JSON" | head -1)"
+  fi
+  echo "${name:-catppuccin-mocha}"
+}
+
+# Check if a theme exists in either directory
+theme_exists() {
+  [[ -f "$USER_THEMES_DIR/$1.json" ]] || [[ -f "$BUNDLED_THEMES_DIR/$1.json" ]]
+}
+
+# -- bar ---------------------------------------------------------------------
+
+bar_usage() {
+  cat <<EOF
+Usage: dshell bar <subcommand>
+
+Subcommands:
+  focus     Toggle bar focus mode
+EOF
+}
+
+# -- idle --------------------------------------------------------------------
+
+idle_usage() {
+  cat <<EOF
+Usage: dshell idle <subcommand>
+
+Subcommands:
+  enable    Enable idle inhibitor
+  disable   Disable idle inhibitor
+  toggle    Toggle idle inhibitor
+  state     Show idle inhibitor state
+EOF
+}
+
+# -- notifications -----------------------------------------------------------
+
+notifications_usage() {
+  cat <<EOF
+Usage: dshell notifications <subcommand>
+
+Subcommands:
+  toggle      Toggle notification panel
+  clear-all   Clear notification history
+EOF
+}
+
+# -- popup -------------------------------------------------------------------
+
+popup_usage() {
+  cat <<EOF
+Usage: dshell popup <subcommand>
+
+Subcommands:
+  toggle <name>   Toggle a popup (e.g. volume, brightness, wireless)
+  close           Close the active popup
+EOF
+}
+
+# -- profile -----------------------------------------------------------------
+
+profile_list() {
+  if [[ ! -f "$GENERAL_JSON" ]]; then
+    echo "No profiles found"
+    return
+  fi
+
+  local active_dir
+  active_dir="$(sed -n 's/.*"activeProfile" *: *"\([^"]*\)".*/\1/p' "$GENERAL_JSON" | head -1)"
+
+  # Extract name/dir pairs from the profiles array
+  local -a names=()
+  local -a dirs=()
+  local in_profiles=false in_entry=false
+  local entry_name="" entry_dir=""
+
+  while IFS= read -r line; do
+    if [[ "$line" =~ \"profiles\" ]]; then
+      in_profiles=true
+      continue
+    fi
+    $in_profiles || continue
+
+    if [[ "$line" =~ \] ]]; then
+      break
+    fi
+
+    if [[ "$line" =~ \{ ]]; then
+      in_entry=true
+      entry_name=""
+      entry_dir=""
+      continue
+    fi
+
+    if $in_entry; then
+      if [[ "$line" =~ \"name\"\ *:\ *\"([^\"]+)\" ]]; then
+        entry_name="${BASH_REMATCH[1]}"
+      elif [[ "$line" =~ \"dir\"\ *:\ *\"([^\"]+)\" ]]; then
+        entry_dir="${BASH_REMATCH[1]}"
+      fi
+
+      if [[ "$line" =~ \} ]]; then
+        in_entry=false
+        if [[ -n "$entry_name" && -n "$entry_dir" ]]; then
+          names+=("$entry_name")
+          dirs+=("$entry_dir")
+        fi
+      fi
+    fi
+  done <"$GENERAL_JSON"
+
+  if [[ ${#names[@]} -eq 0 ]]; then
+    echo "No profiles found"
+    return
+  fi
+
+  # Compute column widths
+  local name_width=7 # "Profile"
+  local path_width=4 # "Path"
+  for i in "${!names[@]}"; do
+    (( ${#names[$i]} > name_width )) && name_width=${#names[$i]}
+    local path="$DATA_DIR/${dirs[$i]}"
+    (( ${#path} > path_width )) && path_width=${#path}
+  done
+
+  # Print table
+  printf "%-${name_width}s  %s\n" "Profile" "Path"
+  for i in "${!names[@]}"; do
+    local suffix=""
+    [[ "${dirs[$i]}" == "$active_dir" ]] && suffix="  (active)"
+    printf "%-${name_width}s  %s%s\n" "${names[$i]}" "$DATA_DIR/${dirs[$i]}" "$suffix"
+  done
+}
+
+profile_usage() {
+  cat <<EOF
+Usage: dshell profile <subcommand>
+
+Subcommands:
+  list              List all profiles
+  current           Show active profile name
+  enable <name>     Switch to a profile
+EOF
+}
+
+# -- settings ----------------------------------------------------------------
+
+settings_usage() {
+  cat <<EOF
+Usage: dshell settings <subcommand>
+
+Subcommands:
+  toggle                  Toggle settings panel
+  show-category <id>      Open settings panel to a category
+EOF
+}
+
+# -- theme -------------------------------------------------------------------
+
+theme_list() {
+  local -A themes # name -> source path
+  local -a order  # insertion order
+
+  # Bundled themes first
+  if [[ -d "$BUNDLED_THEMES_DIR" ]]; then
+    for f in "$BUNDLED_THEMES_DIR"/*.json; do
+      [[ -f "$f" ]] || continue
+      local name="${f##*/}"
+      name="${name%.json}"
+      themes["$name"]="$BUNDLED_THEMES_DIR"
+      order+=("$name")
+    done
+  fi
+
+  # User themes override bundled ones
+  if [[ -d "$USER_THEMES_DIR" ]]; then
+    for f in "$USER_THEMES_DIR"/*.json; do
+      [[ -f "$f" ]] || continue
+      local name="${f##*/}"
+      name="${name%.json}"
+      if [[ -z "${themes[$name]+x}" ]]; then
+        order+=("$name")
+      fi
+      themes["$name"]="$USER_THEMES_DIR"
+    done
+  fi
+
+  if [[ ${#order[@]} -eq 0 ]]; then
+    echo "No themes found"
+    return
+  fi
+
+  # Sort alphabetically
+  IFS=$'\n' sorted=($(printf '%s\n' "${order[@]}" | sort))
+  unset IFS
+
+  local current
+  current="$(active_theme)"
+
+  # Compute column widths
+  local name_width=5   # "Theme"
+  local source_width=6 # "Source"
+  for name in "${sorted[@]}"; do
+    ((${#name} > name_width)) && name_width=${#name}
+    local src="${themes[$name]}"
+    ((${#src} > source_width)) && source_width=${#src}
+  done
+
+  # Print table
+  printf "%-${name_width}s  %s\n" "Theme" "Source"
+  for name in "${sorted[@]}"; do
+    local suffix=""
+    [[ "$name" == "$current" ]] && suffix="  (active)"
+    printf "%-${name_width}s  %s%s\n" "$name" "${themes[$name]}" "$suffix"
+  done
+}
+
+theme_set() {
+  local name="${1:-}"
+  [[ -z "$name" ]] && die "usage: dshell theme set <name>"
+
+  if ! theme_exists "$name"; then
+    echo "error: theme '$name' not found" >&2
+    echo "" >&2
+    echo "Available themes:" >&2
+    for f in "$BUNDLED_THEMES_DIR"/*.json "$USER_THEMES_DIR"/*.json; do
+      [[ -f "$f" ]] || continue
+      local base="${f##*/}"
+      echo "  ${base%.json}" >&2
+    done | sort -u >&2
+    exit 1
+  fi
+
+  local current
+  current="$(active_theme)"
+  if [[ "$name" == "$current" ]]; then
+    echo "Already using theme '$name'"
+    return
+  fi
+
+  ipc theme set "$name"
+  echo "Switched theme to '$name'"
+}
+
+theme_usage() {
+  cat <<EOF
+Usage: dshell theme <subcommand>
+
+Subcommands:
+  list          List available themes
+  set <name>    Switch to a theme
+  current       Show active theme name
+EOF
+}
+
+# -- dispatch ----------------------------------------------------------------
+
+usage() {
+  cat <<EOF
+Usage: dshell <command> [subcommand]
+
+Commands:
+  bar             Bar focus mode
+  idle            Idle inhibitor control
+  notifications   Notification panel and history
+  popup           Popup windows
+  profile         Profile management
+  settings        Settings panel
+  theme           Theme management
+EOF
+}
+
+case "${1:-}" in
+bar)
+  case "${2:-}" in
+  focus) ipc bar toggle ;;
+  -h | --help | "") bar_usage ;;
+  *) die "unknown subcommand: bar ${2:-}" ;;
+  esac
+  ;;
+idle)
+  case "${2:-}" in
+  enable) ipc idle enable ;;
+  disable) ipc idle disable ;;
+  toggle) ipc idle toggle ;;
+  state) ipc idle state ;;
+  -h | --help | "") idle_usage ;;
+  *) die "unknown subcommand: idle ${2:-}" ;;
+  esac
+  ;;
+notifications)
+  case "${2:-}" in
+  toggle) ipc notifications toggle ;;
+  clear-all) ipc notifications clearAll ;;
+  -h | --help | "") notifications_usage ;;
+  *) die "unknown subcommand: notifications ${2:-}" ;;
+  esac
+  ;;
+popup)
+  case "${2:-}" in
+  toggle)
+    [[ -z "${3:-}" ]] && die "usage: dshell popup toggle <name>"
+    ipc popup toggle "${3}"
+    ;;
+  close) ipc popup close ;;
+  -h | --help | "") popup_usage ;;
+  *) die "unknown subcommand: popup ${2:-}" ;;
+  esac
+  ;;
+profile)
+  case "${2:-}" in
+  list) profile_list ;;
+  current)
+    if [[ -f "$GENERAL_JSON" ]]; then
+      sed -n 's/.*"activeProfileName" *: *"\([^"]*\)".*/\1/p' "$GENERAL_JSON" | head -1
+    fi
+    ;;
+  enable)
+    [[ -z "${3:-}" ]] && die "usage: dshell profile enable <name>"
+    ipc profile enable "${3}"
+    ;;
+  -h | --help | "") profile_usage ;;
+  *) die "unknown subcommand: profile ${2:-}" ;;
+  esac
+  ;;
+settings)
+  case "${2:-}" in
+  toggle) ipc settings toggle ;;
+  show-category)
+    [[ -z "${3:-}" ]] && die "usage: dshell settings show-category <id>"
+    ipc settings showCategory "${3}"
+    ;;
+  -h | --help | "") settings_usage ;;
+  *) die "unknown subcommand: settings ${2:-}" ;;
+  esac
+  ;;
+theme)
+  case "${2:-}" in
+  list) theme_list ;;
+  set) theme_set "${3:-}" ;;
+  current) ipc theme current ;;
+  -h | --help | "") theme_usage ;;
+  *) die "unknown subcommand: theme ${2:-}" ;;
+  esac
+  ;;
+-h | --help | "") usage ;;
+*) die "unknown command: $1" ;;
+esac

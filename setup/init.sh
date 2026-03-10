@@ -52,6 +52,14 @@ fi
 echo "==> Symlinking dotshell config..."
 ln -sfn "$DOTSHELL_REPO_HOME" "${XDG_CONFIG_HOME:-$HOME/.config}/dotshell"
 
+# Symlink dshell CLI into PATH
+echo "==> Installing \`dshell\`..."
+mkdir -p "$HOME/.local/bin"
+ln -sfn "$DOTSHELL_REPO_HOME/bin/dshell" "$HOME/.local/bin/dshell"
+# Symlink bash completion for dshell
+mkdir -p "$XDG_DATA_HOME/bash-completion/completions"
+ln -sfn "$DOTSHELL_REPO_HOME/bin/dshell-completion.bash" "$XDG_DATA_HOME/bash-completion/completions/dshell"
+
 # Create systemd user service for quickshell
 echo "==> Setting up Quickshell systemd service..."
 systemctl --user daemon-reload
