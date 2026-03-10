@@ -22,7 +22,7 @@ sudo pacman -S --needed --noconfirm \
   pipewire wireplumber \
   pacman-contrib \
   gpu-screen-recorder \
-  wf-renderer \
+  wf-recorder \
   otf-commit-mono-nerd ttf-dejavu \
   libnotify
 
