@@ -29,7 +29,7 @@ Variants {
     }
 
     // Leave room for status bar at top
-    margins.top: 36
+    margins.top: 32
 
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
