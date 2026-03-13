@@ -444,7 +444,7 @@ Singleton {
     panelOpen = !panelOpen
     if (panelOpen) {
       SlideInOverlayManager.open()
-      markAllAsRead()
+      Qt.callLater(markAllAsRead)
     } else {
       SlideInOverlayManager.close()
     }
@@ -476,7 +476,7 @@ Singleton {
     function show(): void {
       notificationManager.panelOpen = true
       SlideInOverlayManager.open()
-      notificationManager.markAllAsRead()
+      Qt.callLater(notificationManager.markAllAsRead)
     }
     function hide(): void { notificationManager.closePanel() }
     function clearAll(): void { notificationManager.clearHistory() }
