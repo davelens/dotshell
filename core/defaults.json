@@ -6,7 +6,8 @@
     "wireless",
     "bluetooth",
     "notifications",
-    "recording"
+    "recording",
+    "power"
   ],
   "theme": "catppuccin-mocha",
   "activeProfile": "defaults",

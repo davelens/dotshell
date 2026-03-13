@@ -3,8 +3,11 @@
   "name": "Power",
   "icon": "󰐥",
   "order": 200,
-  "keywords": "power shutdown reboot logout suspend",
+  "keywords": "power shutdown reboot logout suspend lock commands",
   "components": {
-    "button": "Button.qml"
-  }
+    "button": "Button.qml",
+    "manager": "Manager.qml",
+    "settings": "Settings.qml"
+  },
+  "rootComponents": ["Overlay.qml"]
 }

@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell.Io
 import "../.."
 import "../../core/components"
 
@@ -7,11 +6,5 @@ BarButton {
   icon: "󰐥"
   iconColor: Theme.accent
 
-  Process {
-    id: powerMenuProc
-    command: ["sh", "-c", "~/.local/bin/rofi-start --powermenu"]
-    running: false
-  }
-
-  onClicked: powerMenuProc.running = true
+  onClicked: PowerManager.toggle()
 }
