@@ -46,13 +46,14 @@ _dshell_complete() {
 
   case "$COMP_CWORD" in
   1)
-    COMPREPLY=($(compgen -W "bar idle notifications popup profile settings theme" -- "$cur"))
+    COMPREPLY=($(compgen -W "bar idle notifications power popup profile settings theme" -- "$cur"))
     ;;
   2)
     case "${COMP_WORDS[1]}" in
     bar) COMPREPLY=($(compgen -W "focus" -- "$cur")) ;;
     idle) COMPREPLY=($(compgen -W "enable disable toggle state" -- "$cur")) ;;
     notifications) COMPREPLY=($(compgen -W "toggle clear-all" -- "$cur")) ;;
+    power) COMPREPLY=($(compgen -W "toggle" -- "$cur")) ;;
     popup) COMPREPLY=($(compgen -W "toggle close" -- "$cur")) ;;
     profile) COMPREPLY=($(compgen -W "list current enable" -- "$cur")) ;;
     settings) COMPREPLY=($(compgen -W "toggle show-category" -- "$cur")) ;;

@@ -71,6 +71,17 @@ Subcommands:
 EOF
 }
 
+# -- power -------------------------------------------------------------------
+
+power_usage() {
+  cat <<EOF
+Usage: dshell power <subcommand>
+
+Subcommands:
+  toggle    Toggle power menu
+EOF
+}
+
 # -- popup -------------------------------------------------------------------
 
 popup_usage() {
@@ -289,6 +300,7 @@ Commands:
   bar             Bar focus mode
   idle            Idle inhibitor control
   notifications   Notification panel and history
+  power           Power menu
   popup           Popup windows
   profile         Profile management
   settings        Settings panel
@@ -320,6 +332,13 @@ notifications)
   clear-all) ipc notifications clearAll ;;
   -h | --help | "") notifications_usage ;;
   *) die "unknown subcommand: notifications ${2:-}" ;;
+  esac
+  ;;
+power)
+  case "${2:-}" in
+  toggle) ipc power toggle ;;
+  -h | --help | "") power_usage ;;
+  *) die "unknown subcommand: power ${2:-}" ;;
   esac
   ;;
 popup)
