@@ -16,8 +16,10 @@ Variants {
     id: panel
     screen: modelData
 
-    // Keep visible during close animation
-    visible: NotificationManager.panelOpen || slideAnimation.running
+    // Always visible so the Wayland surface stays mapped and the QML tree
+    // stays laid out, avoiding a first-frame hitch when the panel slides in.
+    // The panel content sits offscreen (rightMargin: -380) when closed.
+    visible: true
 
     anchors {
       top: true
