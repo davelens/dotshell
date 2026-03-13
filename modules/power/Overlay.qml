@@ -12,7 +12,9 @@ Variants {
 
     id: overlay
     screen: modelData
-    visible: PowerManager.menuOpen
+    // Keep the surface always mapped so the QML tree stays laid out.
+    // Use layer switching to prevent input interception when closed.
+    visible: true
 
     anchors {
       top: true
@@ -25,7 +27,7 @@ Variants {
     exclusionMode: ExclusionMode.Ignore
 
     WlrLayershell.namespace: "quickshell-power-menu"
-    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.layer: PowerManager.menuOpen ? WlrLayer.Overlay : WlrLayer.Background
     WlrLayershell.keyboardFocus: PowerManager.menuOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     // Keyboard focus cycling state
@@ -114,6 +116,7 @@ Variants {
     Rectangle {
       anchors.fill: parent
       color: Theme.overlay
+      visible: PowerManager.menuOpen
 
       MouseArea {
         anchors.fill: parent
@@ -125,6 +128,7 @@ Variants {
     Rectangle {
       id: card
       anchors.centerIn: parent
+      visible: PowerManager.menuOpen
       width: 320
       height: cardContent.height + 48
       radius: 12

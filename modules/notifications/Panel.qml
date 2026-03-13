@@ -35,7 +35,16 @@ Variants {
     exclusionMode: ExclusionMode.Ignore
 
     WlrLayershell.namespace: "quickshell-notification-panel"
-    WlrLayershell.layer: WlrLayer.Overlay
+    // Stay on Overlay while open or while the slide-out animation is running,
+    // then drop to Background so the surface doesn't intercept clicks.
+    property bool animating: false
+    Connections {
+      target: NotificationManager
+      function onPanelOpenChanged() {
+        if (!NotificationManager.panelOpen) panel.animating = true
+      }
+    }
+    WlrLayershell.layer: (NotificationManager.panelOpen || panel.animating) ? WlrLayer.Overlay : WlrLayer.Background
     WlrLayershell.keyboardFocus: NotificationManager.panelOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     // Keyboard focus cycling state
@@ -168,6 +177,10 @@ Variants {
           id: slideAnimation
           duration: 250
           easing.type: Easing.OutCubic
+          onRunningChanged: {
+            if (!running && !NotificationManager.panelOpen)
+              panel.animating = false
+          }
         }
       }
 
