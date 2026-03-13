@@ -150,13 +150,17 @@ Variants {
     }
 
     // Panel content with slide animation
+    // Extends 2px beyond window edges (top, right, bottom) so the compositor
+    // clips those edges instead of rendering a visible seam at fractional scaling.
     Rectangle {
       id: panelContent
       anchors.top: parent.top
+      anchors.topMargin: -2
       anchors.bottom: parent.bottom
+      anchors.bottomMargin: -2
       anchors.right: parent.right
-      anchors.rightMargin: NotificationManager.panelOpen ? 0 : -width
-      width: 380
+      anchors.rightMargin: NotificationManager.panelOpen ? -2 : -(width + 1)
+      width: 382
       color: Theme.bgBase
 
       Behavior on anchors.rightMargin {
@@ -167,19 +171,16 @@ Variants {
         }
       }
 
-      // Left border
-      Rectangle {
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        width: 1
-        color: Theme.bgCard
-      }
+      border.width: 1
+      border.color: Theme.bgBorder
 
       Column {
         id: panelColumn
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.leftMargin: 16
+        anchors.topMargin: 18
+        anchors.rightMargin: 18
+        anchors.bottomMargin: 18
         spacing: 16
 
         // Header
