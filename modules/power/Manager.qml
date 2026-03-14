@@ -8,37 +8,27 @@ import "../.."
 Singleton {
   id: powerManager
 
-  // -- Persisted settings (command strings) --------------------------------
+  // -- Persisted settings (command strings, profile-independent) -----------
 
-  property alias lockCommand: settingsAdapter.lockCommand
-  property alias suspendCommand: settingsAdapter.suspendCommand
-  property alias logoutCommand: settingsAdapter.logoutCommand
-  property alias rebootCommand: settingsAdapter.rebootCommand
-  property alias shutdownCommand: settingsAdapter.shutdownCommand
+  readonly property string generalStatePath: DataManager.getGeneralStatePath("power")
 
-  // File-based persistence
-  readonly property string statePath: DataManager.getStatePath("power")
-  readonly property string defaultsPath: DataManager.getDefaultsPath("power")
-  property bool fileReady: false
-
-  // Copy defaults if state file doesn't exist
-  Process {
-    id: ensureDefaults
-    command: ["sh", "-c", "test -f '" + powerManager.statePath + "' || cp '" + powerManager.defaultsPath + "' '" + powerManager.statePath + "'"]
-    running: DataManager.ready
-    onExited: { powerManager.fileReady = true }
-  }
+  property alias lockCommand: generalAdapter.lockCommand
+  property alias suspendCommand: generalAdapter.suspendCommand
+  property alias logoutCommand: generalAdapter.logoutCommand
+  property alias rebootCommand: generalAdapter.rebootCommand
+  property alias shutdownCommand: generalAdapter.shutdownCommand
 
   FileView {
-    id: settingsFile
-    path: powerManager.fileReady ? powerManager.statePath : ""
-
+    id: generalSettingsFile
+    path: DataManager.dataDirReady ? powerManager.generalStatePath : ""
+    printErrors: false
     watchChanges: true
     onFileChanged: reload()
+    onLoadFailed: writeAdapter()
     onAdapterUpdated: writeAdapter()
 
     JsonAdapter {
-      id: settingsAdapter
+      id: generalAdapter
       property string lockCommand: "loginctl lock-session"
       property string suspendCommand: "systemctl suspend"
       property string logoutCommand: "swaymsg exit"

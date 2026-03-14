@@ -45,6 +45,13 @@ Singleton {
     return defaultsDir + "/" + moduleId + ".json"
   }
 
+  // Get the general (profile-independent) state file path for a module.
+  // Lives at dataDir root, not inside a profile directory.
+  // Gated on dataDirReady (stage 1), not ready (stage 3).
+  function getGeneralStatePath(moduleId) {
+    return dataDir + "/" + moduleId + "-general.json"
+  }
+
   // Called by GeneralSettings once the active profile is known.
   // Also called when switching profiles (ready cycles false -> true).
   function setActiveProfile(dir) {
