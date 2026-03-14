@@ -290,6 +290,17 @@ Subcommands:
 EOF
 }
 
+# -- screen-recording --------------------------------------------------------
+
+screen_recording_usage() {
+  cat <<EOF
+Usage: dshell screen-recording <subcommand>
+
+Subcommands:
+  files     Toggle the screen recording file browser panel
+EOF
+}
+
 # -- dispatch ----------------------------------------------------------------
 
 usage() {
@@ -297,14 +308,15 @@ usage() {
 Usage: dshell <command> [subcommand]
 
 Commands:
-  bar             Bar focus mode
-  idle            Idle inhibitor control
-  notifications   Notification panel and history
-  power           Power menu
-  popup           Popup windows
-  profile         Profile management
-  settings        Settings panel
-  theme           Theme management
+  bar               Bar focus mode
+  idle              Idle inhibitor control
+  notifications     Notification panel and history
+  power             Power menu
+  popup             Popup windows
+  profile           Profile management
+  screen-recording  Screen recording file browser
+  settings          Settings panel
+  theme             Theme management
 EOF
 }
 
@@ -366,6 +378,13 @@ profile)
     ;;
   -h | --help | "") profile_usage ;;
   *) die "unknown subcommand: profile ${2:-}" ;;
+  esac
+  ;;
+screen-recording)
+  case "${2:-}" in
+  files) ipc screen-recording files ;;
+  -h | --help | "") screen_recording_usage ;;
+  *) die "unknown subcommand: screen-recording ${2:-}" ;;
   esac
   ;;
 settings)

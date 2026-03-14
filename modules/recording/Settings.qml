@@ -124,5 +124,321 @@ ScrollView {
         }
       }
     }
+
+    // Screenshots directory
+    TitleText {
+      text: settingsRoot.highlightText("Screenshots Directory", settingsRoot.searchQuery)
+      textFormat: Text.RichText
+    }
+
+    Rectangle {
+      width: parent.width
+      height: screenshotColumn.height + 24
+      radius: 8
+      color: Theme.bgCard
+
+      Column {
+        id: screenshotColumn
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 12
+        spacing: 12
+
+        HelpText {
+          width: parent.width
+          text: "The directory where screenshots are stored. Used by the file browser panel."
+          wrapMode: Text.WordWrap
+        }
+
+        Rectangle {
+          width: parent.width
+          height: 36
+          radius: 6
+          color: Theme.bgCardHover
+          border.width: screenshotInput.activeFocus ? 2 : 1
+          border.color: screenshotInput.activeFocus ? Theme.focusRing : Theme.bgBorder
+
+          TextInput {
+            id: screenshotInput
+            anchors.fill: parent
+            anchors.margins: 8
+            color: Theme.textPrimary
+            font.pixelSize: 14
+            verticalAlignment: TextInput.AlignVCenter
+            activeFocusOnTab: true
+            selectByMouse: true
+            text: RecordingManager.screenshotDir
+
+            property bool showFocusRing: false
+
+            Text {
+              anchors.fill: parent
+              anchors.verticalCenter: parent.verticalCenter
+              text: "e.g. ~/Pictures/screenshots"
+              color: Theme.textMuted
+              font.pixelSize: 14
+              verticalAlignment: Text.AlignVCenter
+              visible: !screenshotInput.text && !screenshotInput.activeFocus
+            }
+
+            onEditingFinished: {
+              if (text) {
+                RecordingManager.screenshotDir = text
+              }
+            }
+
+            Keys.onReturnPressed: focus = false
+            Keys.onEnterPressed: focus = false
+          }
+
+          MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.IBeamCursor
+            onPressed: function(mouse) {
+              screenshotInput.forceActiveFocus()
+              mouse.accepted = false
+            }
+          }
+        }
+      }
+    }
+
+    // Screencasts directory
+    TitleText {
+      text: settingsRoot.highlightText("Screencasts Directory", settingsRoot.searchQuery)
+      textFormat: Text.RichText
+    }
+
+    Rectangle {
+      width: parent.width
+      height: screencastColumn.height + 24
+      radius: 8
+      color: Theme.bgCard
+
+      Column {
+        id: screencastColumn
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 12
+        spacing: 12
+
+        HelpText {
+          width: parent.width
+          text: "The directory where screencasts are stored. Used by the file browser panel."
+          wrapMode: Text.WordWrap
+        }
+
+        Rectangle {
+          width: parent.width
+          height: 36
+          radius: 6
+          color: Theme.bgCardHover
+          border.width: screencastInput.activeFocus ? 2 : 1
+          border.color: screencastInput.activeFocus ? Theme.focusRing : Theme.bgBorder
+
+          TextInput {
+            id: screencastInput
+            anchors.fill: parent
+            anchors.margins: 8
+            color: Theme.textPrimary
+            font.pixelSize: 14
+            verticalAlignment: TextInput.AlignVCenter
+            activeFocusOnTab: true
+            selectByMouse: true
+            text: RecordingManager.screencastDir
+
+            property bool showFocusRing: false
+
+            Text {
+              anchors.fill: parent
+              anchors.verticalCenter: parent.verticalCenter
+              text: "e.g. ~/Videos/screencasts"
+              color: Theme.textMuted
+              font.pixelSize: 14
+              verticalAlignment: Text.AlignVCenter
+              visible: !screencastInput.text && !screencastInput.activeFocus
+            }
+
+            onEditingFinished: {
+              if (text) {
+                RecordingManager.screencastDir = text
+              }
+            }
+
+            Keys.onReturnPressed: focus = false
+            Keys.onEnterPressed: focus = false
+          }
+
+          MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.IBeamCursor
+            onPressed: function(mouse) {
+              screencastInput.forceActiveFocus()
+              mouse.accepted = false
+            }
+          }
+        }
+      }
+    }
+
+    // Image previewer
+    TitleText {
+      text: settingsRoot.highlightText("Image Previewer", settingsRoot.searchQuery)
+      textFormat: Text.RichText
+    }
+
+    Rectangle {
+      width: parent.width
+      height: imagePreviewerColumn.height + 24
+      radius: 8
+      color: Theme.bgCard
+
+      Column {
+        id: imagePreviewerColumn
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 12
+        spacing: 12
+
+        HelpText {
+          width: parent.width
+          text: "Command used to preview screenshots from the file browser panel."
+          wrapMode: Text.WordWrap
+        }
+
+        Rectangle {
+          width: parent.width
+          height: 36
+          radius: 6
+          color: Theme.bgCardHover
+          border.width: imagePreviewerInput.activeFocus ? 2 : 1
+          border.color: imagePreviewerInput.activeFocus ? Theme.focusRing : Theme.bgBorder
+
+          TextInput {
+            id: imagePreviewerInput
+            anchors.fill: parent
+            anchors.margins: 8
+            color: Theme.textPrimary
+            font.pixelSize: 14
+            verticalAlignment: TextInput.AlignVCenter
+            activeFocusOnTab: true
+            selectByMouse: true
+            text: RecordingManager.imagePreviewer
+
+            property bool showFocusRing: false
+
+            Text {
+              anchors.fill: parent
+              anchors.verticalCenter: parent.verticalCenter
+              text: "sushi"
+              color: Theme.textMuted
+              font.pixelSize: 14
+              verticalAlignment: Text.AlignVCenter
+              visible: !imagePreviewerInput.text && !imagePreviewerInput.activeFocus
+            }
+
+            onEditingFinished: {
+              if (text) {
+                RecordingManager.imagePreviewer = text
+              }
+            }
+
+            Keys.onReturnPressed: focus = false
+            Keys.onEnterPressed: focus = false
+          }
+
+          MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.IBeamCursor
+            onPressed: function(mouse) {
+              imagePreviewerInput.forceActiveFocus()
+              mouse.accepted = false
+            }
+          }
+        }
+      }
+    }
+
+    // Video previewer
+    TitleText {
+      text: settingsRoot.highlightText("Video Previewer", settingsRoot.searchQuery)
+      textFormat: Text.RichText
+    }
+
+    Rectangle {
+      width: parent.width
+      height: videoPreviewerColumn.height + 24
+      radius: 8
+      color: Theme.bgCard
+
+      Column {
+        id: videoPreviewerColumn
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 12
+        spacing: 12
+
+        HelpText {
+          width: parent.width
+          text: "Command used to preview screencasts from the file browser panel."
+          wrapMode: Text.WordWrap
+        }
+
+        Rectangle {
+          width: parent.width
+          height: 36
+          radius: 6
+          color: Theme.bgCardHover
+          border.width: videoPreviewerInput.activeFocus ? 2 : 1
+          border.color: videoPreviewerInput.activeFocus ? Theme.focusRing : Theme.bgBorder
+
+          TextInput {
+            id: videoPreviewerInput
+            anchors.fill: parent
+            anchors.margins: 8
+            color: Theme.textPrimary
+            font.pixelSize: 14
+            verticalAlignment: TextInput.AlignVCenter
+            activeFocusOnTab: true
+            selectByMouse: true
+            text: RecordingManager.videoPreviewer
+
+            property bool showFocusRing: false
+
+            Text {
+              anchors.fill: parent
+              anchors.verticalCenter: parent.verticalCenter
+              text: "sushi"
+              color: Theme.textMuted
+              font.pixelSize: 14
+              verticalAlignment: Text.AlignVCenter
+              visible: !videoPreviewerInput.text && !videoPreviewerInput.activeFocus
+            }
+
+            onEditingFinished: {
+              if (text) {
+                RecordingManager.videoPreviewer = text
+              }
+            }
+
+            Keys.onReturnPressed: focus = false
+            Keys.onEnterPressed: focus = false
+          }
+
+          MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.IBeamCursor
+            onPressed: function(mouse) {
+              videoPreviewerInput.forceActiveFocus()
+              mouse.accepted = false
+            }
+          }
+        }
+      }
+    }
   }
 }

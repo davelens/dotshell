@@ -8,36 +8,279 @@ import "../.."
 Singleton {
   id: recordingManager
 
-  // Persisted setting
-  property alias processName: settingsAdapter.processName
-
-  // File-based persistence
-  readonly property string statePath: DataManager.getStatePath("recording")
-  readonly property string defaultsPath: DataManager.getDefaultsPath("recording")
-  property bool fileReady: false
-
-  // Copy defaults if state file doesn't exist
-  Process {
-    id: ensureDefaults
-    command: ["sh", "-c", "test -f '" + recordingManager.statePath + "' || cp '" + recordingManager.defaultsPath + "' '" + recordingManager.statePath + "'"]
-    running: DataManager.ready
-    onExited: { recordingManager.fileReady = true }
-  }
+  // General (profile-independent) settings
+  readonly property string generalStatePath: DataManager.getGeneralStatePath("recording")
+  property alias processName: generalAdapter.processName
+  property alias screenshotDir: generalAdapter.screenshotDir
+  property alias screencastDir: generalAdapter.screencastDir
+  property alias imagePreviewer: generalAdapter.imagePreviewer
+  property alias videoPreviewer: generalAdapter.videoPreviewer
 
   FileView {
-    id: settingsFile
-    path: recordingManager.fileReady ? recordingManager.statePath : ""
-
-    // Reload file when it changes on disk
+    id: generalSettingsFile
+    path: DataManager.dataDirReady ? recordingManager.generalStatePath : ""
+    printErrors: false
     watchChanges: true
     onFileChanged: reload()
-
-    // Save when adapter properties change
+    onLoadFailed: writeAdapter()
     onAdapterUpdated: writeAdapter()
 
     JsonAdapter {
-      id: settingsAdapter
+      id: generalAdapter
       property string processName: "gpu-screen-recorder"
+      property string screenshotDir: (Quickshell.env("HOME") || "") + "/Pictures/screenshots"
+      property string screencastDir: (Quickshell.env("HOME") || "") + "/Videos/screencasts"
+      property string imagePreviewer: "sushi"
+      property string videoPreviewer: "sushi"
+    }
+  }
+
+  // Panel state
+  property bool panelOpen: false
+
+  // File lists (sorted newest first)
+  property var screenshots: []
+  property int screenshotCount: 0
+  property var screencasts: []
+  property int screencastCount: 0
+
+  // Thumbnail cache directory
+  readonly property string cacheDir: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/dotshell/thumbnails"
+
+  // Signals for panel to react to file operations
+  signal filesRefreshed()
+  signal fileDeleted(string path)
+  signal fileRenamed(string oldPath, string newPath)
+
+  // Panel toggle functions
+  function togglePanel() {
+    if (panelOpen) closePanel()
+    else openPanel()
+  }
+
+  function openPanel() {
+    panelOpen = true
+    refreshFiles()
+  }
+
+  function closePanel() {
+    panelOpen = false
+  }
+
+  // File listing
+  function refreshFiles() {
+    refreshScreenshots()
+    refreshScreencasts()
+  }
+
+  function refreshScreenshots() {
+    var dir = screenshotDir
+    listScreenshotsProc.command = ["sh", "-c",
+      "find '" + dir + "' -maxdepth 1 -type f -size 0 \\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.bmp' \\) -delete 2>/dev/null ; " +
+      "ls -1t '" + dir + "' 2>/dev/null | grep -iE '\\.(png|jpg|jpeg|webp|bmp)$' || true"
+    ]
+    listScreenshotsProc.running = true
+  }
+
+  function refreshScreencasts() {
+    var dir = screencastDir
+    listScreencastsProc.command = ["sh", "-c",
+      "find '" + dir + "' -maxdepth 1 -type f -size 0 \\( -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.avi' -o -iname '*.mov' \\) -delete 2>/dev/null ; " +
+      "ls -1t '" + dir + "' 2>/dev/null | grep -iE '\\.(mp4|mkv|webm|avi|mov)$' || true"
+    ]
+    listScreencastsProc.running = true
+  }
+
+  Process {
+    id: listScreenshotsProc
+    property string output: ""
+    onStarted: { output = "" }
+    stdout: SplitParser {
+      onRead: data => { listScreenshotsProc.output += data + "\n" }
+    }
+    onExited: {
+      var lines = listScreenshotsProc.output.trim().split("\n").filter(function(l) { return l.length > 0 })
+      var dir = recordingManager.screenshotDir
+      var result = []
+      for (var i = 0; i < lines.length; i++) {
+        result.push(dir + "/" + lines[i])
+      }
+      recordingManager.screenshots = result
+      recordingManager.screenshotCount = result.length
+      recordingManager.filesRefreshed()
+    }
+  }
+
+  Process {
+    id: listScreencastsProc
+    property string output: ""
+    onStarted: { output = "" }
+    stdout: SplitParser {
+      onRead: data => { listScreencastsProc.output += data + "\n" }
+    }
+    onExited: {
+      var lines = listScreencastsProc.output.trim().split("\n").filter(function(l) { return l.length > 0 })
+      var dir = recordingManager.screencastDir
+      var result = []
+      for (var i = 0; i < lines.length; i++) {
+        result.push(dir + "/" + lines[i])
+      }
+      recordingManager.screencasts = result
+      recordingManager.screencastCount = result.length
+      recordingManager.filesRefreshed()
+    }
+  }
+
+  // Thumbnail generation for screencasts
+  // Returns the expected cache path for a given video file
+  function getThumbnailPath(videoPath) {
+    // Use a hash of the video path as the thumbnail filename
+    var hash = Qt.md5(videoPath)
+    return cacheDir + "/" + hash + ".png"
+  }
+
+  // Request thumbnail generation (called lazily by grid delegates)
+  property var _pendingThumbnails: ({})
+  property var _thumbnailQueue: []
+  property int _activeThumbnailJobs: 0
+  readonly property int _maxThumbnailJobs: 3
+
+  function requestThumbnail(videoPath) {
+    var thumbPath = getThumbnailPath(videoPath)
+    if (_pendingThumbnails[videoPath]) return // already queued or in progress
+    _pendingThumbnails[videoPath] = true
+    _thumbnailQueue.push(videoPath)
+    _drainThumbnailQueue()
+  }
+
+  function _drainThumbnailQueue() {
+    while (_activeThumbnailJobs < _maxThumbnailJobs && _thumbnailQueue.length > 0) {
+      var path = _thumbnailQueue.shift()
+      _startThumbnailJob(path)
+    }
+  }
+
+  function _startThumbnailJob(videoPath) {
+    _activeThumbnailJobs++
+    var thumbPath = getThumbnailPath(videoPath)
+    var proc = thumbComponent.createObject(recordingManager, {
+      videoPath: videoPath,
+      thumbPath: thumbPath
+    })
+    proc.command = ["sh", "-c",
+      "mkdir -p '" + cacheDir + "' && " +
+      "ffmpeg -y -i '" + videoPath + "' -vframes 1 -ss 00:00:01 -vf 'scale=320:-1' '" + thumbPath + "' 2>/dev/null"
+    ]
+    proc.running = true
+  }
+
+  Component {
+    id: thumbComponent
+    Process {
+      property string videoPath: ""
+      property string thumbPath: ""
+      onExited: function(exitCode) {
+        recordingManager._activeThumbnailJobs--
+        delete recordingManager._pendingThumbnails[videoPath]
+        if (exitCode === 0) {
+          recordingManager.thumbnailReady(videoPath, thumbPath)
+        }
+        recordingManager._drainThumbnailQueue()
+        destroy()
+      }
+    }
+  }
+
+  signal thumbnailReady(string videoPath, string thumbPath)
+
+  // File operations
+  function deleteFile(filePath) {
+    deleteFileProc.filePath = filePath
+    deleteFileProc.command = ["rm", "-f", filePath]
+    deleteFileProc.running = true
+  }
+
+  Process {
+    id: deleteFileProc
+    property string filePath: ""
+    onExited: function(exitCode) {
+      if (exitCode === 0) {
+        recordingManager.fileDeleted(filePath)
+        recordingManager.refreshFiles()
+      }
+    }
+  }
+
+  function deleteAll(type) {
+    var dir = (type === "screenshots") ? screenshotDir : screencastDir
+    var pattern = (type === "screenshots")
+      ? "\\.(png|jpg|jpeg|webp|bmp)$"
+      : "\\.(mp4|mkv|webm|avi|mov)$"
+    deleteAllProc.command = ["sh", "-c",
+      "find '" + dir + "' -maxdepth 1 -type f | grep -iE '" + pattern + "' | xargs rm -f 2>/dev/null ; true"
+    ]
+    deleteAllProc.running = true
+  }
+
+  Process {
+    id: deleteAllProc
+    onExited: {
+      recordingManager.refreshFiles()
+    }
+  }
+
+  function renameFile(oldPath, newName) {
+    // Preserve directory and extension, change only the base name
+    var dir = oldPath.substring(0, oldPath.lastIndexOf("/"))
+    var oldName = oldPath.substring(oldPath.lastIndexOf("/") + 1)
+    var ext = oldName.substring(oldName.lastIndexOf("."))
+    var newPath = dir + "/" + newName + ext
+    renameFileProc.oldPath = oldPath
+    renameFileProc.newPath = newPath
+    renameFileProc.command = ["mv", oldPath, newPath]
+    renameFileProc.running = true
+  }
+
+  Process {
+    id: renameFileProc
+    property string oldPath: ""
+    property string newPath: ""
+    onExited: function(exitCode) {
+      if (exitCode === 0) {
+        recordingManager.fileRenamed(oldPath, newPath)
+        recordingManager.refreshFiles()
+      }
+    }
+  }
+
+  function copyPath(filePath) {
+    copyPathProc.command = ["sh", "-c", "echo -n '" + filePath + "' | wl-copy"]
+    copyPathProc.running = true
+  }
+
+  Process {
+    id: copyPathProc
+  }
+
+  function openFile(filePath) {
+    var isVideo = /\.(mp4|mkv|webm|avi|mov)$/i.test(filePath)
+    var app = isVideo ? videoPreviewer : imagePreviewer
+    if (!app) app = "sushi"
+    closePanel()
+    openFileProc.command = [app, filePath]
+    openFileProc.running = true
+  }
+
+  Process {
+    id: openFileProc
+  }
+
+  // IPC handler
+  IpcHandler {
+    target: "screen-recording"
+
+    function files(): void {
+      recordingManager.togglePanel()
     }
   }
 }
