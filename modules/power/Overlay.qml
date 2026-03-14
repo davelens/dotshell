@@ -85,6 +85,20 @@ Variants {
       focusables = []
     }
 
+    Connections {
+      target: PowerManager
+      function onPendingActionChanged() {
+        if (PowerManager.pendingAction !== "") {
+          overlay.resetFocus()
+          overlay.refreshFocusables()
+          if (overlay.focusables.length > 0) {
+            overlay.focusIndex = overlay.focusables.length - 1
+            overlay.focusItem(overlay.focusables[overlay.focusIndex])
+          }
+        }
+      }
+    }
+
     contentItem {
       focus: PowerManager.menuOpen
       Keys.onPressed: function(event) {
@@ -316,25 +330,26 @@ Variants {
             FocusButton {
               width: 120
               height: 40
-              text: "󰄬 Yes"
-              fontSize: 14
-              backgroundColor: Theme.bgCard
-              hoverColor: Theme.bgCardHover
-              textColor: Theme.textPrimary
-              textHoverColor: Theme.accent
-              onClicked: PowerManager.confirmAction()
-            }
-
-            FocusButton {
-              width: 120
-              height: 40
-              text: "󰅖 No"
+              text: "󰅖  No"
               fontSize: 14
               backgroundColor: Theme.bgCard
               hoverColor: Theme.bgCardHover
               textColor: Theme.textPrimary
               textHoverColor: Theme.danger
               onClicked: PowerManager.cancelAction()
+            }
+
+            FocusButton {
+              id: yesButton
+              width: 120
+              height: 40
+              text: "󰄬  Yes"
+              fontSize: 14
+              backgroundColor: Theme.bgCard
+              hoverColor: Theme.bgCardHover
+              textColor: Theme.textPrimary
+              textHoverColor: Theme.accent
+              onClicked: PowerManager.confirmAction()
             }
           }
         }
