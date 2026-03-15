@@ -255,6 +255,7 @@ Scope {
             if (inSearch) {
               searchInput.text = ""
               searchInput.focus = false
+              panel.contentItem.forceActiveFocus()
             } else if (panel.viewMode === "detail") {
               panel.returnToGrid()
             } else {
@@ -268,6 +269,7 @@ Scope {
           if (event.key === Qt.Key_BracketLeft && ctrl) {
             if (inSearch) {
               searchInput.focus = false
+              panel.contentItem.forceActiveFocus()
             } else if (panel.viewMode === "detail") {
               panel.returnToGrid()
             } else {
@@ -496,6 +498,7 @@ Scope {
               Keys.onEscapePressed: {
                 text = ""
                 focus = false
+                panel.contentItem.forceActiveFocus()
               }
             }
 
@@ -959,6 +962,7 @@ Scope {
                       if (value && value !== detailContainer.baseName) {
                         RecordingManager.renameFile(panel.detailPath, value)
                       }
+                      panel.contentItem.forceActiveFocus()
                     }
                   }
 
