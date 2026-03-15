@@ -12,42 +12,42 @@ echo "==> Installing Quickshell and dependencies..."
 # - ddcutil: External monitor brightness via DDC/CI
 # - networkmanager: WiFi management (nmcli)
 # - pipewire, wireplumber: Audio (PipeWire integration)
-# - ttf-dejavu + otf-commit-mono-nerd: Fonts for panels + Nerd icons
+# - ttf-dejavu + otf-commit-mono-nerd + ttf-hack-nerd: Fonts for panels + Nerd icons
 # - libnotify: notify-send for test notifications
 # - ffmpeg: Video thumbnail generation for the screen recording file browser panel
 sudo pacman -S --needed --noconfirm \
-	bluez bluez-utils \
-	brightnessctl \
-	ddcutil \
-	networkmanager \
-	pipewire wireplumber \
-	pacman-contrib \
-	gpu-screen-recorder \
-	wf-recorder \
-	otf-commit-mono-nerd ttf-dejavu \
-	libnotify \
-	ffmpeg
+  bluez bluez-utils \
+  brightnessctl \
+  ddcutil \
+  networkmanager \
+  pipewire wireplumber \
+  pacman-contrib \
+  gpu-screen-recorder \
+  wf-recorder \
+  ttf-hack-nerd ttf-dejavu \
+  libnotify \
+  ffmpeg
 
 paru -S --needed --noconfirm quickshell
 
 # Enable i2c for ddcutil (external monitor brightness)
 # User needs to be in i2c group
 if ! groups | grep -q i2c; then
-	echo "==> Adding user to i2c group for ddcutil..."
-	sudo usermod -aG i2c "$USER"
-	echo "    Note: You may need to log out and back in for this to take effect."
+  echo "==> Adding user to i2c group for ddcutil..."
+  sudo usermod -aG i2c "$USER"
+  echo "    Note: You may need to log out and back in for this to take effect."
 fi
 
 # Load i2c-dev module
 if ! lsmod | grep -q i2c_dev; then
-	echo "==> Loading i2c-dev kernel module..."
-	sudo modprobe i2c-dev
+  echo "==> Loading i2c-dev kernel module..."
+  sudo modprobe i2c-dev
 fi
 
 # Ensure i2c-dev loads on boot
 if [[ ! -f /etc/modules-load.d/i2c-dev.conf ]]; then
-	echo "==> Configuring i2c-dev to load on boot..."
-	echo "i2c-dev" | sudo tee /etc/modules-load.d/i2c-dev.conf >/dev/null
+  echo "==> Configuring i2c-dev to load on boot..."
+  echo "i2c-dev" | sudo tee /etc/modules-load.d/i2c-dev.conf >/dev/null
 fi
 
 # Symlink dotshell repo into ~/.config/dotshell
@@ -85,7 +85,7 @@ update-desktop-database "$XDG_DATA_HOME/applications"
 
 # Stop mako if running (Quickshell has its own notification daemon)
 if pgrep -x mako >/dev/null; then
-	echo "==> Mako is running; you need to kill it before quickshell notifications are in use"
+  echo "==> Mako is running; you need to kill it before quickshell notifications are in use"
 fi
 
 echo "==> Starting Quickshell..."
