@@ -54,7 +54,7 @@ _dshell_complete() {
 		idle) COMPREPLY=($(compgen -W "enable disable toggle state" -- "$cur")) ;;
 		notifications) COMPREPLY=($(compgen -W "toggle clear-all" -- "$cur")) ;;
 		power) COMPREPLY=($(compgen -W "toggle" -- "$cur")) ;;
-		popup) COMPREPLY=($(compgen -W "toggle close" -- "$cur")) ;;
+		popup) COMPREPLY=($(compgen -W "toggle" -- "$cur")) ;;
 		profile) COMPREPLY=($(compgen -W "list current enable" -- "$cur")) ;;
 		screen-recording) COMPREPLY=($(compgen -W "files" -- "$cur")) ;;
 		settings) COMPREPLY=($(compgen -W "toggle show-category" -- "$cur")) ;;

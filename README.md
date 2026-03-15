@@ -104,7 +104,6 @@ qs ipc call <target> <command> [args]
 | `settings` | `showCategory <id>` | Open the settings panel at a specific category |
 | `bar` | `toggle` | Toggle bar focus mode |
 | `popup` | `toggle <name>` | Toggle a popup by name (e.g. `volume`, `bluetooth`, `brightness`) |
-| `popup` | `close` | Close the active popup |
 | `notifications` | `toggle` | Toggle the notification panel |
 | `notifications` | `show` | Open the notification panel |
 | `notifications` | `hide` | Close the notification panel |

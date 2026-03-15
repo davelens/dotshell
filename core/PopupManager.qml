@@ -80,7 +80,5 @@ Singleton {
         }
       }
     }
-
-    function close(): void { popupManager.close() }
   }
 }

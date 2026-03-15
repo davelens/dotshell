@@ -90,7 +90,6 @@ Usage: dshell popup <subcommand>
 
 Subcommands:
   toggle <name>   Toggle a popup (e.g. volume, brightness, wireless)
-  close           Close the active popup
 EOF
 }
 
@@ -359,7 +358,6 @@ popup)
     [[ -z "${3:-}" ]] && die "usage: dshell popup toggle <name>"
     ipc popup toggle "${3}"
     ;;
-  close) ipc popup close ;;
   -h | --help | "") popup_usage ;;
   *) die "unknown subcommand: popup ${2:-}" ;;
   esac
