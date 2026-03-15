@@ -87,6 +87,17 @@ Variants {
 
     Connections {
       target: PowerManager
+      function onMenuOpenChanged() {
+        if (PowerManager.menuOpen) {
+          overlay.resetFocus()
+          overlay.refreshFocusables()
+          // Auto-select "suspend" (index 1 in actions)
+          if (overlay.focusables.length > 1) {
+            overlay.focusIndex = 1
+            overlay.focusItem(overlay.focusables[1])
+          }
+        }
+      }
       function onPendingActionChanged() {
         if (PowerManager.pendingAction !== "") {
           overlay.resetFocus()
