@@ -191,6 +191,7 @@ Scope {
         detailPath = ""
         detailFocusables = []
         detailFocusIndex = -1
+        contentItem.forceActiveFocus()
       }
 
       // -- Detail focus cycling (Ctrl+N / Ctrl+P) ---------------------------
