@@ -29,7 +29,7 @@ Scope {
         bottom: true
       }
 
-      color: "transparent"
+      color: Theme.overlay
       exclusionMode: ExclusionMode.Ignore
 
       WlrLayershell.namespace: "quickshell-screen-recording"
