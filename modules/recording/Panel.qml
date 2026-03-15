@@ -951,43 +951,13 @@ Scope {
                     anchors.verticalCenter: parent.verticalCenter
                   }
 
-                  Rectangle {
+                  FocusTextInput {
+                    id: renameInput
                     width: parent.width - 200
-                    height: 36
-                    radius: 6
-                    color: Theme.bgCardHover
-                    border.width: renameInput.activeFocus ? 2 : 1
-                    border.color: renameInput.activeFocus ? Theme.focusRing : Theme.bgBorder
-
-                    TextInput {
-                      id: renameInput
-                      anchors.fill: parent
-                      anchors.margins: 8
-                      color: Theme.textPrimary
-                      font.pixelSize: 14
-                      verticalAlignment: TextInput.AlignVCenter
-                      activeFocusOnTab: true
-                      selectByMouse: true
-                      text: detailContainer.baseName
-
-                      property bool showFocusRing: false
-
-                      onEditingFinished: {
-                        if (text && text !== detailContainer.baseName) {
-                          RecordingManager.renameFile(panel.detailPath, text)
-                        }
-                      }
-
-                      Keys.onReturnPressed: focus = false
-                      Keys.onEnterPressed: focus = false
-                    }
-
-                    MouseArea {
-                      anchors.fill: parent
-                      cursorShape: Qt.IBeamCursor
-                      onPressed: function(mouse) {
-                        renameInput.forceActiveFocus()
-                        mouse.accepted = false
+                    text: detailContainer.baseName
+                    onEditingFinished: function(value) {
+                      if (value && value !== detailContainer.baseName) {
+                        RecordingManager.renameFile(panel.detailPath, value)
                       }
                     }
                   }

@@ -1,5 +1,3 @@
-import Quickshell
-import Quickshell.Io
 import QtQuick
 import QtQuick.Controls
 import "../.."
@@ -64,55 +62,11 @@ ScrollView {
           wrapMode: Text.WordWrap
         }
 
-        // Text input for process name
-        Rectangle {
-          width: parent.width
-          height: 36
-          radius: 6
-          color: Theme.bgCardHover
-          border.width: processInput.activeFocus ? 2 : 1
-          border.color: processInput.activeFocus ? Theme.focusRing : Theme.bgBorder
-
-          TextInput {
-            id: processInput
-            anchors.fill: parent
-            anchors.margins: 8
-            color: Theme.textPrimary
-            font.pixelSize: 14
-            verticalAlignment: TextInput.AlignVCenter
-            activeFocusOnTab: true
-            selectByMouse: true
-            text: RecordingManager.processName
-
-            property bool showFocusRing: false
-
-            Text {
-              anchors.fill: parent
-              anchors.verticalCenter: parent.verticalCenter
-              text: "e.g. gpu-screen-recorder"
-              color: Theme.textMuted
-              font.pixelSize: 14
-              verticalAlignment: Text.AlignVCenter
-              visible: !processInput.text && !processInput.activeFocus
-            }
-
-            onEditingFinished: {
-              if (text) {
-                RecordingManager.processName = text
-              }
-            }
-
-            Keys.onReturnPressed: focus = false
-            Keys.onEnterPressed: focus = false
-          }
-
-          MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.IBeamCursor
-            onPressed: function(mouse) {
-              processInput.forceActiveFocus()
-              mouse.accepted = false
-            }
+        FocusTextInput {
+          text: RecordingManager.processName
+          placeholderText: "e.g. gpu-screen-recorder"
+          onEditingFinished: function(value) {
+            if (value) RecordingManager.processName = value
           }
         }
 
@@ -151,54 +105,11 @@ ScrollView {
           wrapMode: Text.WordWrap
         }
 
-        Rectangle {
-          width: parent.width
-          height: 36
-          radius: 6
-          color: Theme.bgCardHover
-          border.width: screenshotInput.activeFocus ? 2 : 1
-          border.color: screenshotInput.activeFocus ? Theme.focusRing : Theme.bgBorder
-
-          TextInput {
-            id: screenshotInput
-            anchors.fill: parent
-            anchors.margins: 8
-            color: Theme.textPrimary
-            font.pixelSize: 14
-            verticalAlignment: TextInput.AlignVCenter
-            activeFocusOnTab: true
-            selectByMouse: true
-            text: RecordingManager.screenshotDir
-
-            property bool showFocusRing: false
-
-            Text {
-              anchors.fill: parent
-              anchors.verticalCenter: parent.verticalCenter
-              text: "e.g. ~/Pictures/screenshots"
-              color: Theme.textMuted
-              font.pixelSize: 14
-              verticalAlignment: Text.AlignVCenter
-              visible: !screenshotInput.text && !screenshotInput.activeFocus
-            }
-
-            onEditingFinished: {
-              if (text) {
-                RecordingManager.screenshotDir = text
-              }
-            }
-
-            Keys.onReturnPressed: focus = false
-            Keys.onEnterPressed: focus = false
-          }
-
-          MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.IBeamCursor
-            onPressed: function(mouse) {
-              screenshotInput.forceActiveFocus()
-              mouse.accepted = false
-            }
+        FocusTextInput {
+          text: RecordingManager.screenshotDir
+          placeholderText: "e.g. ~/Pictures/screenshots"
+          onEditingFinished: function(value) {
+            if (value) RecordingManager.screenshotDir = value
           }
         }
       }
@@ -230,54 +141,11 @@ ScrollView {
           wrapMode: Text.WordWrap
         }
 
-        Rectangle {
-          width: parent.width
-          height: 36
-          radius: 6
-          color: Theme.bgCardHover
-          border.width: screencastInput.activeFocus ? 2 : 1
-          border.color: screencastInput.activeFocus ? Theme.focusRing : Theme.bgBorder
-
-          TextInput {
-            id: screencastInput
-            anchors.fill: parent
-            anchors.margins: 8
-            color: Theme.textPrimary
-            font.pixelSize: 14
-            verticalAlignment: TextInput.AlignVCenter
-            activeFocusOnTab: true
-            selectByMouse: true
-            text: RecordingManager.screencastDir
-
-            property bool showFocusRing: false
-
-            Text {
-              anchors.fill: parent
-              anchors.verticalCenter: parent.verticalCenter
-              text: "e.g. ~/Videos/screencasts"
-              color: Theme.textMuted
-              font.pixelSize: 14
-              verticalAlignment: Text.AlignVCenter
-              visible: !screencastInput.text && !screencastInput.activeFocus
-            }
-
-            onEditingFinished: {
-              if (text) {
-                RecordingManager.screencastDir = text
-              }
-            }
-
-            Keys.onReturnPressed: focus = false
-            Keys.onEnterPressed: focus = false
-          }
-
-          MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.IBeamCursor
-            onPressed: function(mouse) {
-              screencastInput.forceActiveFocus()
-              mouse.accepted = false
-            }
+        FocusTextInput {
+          text: RecordingManager.screencastDir
+          placeholderText: "e.g. ~/Videos/screencasts"
+          onEditingFinished: function(value) {
+            if (value) RecordingManager.screencastDir = value
           }
         }
       }
@@ -309,54 +177,11 @@ ScrollView {
           wrapMode: Text.WordWrap
         }
 
-        Rectangle {
-          width: parent.width
-          height: 36
-          radius: 6
-          color: Theme.bgCardHover
-          border.width: imagePreviewerInput.activeFocus ? 2 : 1
-          border.color: imagePreviewerInput.activeFocus ? Theme.focusRing : Theme.bgBorder
-
-          TextInput {
-            id: imagePreviewerInput
-            anchors.fill: parent
-            anchors.margins: 8
-            color: Theme.textPrimary
-            font.pixelSize: 14
-            verticalAlignment: TextInput.AlignVCenter
-            activeFocusOnTab: true
-            selectByMouse: true
-            text: RecordingManager.imagePreviewer
-
-            property bool showFocusRing: false
-
-            Text {
-              anchors.fill: parent
-              anchors.verticalCenter: parent.verticalCenter
-              text: "sushi"
-              color: Theme.textMuted
-              font.pixelSize: 14
-              verticalAlignment: Text.AlignVCenter
-              visible: !imagePreviewerInput.text && !imagePreviewerInput.activeFocus
-            }
-
-            onEditingFinished: {
-              if (text) {
-                RecordingManager.imagePreviewer = text
-              }
-            }
-
-            Keys.onReturnPressed: focus = false
-            Keys.onEnterPressed: focus = false
-          }
-
-          MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.IBeamCursor
-            onPressed: function(mouse) {
-              imagePreviewerInput.forceActiveFocus()
-              mouse.accepted = false
-            }
+        FocusTextInput {
+          text: RecordingManager.imagePreviewer
+          placeholderText: "sushi"
+          onEditingFinished: function(value) {
+            if (value) RecordingManager.imagePreviewer = value
           }
         }
       }
@@ -388,54 +213,11 @@ ScrollView {
           wrapMode: Text.WordWrap
         }
 
-        Rectangle {
-          width: parent.width
-          height: 36
-          radius: 6
-          color: Theme.bgCardHover
-          border.width: videoPreviewerInput.activeFocus ? 2 : 1
-          border.color: videoPreviewerInput.activeFocus ? Theme.focusRing : Theme.bgBorder
-
-          TextInput {
-            id: videoPreviewerInput
-            anchors.fill: parent
-            anchors.margins: 8
-            color: Theme.textPrimary
-            font.pixelSize: 14
-            verticalAlignment: TextInput.AlignVCenter
-            activeFocusOnTab: true
-            selectByMouse: true
-            text: RecordingManager.videoPreviewer
-
-            property bool showFocusRing: false
-
-            Text {
-              anchors.fill: parent
-              anchors.verticalCenter: parent.verticalCenter
-              text: "sushi"
-              color: Theme.textMuted
-              font.pixelSize: 14
-              verticalAlignment: Text.AlignVCenter
-              visible: !videoPreviewerInput.text && !videoPreviewerInput.activeFocus
-            }
-
-            onEditingFinished: {
-              if (text) {
-                RecordingManager.videoPreviewer = text
-              }
-            }
-
-            Keys.onReturnPressed: focus = false
-            Keys.onEnterPressed: focus = false
-          }
-
-          MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.IBeamCursor
-            onPressed: function(mouse) {
-              videoPreviewerInput.forceActiveFocus()
-              mouse.accepted = false
-            }
+        FocusTextInput {
+          text: RecordingManager.videoPreviewer
+          placeholderText: "sushi"
+          onEditingFinished: function(value) {
+            if (value) RecordingManager.videoPreviewer = value
           }
         }
       }
