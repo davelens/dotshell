@@ -173,8 +173,8 @@ ScrollView {
 
               onVisibleChanged: {
                 if (visible) {
-                  settingsPasswordInput.text = ""
-                  settingsPasswordInput.forceActiveFocus()
+                  settingsPasswordInput.clear()
+                  settingsPasswordInput.focusInput()
                 }
               }
 
@@ -185,108 +185,12 @@ ScrollView {
                 leftPadding: 2
               }
 
-              Rectangle {
-                width: parent.width
-                height: 36
-                radius: 4
-                color: Theme.bgCard
-                border.width: 1
-                border.color: settingsPasswordInput.activeFocus ? Theme.accent : Theme.bgCardHover
-
-                Row {
-                  anchors.fill: parent
-                  anchors.leftMargin: 10
-                  anchors.rightMargin: 4
-                  spacing: 4
-
-                  TextInput {
-                    id: settingsPasswordInput
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - settingsToggleVis.width - settingsConnectBtn.width - 12
-                    color: Theme.textPrimary
-                    font.pixelSize: 14
-                    clip: true
-                    echoMode: TextInput.Password
-
-                    Text {
-                      anchors.fill: parent
-                      anchors.verticalCenter: parent.verticalCenter
-                      text: "Enter password"
-                      color: Theme.textMuted
-                      font.pixelSize: 14
-                      visible: !settingsPasswordInput.text
-                    }
-
-                    Keys.onReturnPressed: {
-                      if (settingsPasswordInput.text) {
-                        WirelessManager.connect(modelData.ssid, settingsPasswordInput.text)
-                      }
-                    }
-                    Keys.onEnterPressed: {
-                      if (settingsPasswordInput.text) {
-                        WirelessManager.connect(modelData.ssid, settingsPasswordInput.text)
-                      }
-                    }
-                    Keys.onEscapePressed: WirelessManager.cancelPending()
-                  }
-
-                  // Show/hide password toggle
-                  Text {
-                    id: settingsToggleVis
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: settingsPasswordInput.echoMode === TextInput.Password ? "󰈈" : "󰈉"
-                    color: settingsToggleMouse.containsMouse ? Theme.textPrimary : Theme.textMuted
-                    font.pixelSize: 16
-                    font.family: "Symbols Nerd Font"
-                    width: 28
-                    horizontalAlignment: Text.AlignHCenter
-
-                    MouseArea {
-                      id: settingsToggleMouse
-                      anchors.fill: parent
-                      hoverEnabled: true
-                      cursorShape: Qt.PointingHandCursor
-                      onClicked: {
-                        settingsPasswordInput.echoMode = settingsPasswordInput.echoMode === TextInput.Password
-                          ? TextInput.Normal
-                          : TextInput.Password
-                      }
-                    }
-                  }
-
-                  // Connect button
-                  Rectangle {
-                    id: settingsConnectBtn
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 28
-                    height: 28
-                    radius: 4
-                    color: settingsConnectMouse.containsMouse && settingsPasswordInput.text
-                      ? Theme.accent : "transparent"
-
-                    Text {
-                      anchors.centerIn: parent
-                      text: "󰁔"
-                      color: settingsPasswordInput.text
-                        ? (settingsConnectMouse.containsMouse ? Theme.bgBase : Theme.accent)
-                        : Theme.bgBorder
-                      font.pixelSize: 16
-                      font.family: "Symbols Nerd Font"
-                    }
-
-                    MouseArea {
-                      id: settingsConnectMouse
-                      anchors.fill: parent
-                      hoverEnabled: true
-                      cursorShape: settingsPasswordInput.text ? Qt.PointingHandCursor : Qt.ArrowCursor
-                      onClicked: {
-                        if (settingsPasswordInput.text) {
-                          WirelessManager.connect(modelData.ssid, settingsPasswordInput.text)
-                        }
-                      }
-                    }
-                  }
+              PasswordInput {
+                id: settingsPasswordInput
+                onSubmitted: function(password) {
+                  WirelessManager.connect(modelData.ssid, password)
                 }
+                onCancelled: WirelessManager.cancelPending()
               }
 
               // Error message

@@ -262,113 +262,17 @@ Variants {
 
               onVisibleChanged: {
                 if (visible) {
-                  passwordInput.text = ""
-                  passwordInput.forceActiveFocus()
+                  passwordInput.clear()
+                  passwordInput.focusInput()
                 }
               }
 
-              Rectangle {
-                width: parent.width
-                height: 36
-                radius: 4
-                color: Theme.bgCard
-                border.width: 1
-                border.color: passwordInput.activeFocus ? Theme.accent : Theme.bgCardHover
-
-                Row {
-                  anchors.fill: parent
-                  anchors.leftMargin: 10
-                  anchors.rightMargin: 4
-                  spacing: 4
-
-                  TextInput {
-                    id: passwordInput
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - toggleVisibility.width - connectBtn.width - 12
-                    color: Theme.textPrimary
-                    font.pixelSize: 14
-                    clip: true
-                    echoMode: TextInput.Password
-
-                    Text {
-                      anchors.fill: parent
-                      anchors.verticalCenter: parent.verticalCenter
-                      text: "Enter password"
-                      color: Theme.textMuted
-                      font.pixelSize: 14
-                      visible: !passwordInput.text
-                    }
-
-                    Keys.onReturnPressed: {
-                      if (passwordInput.text) {
-                        WirelessManager.connect(modelData.ssid, passwordInput.text)
-                      }
-                    }
-                    Keys.onEnterPressed: {
-                      if (passwordInput.text) {
-                        WirelessManager.connect(modelData.ssid, passwordInput.text)
-                      }
-                    }
-                    Keys.onEscapePressed: WirelessManager.cancelPending()
-                  }
-
-                  // Show/hide password toggle
-                  Text {
-                    id: toggleVisibility
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: passwordInput.echoMode === TextInput.Password ? "󰈈" : "󰈉"
-                    color: toggleMouse.containsMouse ? Theme.textPrimary : Theme.textMuted
-                    font.pixelSize: 16
-                    font.family: "Symbols Nerd Font"
-                    width: 28
-                    horizontalAlignment: Text.AlignHCenter
-
-                    MouseArea {
-                      id: toggleMouse
-                      anchors.fill: parent
-                      hoverEnabled: true
-                      cursorShape: Qt.PointingHandCursor
-                      onClicked: {
-                        passwordInput.echoMode = passwordInput.echoMode === TextInput.Password
-                          ? TextInput.Normal
-                          : TextInput.Password
-                      }
-                    }
-                  }
-
-                  // Connect button
-                  Rectangle {
-                    id: connectBtn
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 28
-                    height: 28
-                    radius: 4
-                    color: connectBtnMouse.containsMouse && passwordInput.text
-                      ? Theme.accent : "transparent"
-
-                    Text {
-                      anchors.centerIn: parent
-                      text: "󰁔"
-                      color: passwordInput.text
-                        ? (connectBtnMouse.containsMouse ? Theme.bgBase : Theme.accent)
-                        : Theme.bgBorder
-                      font.pixelSize: 16
-                      font.family: "Symbols Nerd Font"
-                    }
-
-                    MouseArea {
-                      id: connectBtnMouse
-                      anchors.fill: parent
-                      hoverEnabled: true
-                      cursorShape: passwordInput.text ? Qt.PointingHandCursor : Qt.ArrowCursor
-                      onClicked: {
-                        if (passwordInput.text) {
-                          WirelessManager.connect(modelData.ssid, passwordInput.text)
-                        }
-                      }
-                    }
-                  }
+              PasswordInput {
+                id: passwordInput
+                onSubmitted: function(password) {
+                  WirelessManager.connect(modelData.ssid, password)
                 }
+                onCancelled: WirelessManager.cancelPending()
               }
 
               // Error message
