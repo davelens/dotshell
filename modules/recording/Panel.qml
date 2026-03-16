@@ -812,6 +812,45 @@ Scope {
                 }
               }
 
+              // Selection status
+              Row {
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                spacing: 4
+                visible: panel.selectedCount > 0
+
+                Text {
+                  text: panel.selectedCount + " item" + (panel.selectedCount > 1 ? "s" : "") + " selected (press "
+                  color: Theme.textSecondary
+                  font.pixelSize: 13
+                  anchors.verticalCenter: parent.verticalCenter
+                }
+
+                KeyboardTag {
+                  text: "q"
+                  anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Text {
+                  text: " or "
+                  color: Theme.textSecondary
+                  font.pixelSize: 13
+                  anchors.verticalCenter: parent.verticalCenter
+                }
+
+                KeyboardTag {
+                  text: "Esc"
+                  anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Text {
+                  text: " to cancel)"
+                  color: Theme.textSecondary
+                  font.pixelSize: 13
+                  anchors.verticalCenter: parent.verticalCenter
+                }
+              }
+
               // Delete all button
               Row {
                 id: deleteAllRow

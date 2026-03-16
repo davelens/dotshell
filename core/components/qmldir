@@ -7,6 +7,7 @@ Dropdown 1.0 Dropdown.qml
 PopupBase 1.0 PopupBase.qml
 FocusButton 1.0 FocusButton.qml
 HelpText 1.0 HelpText.qml
+KeyboardTag 1.0 KeyboardTag.qml
 FocusIconButton 1.0 FocusIconButton.qml
 FocusLink 1.0 FocusLink.qml
 FocusListItem 1.0 FocusListItem.qml
