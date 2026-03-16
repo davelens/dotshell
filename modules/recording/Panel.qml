@@ -881,13 +881,27 @@ Scope {
 
               property bool isVideo: panel.activeTab === "screencasts"
               property bool confirmDelete: false
+              property string detailDuration: ""
 
               Connections {
                 target: panel
                 function onViewModeChanged() {
                   detailContainer.confirmDelete = false
+                  detailContainer.detailDuration = ""
                   if (panel.viewMode === "detail") {
                     panel.detailFocusIndex = -1
+                    if (detailContainer.isVideo && panel.detailPath) {
+                      RecordingManager.requestDuration(panel.detailPath)
+                    }
+                  }
+                }
+              }
+
+              Connections {
+                target: RecordingManager
+                function onDurationReady(vPath, duration) {
+                  if (vPath === panel.detailPath) {
+                    detailContainer.detailDuration = duration
                   }
                 }
               }
@@ -1073,6 +1087,14 @@ Scope {
                     color: Theme.textMuted
                     font.pixelSize: 14
                     anchors.verticalCenter: parent.verticalCenter
+                  }
+
+                  Text {
+                    text: "(" + detailContainer.detailDuration + ")"
+                    color: Theme.textMuted
+                    font.pixelSize: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: detailContainer.isVideo && detailContainer.detailDuration !== ""
                   }
                 }
 

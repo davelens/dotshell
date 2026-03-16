@@ -224,6 +224,42 @@ Singleton {
 
   signal detailThumbnailReady(string videoPath, string thumbPath)
 
+  // Video duration via ffprobe
+  function requestDuration(videoPath) {
+    if (!videoPath) return
+    durationProc.videoPath = videoPath
+    durationProc.output = ""
+    durationProc.command = ["ffprobe", "-v", "error",
+      "-show_entries", "format=duration",
+      "-of", "default=noprint_wrappers=1:nokey=1",
+      videoPath
+    ]
+    durationProc.running = true
+  }
+
+  Process {
+    id: durationProc
+    property string videoPath: ""
+    property string output: ""
+    stdout: SplitParser {
+      onRead: data => { durationProc.output += data }
+    }
+    onExited: function(exitCode) {
+      if (exitCode !== 0) return
+      var secs = Math.floor(parseFloat(durationProc.output.trim()))
+      if (isNaN(secs) || secs < 0) return
+      var h = Math.floor(secs / 3600)
+      var m = Math.floor((secs % 3600) / 60)
+      var s = secs % 60
+      var formatted = h > 0
+        ? h + ":" + (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s
+        : m + ":" + (s < 10 ? "0" : "") + s
+      recordingManager.durationReady(videoPath, formatted)
+    }
+  }
+
+  signal durationReady(string videoPath, string duration)
+
   // File operations
   function deleteFile(filePath) {
     deleteFileProc.filePath = filePath
