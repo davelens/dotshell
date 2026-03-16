@@ -50,7 +50,31 @@ Scope {
       property int pendingDeleteIndex: -1
       readonly property int columnsPerRow: 5
 
+      // Multi-select (Space to toggle, path-based so it survives refiltering)
+      property var selectedPaths: ({})
+      property int selectedCount: 0
+
       onSelectedIndexChanged: pendingDeleteIndex = -1
+
+      function toggleSelection(idx) {
+        if (idx < 0 || idx >= filteredCount) return
+        var path = filteredFiles[idx]
+        var s = selectedPaths
+        if (s[path]) delete s[path]
+        else s[path] = true
+        selectedPaths = s
+        selectedCount = Object.keys(s).length
+      }
+
+      function clearSelection() {
+        selectedPaths = {}
+        selectedCount = 0
+      }
+
+      function isSelected(idx) {
+        if (idx < 0 || idx >= filteredFiles.length) return false
+        return !!selectedPaths[filteredFiles[idx]]
+      }
 
       // Detail focus cycling
       property var detailFocusables: []
@@ -81,6 +105,22 @@ Scope {
         // Clamp selection
         if (selectedIndex >= filteredCount)
           selectedIndex = filteredCount - 1
+
+        // Prune stale multi-selections
+        if (selectedCount > 0) {
+          var lookup = {}
+          for (var j = 0; j < filteredFiles.length; j++)
+            lookup[filteredFiles[j]] = true
+          var s = selectedPaths
+          var changed = false
+          for (var p in s) {
+            if (!lookup[p]) { delete s[p]; changed = true }
+          }
+          if (changed) {
+            selectedPaths = s
+            selectedCount = Object.keys(s).length
+          }
+        }
       }
 
       onActiveTabChanged: {
@@ -89,6 +129,7 @@ Scope {
         searchQuery = ""
         selectedIndex = -1
         pendingDeleteIndex = -1
+        clearSelection()
         updateFilteredFiles()
       }
 
@@ -110,6 +151,7 @@ Scope {
             panel.searchQuery = ""
             panel.selectedIndex = -1
             panel.pendingDeleteIndex = -1
+            panel.clearSelection()
             panel.updateFilteredFiles()
           }
         }
@@ -263,6 +305,8 @@ Scope {
               panel.contentItem.forceActiveFocus()
             } else if (panel.viewMode === "detail") {
               panel.returnToGrid()
+            } else if (panel.selectedCount > 0) {
+              panel.clearSelection()
             } else if (panel.pendingDeleteIndex >= 0) {
               panel.pendingDeleteIndex = -1
             } else {
@@ -279,6 +323,8 @@ Scope {
               panel.contentItem.forceActiveFocus()
             } else if (panel.viewMode === "detail") {
               panel.returnToGrid()
+            } else if (panel.selectedCount > 0) {
+              panel.clearSelection()
             } else if (panel.pendingDeleteIndex >= 0) {
               panel.pendingDeleteIndex = -1
             } else {
@@ -300,14 +346,18 @@ Scope {
 
           // -- Grid mode keys -----------------------------------------------
           if (panel.viewMode === "grid") {
-            // Ctrl+H: switch to previous tab (left)
+            // Ctrl+H: switch to previous tab (disabled during selection)
             if (event.key === Qt.Key_H && ctrl) {
-              panel.activeTab = (panel.activeTab === "screencasts") ? "screenshots" : "screencasts"
+              if (panel.selectedCount === 0) {
+                panel.activeTab = (panel.activeTab === "screencasts") ? "screenshots" : "screencasts"
+              }
               event.accepted = true
             }
-            // Ctrl+L: switch to next tab (right)
+            // Ctrl+L: switch to next tab (disabled during selection)
             else if (event.key === Qt.Key_L && ctrl) {
-              panel.activeTab = (panel.activeTab === "screenshots") ? "screencasts" : "screenshots"
+              if (panel.selectedCount === 0) {
+                panel.activeTab = (panel.activeTab === "screenshots") ? "screencasts" : "screenshots"
+              }
               event.accepted = true
             }
             // Ctrl+J: page down
@@ -340,17 +390,29 @@ Scope {
               panel.moveUp()
               event.accepted = true
             }
-            // Enter / Space: open selected item
-            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+            // Enter: open detail view for focused item
+            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
               panel.openSelected()
               event.accepted = true
             }
-            // d: delete focused file (two-step: first press marks, second confirms)
-            else if (event.key === Qt.Key_D) {
-              if (panel.pendingDeleteIndex === panel.selectedIndex && panel.selectedIndex >= 0) {
-                var path = panel.filteredFiles[panel.selectedIndex]
+            // Space: toggle selection on focused item
+            else if (event.key === Qt.Key_Space) {
+              if (panel.ensureSelection()) {
                 panel.pendingDeleteIndex = -1
-                RecordingManager.deleteFile(path)
+                panel.toggleSelection(panel.selectedIndex)
+              }
+              event.accepted = true
+            }
+            // d: delete selected files or focused file (two-step when no selection)
+            else if (event.key === Qt.Key_D) {
+              if (panel.selectedCount > 0) {
+                var paths = Object.keys(panel.selectedPaths)
+                panel.clearSelection()
+                RecordingManager.deleteFiles(paths)
+              } else if (panel.pendingDeleteIndex === panel.selectedIndex && panel.selectedIndex >= 0) {
+                var singlePath = panel.filteredFiles[panel.selectedIndex]
+                panel.pendingDeleteIndex = -1
+                RecordingManager.deleteFile(singlePath)
               } else if (panel.selectedIndex >= 0 && panel.selectedIndex < panel.filteredCount) {
                 panel.pendingDeleteIndex = panel.selectedIndex
               }
@@ -563,7 +625,7 @@ Scope {
                   width: gridView.cellWidth
                   height: gridView.cellHeight
 
-                  // Selection focus ring
+                  // Focus / selection ring
                   Rectangle {
                     anchors.centerIn: parent
                     width: parent.width - 2
@@ -571,8 +633,16 @@ Scope {
                     radius: 9
                     color: "transparent"
                     border.width: 2
-                    border.color: index === panel.pendingDeleteIndex ? Theme.danger : Theme.focusRing
-                    visible: index === panel.selectedIndex
+                    border.color: {
+                      if (index === panel.selectedIndex && index === panel.pendingDeleteIndex)
+                        return Theme.danger
+                      if (index === panel.selectedIndex)
+                        return Theme.focusRing
+                      if (panel.isSelected(index))
+                        return Theme.accent
+                      return Theme.focusRing
+                    }
+                    visible: index === panel.selectedIndex || panel.isSelected(index)
                     z: 1
                   }
 
@@ -581,9 +651,21 @@ Scope {
                     anchors.fill: parent
                     anchors.margins: 4
                     radius: 6
-                    color: index === panel.selectedIndex ? Theme.bgCardHover : Theme.bgCard
+                    color: {
+                      if (index === panel.pendingDeleteIndex)
+                        return Qt.rgba(Theme.danger.r, Theme.danger.g, Theme.danger.b, 0.15)
+                      if (index === panel.selectedIndex)
+                        return Theme.bgCardHover
+                      return Theme.bgCard
+                    }
                     border.width: index === panel.selectedIndex ? 2 : 1
-                    border.color: index === panel.selectedIndex ? (index === panel.pendingDeleteIndex ? Theme.danger : Theme.focusRing) : Theme.bgBorder
+                    border.color: {
+                      if (index === panel.pendingDeleteIndex)
+                        return Theme.danger
+                      if (index === panel.selectedIndex)
+                        return Theme.focusRing
+                      return Theme.bgBorder
+                    }
                     clip: true
 
                     property string filePath: index < panel.filteredFiles.length ? panel.filteredFiles[index] : ""

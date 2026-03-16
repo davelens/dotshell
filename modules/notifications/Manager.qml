@@ -106,6 +106,19 @@ Singleton {
       notification.tracked = true
       addToHistory(notification)
 
+      // Listen for property updates triggered by replaces_id replacements.
+      // Quickshell updates the Notification object in-place but does not
+      // re-emit the onNotification signal, so we react to individual
+      // property changes instead.
+      notification.summaryChanged.connect(function() {
+        updatePopup(notification)
+        updateHistory(notification)
+      })
+      notification.bodyChanged.connect(function() {
+        updatePopup(notification)
+        updateHistory(notification)
+      })
+
       // Show popup unless DND active (critical bypasses DND)
       var isCritical = notification.urgency === NotificationUrgency.Critical
       if (!notificationManager.isDndActive || (isCritical && notificationManager.criticalBypassDnd)) {
@@ -194,6 +207,32 @@ Singleton {
     // Remove excess
     while (popupModel.count > 5) {
       popupModel.remove(popupModel.count - 1)
+    }
+  }
+
+  function updatePopup(notification) {
+    // Update an existing popup entry when a notification is replaced via
+    // replaces_id. If the popup already expired, re-show it.
+    for (var i = 0; i < popupModel.count; i++) {
+      if (popupModel.get(i).notificationId === notification.id) {
+        popupModel.set(i, {
+          notificationId: notification.id,
+          appName: getAppName(notification),
+          appIcon: getAppIcon(notification),
+          image: getImage(notification),
+          summary: notification.summary || "",
+          body: notification.body || "",
+          urgency: notification.urgency,
+          timestamp: new Date()
+        })
+        return
+      }
+    }
+
+    // Popup was already dismissed/expired — re-show it
+    var isCritical = notification.urgency === NotificationUrgency.Critical
+    if (!notificationManager.isDndActive || (isCritical && notificationManager.criticalBypassDnd)) {
+      showPopup(notification)
     }
   }
 
@@ -379,6 +418,24 @@ Singleton {
     updateUnreadCount()
   }
 
+  function updateHistory(notification) {
+    // Update an existing history entry when a notification is replaced via
+    // replaces_id. Searches all groups for the matching notification ID.
+    var newHistory = history.slice()
+
+    for (var i = 0; i < newHistory.length; i++) {
+      for (var j = 0; j < newHistory[i].notifications.length; j++) {
+        if (newHistory[i].notifications[j].id === notification.id) {
+          newHistory[i].notifications[j].summary = notification.summary || ""
+          newHistory[i].notifications[j].body = notification.body || ""
+          newHistory[i].notifications[j].timestamp = new Date()
+          history = newHistory
+          return
+        }
+      }
+    }
+  }
+
   function removeFromHistory(notificationId) {
     var newHistory = history.slice()
 
@@ -436,6 +493,26 @@ Singleton {
     history = newHistory
   }
 
+  function dismissById(notificationId) {
+    // Dismiss a single notification by its ID (popup + history + server)
+    for (var i = 0; i < popupModel.count; i++) {
+      if (popupModel.get(i).notificationId === notificationId) {
+        popupModel.remove(i)
+        break
+      }
+    }
+
+    removeFromHistory(notificationId)
+
+    for (var j = 0; j < server.trackedNotifications.values.length; j++) {
+      var n = server.trackedNotifications.values[j]
+      if (n.id === notificationId) {
+        n.dismiss()
+        break
+      }
+    }
+  }
+
   function toggleDnd() {
     dndEnabled = !dndEnabled
   }
@@ -479,6 +556,7 @@ Singleton {
       Qt.callLater(notificationManager.markAllAsRead)
     }
     function hide(): void { notificationManager.closePanel() }
+    function dismiss(id: string): void { notificationManager.dismissById(parseInt(id)) }
     function clearAll(): void { notificationManager.clearHistory() }
   }
 

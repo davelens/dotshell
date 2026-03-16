@@ -211,6 +211,20 @@ Singleton {
     }
   }
 
+  function deleteFiles(paths) {
+    if (!paths || paths.length === 0) return
+    var escaped = paths.map(function(p) { return "'" + p.replace(/'/g, "'\\''") + "'" })
+    deleteFilesProc.command = ["sh", "-c", "rm -f " + escaped.join(" ")]
+    deleteFilesProc.running = true
+  }
+
+  Process {
+    id: deleteFilesProc
+    onExited: {
+      recordingManager.refreshFiles()
+    }
+  }
+
   function deleteAll(type) {
     var dir = (type === "screenshots") ? screenshotDir : screencastDir
     var pattern = (type === "screenshots")
