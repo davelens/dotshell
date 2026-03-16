@@ -83,6 +83,8 @@ ScrollView {
     var items = []
     for (var i = 0; i < outputs.length; i++) {
       var o = outputs[i]
+      if (!o.active) continue
+
       var mode = o.current_mode || (o.modes && o.modes.length > 0 ? o.modes[0] : null)
       var w = mode ? mode.width : 1920
       var h = mode ? mode.height : 1080
@@ -91,21 +93,6 @@ ScrollView {
       var posY = o.rect ? o.rect.y : 0
       var logicalW = Math.round(w / scale)
       var logicalH = Math.round(h / scale)
-
-      // Disabled monitors have 0,0 rect; offset them to the right of active monitors
-      if (!o.active) {
-        var maxRight = 0
-        for (var j = 0; j < outputs.length; j++) {
-          if (outputs[j].active && outputs[j].rect) {
-            var oj = outputs[j]
-            var ojMode = oj.current_mode || (oj.modes && oj.modes.length > 0 ? oj.modes[0] : null)
-            var ojW = ojMode ? ojMode.width : 1920
-            var ojScale = oj.scale || 1.0
-            maxRight = Math.max(maxRight, oj.rect.x + Math.round(ojW / ojScale))
-          }
-        }
-        posX = maxRight + 100
-      }
 
       items.push({
         name: o.name,
@@ -125,14 +112,10 @@ ScrollView {
     layoutItems = items
     layoutDirty = false
     selectedIndex = -1
-    var count = 0
-    for (var k = 0; k < items.length; k++) {
-      if (items[k].active) count++
-    }
-    activeCount = count
+    activeCount = items.length
 
     // Cancel drag if we no longer have multiple active monitors
-    if (count <= 1 && dragIndex >= 0) {
+    if (activeCount <= 1 && dragIndex >= 0) {
       dragIndex = -1
       guideLineX = -1
       guideLineY = -1
