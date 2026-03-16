@@ -47,7 +47,10 @@ Scope {
 
       // Grid navigation
       property int selectedIndex: -1
+      property int pendingDeleteIndex: -1
       readonly property int columnsPerRow: 5
+
+      onSelectedIndexChanged: pendingDeleteIndex = -1
 
       // Detail focus cycling
       property var detailFocusables: []
@@ -85,6 +88,7 @@ Scope {
         detailPath = ""
         searchQuery = ""
         selectedIndex = -1
+        pendingDeleteIndex = -1
         updateFilteredFiles()
       }
 
@@ -105,6 +109,7 @@ Scope {
             panel.detailPath = ""
             panel.searchQuery = ""
             panel.selectedIndex = -1
+            panel.pendingDeleteIndex = -1
             panel.updateFilteredFiles()
           }
         }
@@ -258,6 +263,8 @@ Scope {
               panel.contentItem.forceActiveFocus()
             } else if (panel.viewMode === "detail") {
               panel.returnToGrid()
+            } else if (panel.pendingDeleteIndex >= 0) {
+              panel.pendingDeleteIndex = -1
             } else {
               RecordingManager.closePanel()
             }
@@ -272,6 +279,8 @@ Scope {
               panel.contentItem.forceActiveFocus()
             } else if (panel.viewMode === "detail") {
               panel.returnToGrid()
+            } else if (panel.pendingDeleteIndex >= 0) {
+              panel.pendingDeleteIndex = -1
             } else {
               RecordingManager.closePanel()
             }
@@ -334,6 +343,17 @@ Scope {
             // Enter / Space: open selected item
             else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
               panel.openSelected()
+              event.accepted = true
+            }
+            // d: delete focused file (two-step: first press marks, second confirms)
+            else if (event.key === Qt.Key_D) {
+              if (panel.pendingDeleteIndex === panel.selectedIndex && panel.selectedIndex >= 0) {
+                var path = panel.filteredFiles[panel.selectedIndex]
+                panel.pendingDeleteIndex = -1
+                RecordingManager.deleteFile(path)
+              } else if (panel.selectedIndex >= 0 && panel.selectedIndex < panel.filteredCount) {
+                panel.pendingDeleteIndex = panel.selectedIndex
+              }
               event.accepted = true
             }
           }
@@ -551,7 +571,7 @@ Scope {
                     radius: 9
                     color: "transparent"
                     border.width: 2
-                    border.color: Theme.focusRing
+                    border.color: index === panel.pendingDeleteIndex ? Theme.danger : Theme.focusRing
                     visible: index === panel.selectedIndex
                     z: 1
                   }
@@ -563,7 +583,7 @@ Scope {
                     radius: 6
                     color: index === panel.selectedIndex ? Theme.bgCardHover : Theme.bgCard
                     border.width: index === panel.selectedIndex ? 2 : 1
-                    border.color: index === panel.selectedIndex ? Theme.focusRing : Theme.bgBorder
+                    border.color: index === panel.selectedIndex ? (index === panel.pendingDeleteIndex ? Theme.danger : Theme.focusRing) : Theme.bgBorder
                     clip: true
 
                     property string filePath: index < panel.filteredFiles.length ? panel.filteredFiles[index] : ""
