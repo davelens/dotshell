@@ -977,18 +977,18 @@ Scope {
                       asynchronous: true
                       cache: false
 
-                      property string thumbPath: panel.detailPath ? RecordingManager.getThumbnailPath(panel.detailPath) : ""
-                      source: thumbPath ? "file://" + thumbPath : ""
+                      property string detailThumbPath: panel.detailPath ? RecordingManager.getDetailThumbnailPath(panel.detailPath) : ""
+                      source: detailThumbPath ? "file://" + detailThumbPath : ""
 
                       onStatusChanged: {
                         if (status === Image.Error && panel.detailPath) {
-                          RecordingManager.requestThumbnail(panel.detailPath)
+                          RecordingManager.requestDetailThumbnail(panel.detailPath)
                         }
                       }
 
                       Connections {
                         target: RecordingManager
-                        function onThumbnailReady(vPath, tPath) {
+                        function onDetailThumbnailReady(vPath, tPath) {
                           if (vPath === panel.detailPath) {
                             detailVideoThumb.source = ""
                             detailVideoThumb.source = "file://" + tPath

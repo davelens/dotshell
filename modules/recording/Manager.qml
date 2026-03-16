@@ -193,6 +193,37 @@ Singleton {
 
   signal thumbnailReady(string videoPath, string thumbPath)
 
+  // High-resolution detail thumbnail (single job, only one detail view at a time)
+  function getDetailThumbnailPath(videoPath) {
+    var hash = Qt.md5(videoPath)
+    return cacheDir + "/" + hash + "-detail.png"
+  }
+
+  function requestDetailThumbnail(videoPath) {
+    if (!videoPath) return
+    var thumbPath = getDetailThumbnailPath(videoPath)
+    detailThumbProc.videoPath = videoPath
+    detailThumbProc.thumbPath = thumbPath
+    detailThumbProc.command = ["sh", "-c",
+      "mkdir -p '" + cacheDir + "' && " +
+      "ffmpeg -y -i '" + videoPath + "' -vframes 1 -ss 00:00:01 -vf 'scale=1280:-1' '" + thumbPath + "' 2>/dev/null"
+    ]
+    detailThumbProc.running = true
+  }
+
+  Process {
+    id: detailThumbProc
+    property string videoPath: ""
+    property string thumbPath: ""
+    onExited: function(exitCode) {
+      if (exitCode === 0) {
+        recordingManager.detailThumbnailReady(videoPath, thumbPath)
+      }
+    }
+  }
+
+  signal detailThumbnailReady(string videoPath, string thumbPath)
+
   // File operations
   function deleteFile(filePath) {
     deleteFileProc.filePath = filePath
