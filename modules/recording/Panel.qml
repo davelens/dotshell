@@ -934,6 +934,17 @@ Scope {
                   Item {
                     anchors.fill: parent
                     visible: !detailContainer.isVideo && panel.detailPath !== ""
+                    activeFocusOnTab: true
+                    property bool showFocusRing: false
+                    property bool keyboardFocus: false
+
+                    Keys.onPressed: function(event) {
+                      if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                        if (panel.detailPath)
+                          RecordingManager.openFile(panel.detailPath)
+                        event.accepted = true
+                      }
+                    }
 
                     Image {
                       id: detailImage
@@ -942,6 +953,17 @@ Scope {
                       source: parent.visible ? "file://" + panel.detailPath : ""
                       asynchronous: true
                       cache: false
+                    }
+
+                    // Focus ring
+                    Rectangle {
+                      anchors.fill: parent
+                      color: "transparent"
+                      radius: 6
+                      border.width: 2
+                      border.color: Theme.focusRing
+                      visible: parent.showFocusRing && parent.keyboardFocus
+                      z: 2
                     }
 
                     // Open in previewer overlay
@@ -973,6 +995,8 @@ Scope {
                       hoverEnabled: true
                       cursorShape: Qt.PointingHandCursor
                       onClicked: {
+                        parent.keyboardFocus = false
+                        parent.showFocusRing = false
                         if (panel.detailPath)
                           RecordingManager.openFile(panel.detailPath)
                       }
@@ -983,6 +1007,17 @@ Scope {
                   Item {
                     anchors.fill: parent
                     visible: detailContainer.isVideo && panel.detailPath !== ""
+                    activeFocusOnTab: true
+                    property bool showFocusRing: false
+                    property bool keyboardFocus: false
+
+                    Keys.onPressed: function(event) {
+                      if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                        if (panel.detailPath)
+                          RecordingManager.openFile(panel.detailPath)
+                        event.accepted = true
+                      }
+                    }
 
                     Image {
                       id: detailVideoThumb
@@ -1009,6 +1044,17 @@ Scope {
                           }
                         }
                       }
+                    }
+
+                    // Focus ring
+                    Rectangle {
+                      anchors.fill: parent
+                      color: "transparent"
+                      radius: 6
+                      border.width: 2
+                      border.color: Theme.focusRing
+                      visible: parent.showFocusRing && parent.keyboardFocus
+                      z: 2
                     }
 
                     // Play button overlay
@@ -1039,6 +1085,8 @@ Scope {
                       hoverEnabled: true
                       cursorShape: Qt.PointingHandCursor
                       onClicked: {
+                        parent.keyboardFocus = false
+                        parent.showFocusRing = false
                         if (panel.detailPath)
                           RecordingManager.openFile(panel.detailPath)
                       }
