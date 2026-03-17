@@ -1,8 +1,8 @@
 import Quickshell
 import QtQuick
 import QtQuick.Controls
-import "../.."
-import "../../core/components"
+import qs
+import qs.core.components
 
 Variants {
   id: bluetoothPopup

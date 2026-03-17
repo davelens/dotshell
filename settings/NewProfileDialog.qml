@@ -1,6 +1,6 @@
 import QtQuick
-import ".."
-import "../core/components"
+import qs
+import qs.core.components
 
 DialogOverlay {
   id: dialog

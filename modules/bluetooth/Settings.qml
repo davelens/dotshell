@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
-import "../.."
-import "../../core/components"
+import qs
+import qs.core.components
 
 ScrollView {
   id: settingsRoot

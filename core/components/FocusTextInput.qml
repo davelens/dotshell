@@ -1,5 +1,5 @@
 import QtQuick
-import "../.."
+import qs
 
 // Reusable styled text input with focus ring, placeholder, and themed
 // border highlight. Follows the Focus* component contract so it

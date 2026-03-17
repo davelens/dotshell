@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell.Services.UPower
-import "../.."
-import "../../core/components"
+import qs
+import qs.core.components
 
 Item {
   id: battery

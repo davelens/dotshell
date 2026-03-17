@@ -3,8 +3,8 @@ import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 import QtQuick.Controls
-import "../.."
-import "../../core/components"
+import qs
+import qs.core.components
 
 Scope {
   id: root

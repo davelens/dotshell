@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import "../.."
+import qs
 
 // Reusable expandable dropdown component
 // Can display any list of items with customizable display

@@ -1,7 +1,7 @@
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
-import "../.."
+import qs
 
 // Shared PanelWindow base for popup modules. Provides layer shell config,
 // ESC/ctrl+[ key handling, click-outside close, and a positioned content

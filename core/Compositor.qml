@@ -3,7 +3,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
-import ".."
+import qs
 
 // Core compositor abstraction. Auto-detects the active compositor (sway/niri)
 // and provides command helpers so modules don't hardcode compositor commands.

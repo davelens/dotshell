@@ -1,6 +1,6 @@
 import Quickshell
 import QtQuick
-import "../.."
+import qs
 
 // Reusable tooltip base for hover/focus info popups. Provides standard
 // anchoring, background color, border, and auto-sizing with padding.

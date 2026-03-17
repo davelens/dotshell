@@ -1,5 +1,5 @@
 import QtQuick
-import "../.."
+import qs
 
 Text {
   color: Theme.textSecondary

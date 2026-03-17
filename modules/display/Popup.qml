@@ -1,7 +1,7 @@
 import Quickshell
 import QtQuick
-import "../.."
-import "../../core/components"
+import qs
+import qs.core.components
 
 Variants {
   model: PopupManager.isOpen("display") && ScreenManager.primaryScreen

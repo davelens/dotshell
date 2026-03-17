@@ -3,8 +3,8 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
-import "../.."
-import "../../core/components"
+import qs
+import qs.core.components
 
 Rectangle {
   id: card

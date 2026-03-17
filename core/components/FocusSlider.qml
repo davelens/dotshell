@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import "../.."
+import qs
 
 Item {
   id: slider

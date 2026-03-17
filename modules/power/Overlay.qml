@@ -1,8 +1,8 @@
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
-import "../.."
-import "../../core/components"
+import qs
+import qs.core.components
 
 Variants {
   model: ScreenManager.primaryScreen ? [ScreenManager.primaryScreen] : []

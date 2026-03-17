@@ -1,8 +1,8 @@
 import Quickshell
 import Quickshell.Services.Pipewire
 import QtQuick
-import "../.."
-import "../../core/components"
+import qs
+import qs.core.components
 
 BarButton {
   id: button

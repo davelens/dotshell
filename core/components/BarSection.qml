@@ -1,5 +1,5 @@
 import QtQuick
-import "../.."
+import qs
 
 // Reusable bar section that dynamically loads module components from a
 // filtered StatusbarManager items list. Used for the left and center

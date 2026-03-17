@@ -1,5 +1,5 @@
 import QtQuick
-import "../.."
+import qs
 
 Row {
   property var screen

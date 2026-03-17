@@ -1,5 +1,5 @@
 import QtQuick
-import "../.."
+import qs
 
 // Password input field with visibility toggle and submit button.
 // Emits submitted(password) on Enter or submit button click, and

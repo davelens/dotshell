@@ -3,7 +3,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
-import ".."
+import qs
 
 // Manages the data directory at $XDG_DATA_HOME/dotshell/.
 // Provides profile-aware state paths and centralized defaults management.
