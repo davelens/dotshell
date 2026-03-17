@@ -5,7 +5,7 @@ import Quickshell.Services.Pipewire
 import QtQuick
 import "core/components"
 
-Scope {
+ShellRoot {
   id: root
 
   SettingsPanel {}
