@@ -1,7 +1,6 @@
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Services.Pipewire
 import QtQuick
 import "core/components"
 
@@ -40,11 +39,6 @@ ShellRoot {
         }
       }
     }
-  }
-
-  // Pipewire tracking
-  PwObjectTracker {
-    objects: Pipewire.defaultAudioSink ? [Pipewire.defaultAudioSink] : []
   }
 
   // Makes the statusbar only appear on primary screen

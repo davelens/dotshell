@@ -7,6 +7,10 @@ import "../../core/components"
 BarButton {
   id: button
 
+  PwObjectTracker {
+    objects: Pipewire.defaultAudioSink ? [Pipewire.defaultAudioSink] : []
+  }
+
   property var sink: Pipewire.defaultAudioSink
   property real volume: sink && sink.audio ? sink.audio.volume : 0
   property bool muted: sink && sink.audio ? sink.audio.muted : false
