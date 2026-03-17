@@ -34,6 +34,25 @@ theme_exists() {
   [[ -f "$USER_THEMES_DIR/$1.json" ]] || [[ -f "$BUNDLED_THEMES_DIR/$1.json" ]]
 }
 
+# Resolve the full path to a theme JSON file (user overrides take precedence)
+resolve_theme_path() {
+  if [[ -f "$USER_THEMES_DIR/$1.json" ]]; then
+    echo "$USER_THEMES_DIR/$1.json"
+  elif [[ -f "$BUNDLED_THEMES_DIR/$1.json" ]]; then
+    echo "$BUNDLED_THEMES_DIR/$1.json"
+  fi
+}
+
+# Regenerate GTK 4 CSS from a theme JSON file
+update_gtk_css() {
+  local script_dir
+  script_dir="$(dirname "$(readlink -f "$0")")"
+  local theme_path
+  theme_path="$(resolve_theme_path "$1")"
+  [[ -z "$theme_path" ]] && return 1
+  "$script_dir/generate-gtk-css" "$theme_path"
+}
+
 # -- bar ---------------------------------------------------------------------
 
 bar_usage() {
@@ -275,7 +294,20 @@ theme_set() {
   fi
 
   ipc theme set "$name"
+  update_gtk_css "$name"
   echo "Switched theme to '$name'"
+}
+
+theme_refresh() {
+  local current
+  current="$(active_theme)"
+
+  if ! theme_exists "$current"; then
+    die "active theme '$current' not found"
+  fi
+
+  update_gtk_css "$current"
+  echo "GTK CSS regenerated for '$current'"
 }
 
 theme_usage() {
@@ -286,6 +318,7 @@ Subcommands:
   list          List available themes
   set <name>    Switch to a theme
   current       Show active theme name
+  refresh       Regenerate GTK CSS for the active theme
 EOF
 }
 
@@ -401,6 +434,7 @@ theme)
   list) theme_list ;;
   set) theme_set "${3:-}" ;;
   current) ipc theme current ;;
+  refresh) theme_refresh ;;
   -h | --help | "") theme_usage ;;
   *) die "unknown subcommand: theme ${2:-}" ;;
   esac

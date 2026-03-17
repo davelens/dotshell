@@ -58,7 +58,7 @@ _dshell_complete() {
 		profile) COMPREPLY=($(compgen -W "list current enable" -- "$cur")) ;;
 		screen-recording) COMPREPLY=($(compgen -W "files" -- "$cur")) ;;
 		settings) COMPREPLY=($(compgen -W "toggle show-category" -- "$cur")) ;;
-		theme) COMPREPLY=($(compgen -W "list set current" -- "$cur")) ;;
+		theme) COMPREPLY=($(compgen -W "list set current refresh" -- "$cur")) ;;
 		esac
 		;;
 	3)
