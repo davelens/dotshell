@@ -4,31 +4,31 @@ import QtQuick
 import qs
 import qs.core.components
 
-Variants {
-  model: ScreenManager.primaryScreen ? [ScreenManager.primaryScreen] : []
+Scope {
+  Variants {
+    model: PowerManager.menuOpen && ScreenManager.primaryScreen
+             ? [ScreenManager.primaryScreen] : []
 
-  PanelWindow {
-    required property var modelData
+    PanelWindow {
+      required property var modelData
 
-    id: overlay
-    screen: modelData
-    // Keep the surface always mapped so the QML tree stays laid out.
-    // Use layer switching to prevent input interception when closed.
-    visible: true
+      id: overlay
+      screen: modelData
+      visible: true
 
-    anchors {
-      top: true
-      left: true
-      right: true
-      bottom: true
-    }
+      anchors {
+        top: true
+        left: true
+        right: true
+        bottom: true
+      }
 
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
+      color: "transparent"
+      exclusionMode: ExclusionMode.Ignore
 
-    WlrLayershell.namespace: "quickshell-power-menu"
-    WlrLayershell.layer: PowerManager.menuOpen ? WlrLayer.Overlay : WlrLayer.Background
-    WlrLayershell.keyboardFocus: PowerManager.menuOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+      WlrLayershell.namespace: "quickshell-power-menu"
+      WlrLayershell.layer: WlrLayer.Overlay
+      WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     // Keyboard focus cycling state
     property var focusables: []
@@ -85,19 +85,19 @@ Variants {
       focusables = []
     }
 
+    // Auto-select "suspend" when the overlay is created
+    Component.onCompleted: {
+      Qt.callLater(function() {
+        overlay.refreshFocusables()
+        if (overlay.focusables.length > 1) {
+          overlay.focusIndex = 1
+          overlay.focusItem(overlay.focusables[1])
+        }
+      })
+    }
+
     Connections {
       target: PowerManager
-      function onMenuOpenChanged() {
-        if (PowerManager.menuOpen) {
-          overlay.resetFocus()
-          overlay.refreshFocusables()
-          // Auto-select "suspend" (index 1 in actions)
-          if (overlay.focusables.length > 1) {
-            overlay.focusIndex = 1
-            overlay.focusItem(overlay.focusables[1])
-          }
-        }
-      }
       function onPendingActionChanged() {
         if (PowerManager.pendingAction !== "") {
           overlay.resetFocus()
@@ -111,7 +111,7 @@ Variants {
     }
 
     contentItem {
-      focus: PowerManager.menuOpen
+      focus: true
       Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Escape
             || (event.key === Qt.Key_BracketLeft && (event.modifiers & Qt.ControlModifier))) {
@@ -141,7 +141,6 @@ Variants {
     Rectangle {
       anchors.fill: parent
       color: Theme.overlay
-      visible: PowerManager.menuOpen
 
       MouseArea {
         anchors.fill: parent
@@ -153,7 +152,6 @@ Variants {
     Rectangle {
       id: card
       anchors.centerIn: parent
-      visible: PowerManager.menuOpen
       width: 320
       height: cardContent.height + 48
       radius: 12
@@ -366,5 +364,6 @@ Variants {
         }
       }
     }
+  }
   }
 }
