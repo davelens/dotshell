@@ -12,6 +12,7 @@ Singleton {
   property int busyCount: 0
   property int idleCount: 0
   property int errorCount: 0
+  property int questionCount: 0
 
   // Per-instance details: [{project, cwd, port, status, sessionTitle}]
   property var instances: []
@@ -90,6 +91,7 @@ Singleton {
         manager.busyCount = 0
         manager.idleCount = 0
         manager.errorCount = 0
+        manager.questionCount = 0
         return
       }
 
@@ -110,6 +112,7 @@ Singleton {
   // Pending status queries
   property var _pending: []
   property int _pendingIdx: 0
+  property string _pendingSessionId: ""
 
   function _queryNext() {
     if (_pendingIdx >= _pending.length) {
@@ -119,14 +122,17 @@ Singleton {
       var busy = 0
       var idle = 0
       var errors = 0
+      var questions = 0
       for (var i = 0; i < _pending.length; i++) {
         if (_pending[i].status === "busy") busy++
         else if (_pending[i].status === "idle") idle++
         else if (_pending[i].status === "error") errors++
+        else if (_pending[i].status === "input") questions++
       }
       manager.busyCount = busy
       manager.idleCount = idle
       manager.errorCount = errors
+      manager.questionCount = questions
       return
     }
 
@@ -134,6 +140,19 @@ Singleton {
     statusProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
       "http://127.0.0.1:" + instance.port + "/session/status"]
     statusProc.running = true
+  }
+
+  // Advance to session title fetch or next instance
+  function _fetchSessionOrAdvance() {
+    if (manager._pendingSessionId !== "") {
+      var instance = manager._pending[manager._pendingIdx]
+      sessionProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
+        "http://127.0.0.1:" + instance.port + "/session/" + manager._pendingSessionId]
+      sessionProc.running = true
+    } else {
+      manager._pendingIdx++
+      manager._queryNext()
+    }
   }
 
   // Step 2: query each instance's session status via HTTP
@@ -146,7 +165,7 @@ Singleton {
     }
     onExited: function(exitCode, exitStatus) {
       var idx = manager._pendingIdx
-      var sessionId = ""
+      manager._pendingSessionId = ""
       if (idx < manager._pending.length) {
         if (exitCode === 0 && statusProc.output.trim() !== "") {
           try {
@@ -165,7 +184,7 @@ Singleton {
             else manager._pending[idx].status = "idle"
 
             // Pick the first session ID for title lookup
-            if (keys.length > 0) sessionId = keys[0]
+            if (keys.length > 0) manager._pendingSessionId = keys[0]
           } catch(e) {
             manager._pending[idx].status = "error"
           }
@@ -175,20 +194,43 @@ Singleton {
         }
       }
 
-      // If we have a session ID, fetch its title before advancing
-      if (sessionId !== "") {
+      // If the instance is busy, check for pending questions
+      if (manager._pending[idx].status === "busy") {
         var instance = manager._pending[idx]
-        sessionProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
-          "http://127.0.0.1:" + instance.port + "/session/" + sessionId]
-        sessionProc.running = true
+        questionProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
+          "http://127.0.0.1:" + instance.port + "/question"]
+        questionProc.running = true
       } else {
-        manager._pendingIdx++
-        manager._queryNext()
+        manager._fetchSessionOrAdvance()
       }
     }
   }
 
-  // Step 3: fetch session title for the active session
+  // Step 3: check for pending questions (only when busy)
+  Process {
+    id: questionProc
+    property string output: ""
+    onStarted: output = ""
+    stdout: SplitParser {
+      onRead: data => questionProc.output += data + "\n"
+    }
+    onExited: function(exitCode, exitStatus) {
+      var idx = manager._pendingIdx
+      if (idx < manager._pending.length && exitCode === 0 && questionProc.output.trim() !== "") {
+        try {
+          var questions = JSON.parse(questionProc.output.trim())
+          if (Array.isArray(questions) && questions.length > 0)
+            manager._pending[idx].status = "input"
+        } catch(e) {
+          // Parse failed — keep busy status
+        }
+      }
+
+      manager._fetchSessionOrAdvance()
+    }
+  }
+
+  // Step 4: fetch session title for the active session
   Process {
     id: sessionProc
     property string output: ""

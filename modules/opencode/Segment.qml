@@ -55,7 +55,7 @@ Item {
 
     Text {
       anchors.verticalCenter: parent.verticalCenter
-      text: OpencodeManager.errorCount
+      text: OpencodeManager.errorCount + OpencodeManager.questionCount
       color: Theme.danger
       font.pixelSize: 14
     }
@@ -94,12 +94,13 @@ Item {
               text: {
                 if (modelData.status === "busy") return "󰝤"
                 if (modelData.status === "idle") return "󰝦"
+                if (modelData.status === "input") return ""
                 return "󰝤"
               }
               color: {
                 if (modelData.status === "busy") return Theme.warning
                 if (modelData.status === "idle") return Theme.success
-                if (modelData.status === "error") return Theme.danger
+                if (modelData.status === "error" || modelData.status === "input") return Theme.danger
                 return Theme.textMuted
               }
               font.pixelSize: 14
@@ -121,7 +122,7 @@ Item {
               color: {
                 if (modelData.status === "busy") return Theme.warning
                 if (modelData.status === "idle") return Theme.success
-                if (modelData.status === "error") return Theme.danger
+                if (modelData.status === "error" || modelData.status === "input") return Theme.danger
                 return Theme.textMuted
               }
               font.pixelSize: 14
