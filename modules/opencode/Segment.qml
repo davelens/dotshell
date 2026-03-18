@@ -113,10 +113,11 @@ Item {
               color: Theme.textPrimary
               font.pixelSize: 14
               elide: Text.ElideRight
-              width: parent.width - 70
+              width: parent.width - statusIcon.width - statusLabel.width - 16
             }
 
             Text {
+              id: statusLabel
               anchors.verticalCenter: parent.verticalCenter
               text: modelData.status
               color: {
@@ -126,6 +127,7 @@ Item {
                 return Theme.textMuted
               }
               font.pixelSize: 14
+              width: 38
               horizontalAlignment: Text.AlignRight
             }
           }
