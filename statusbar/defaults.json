@@ -39,6 +39,12 @@
   ],
   "right": [
     {
+      "id": "wallpaper",
+      "enabled": true,
+      "marginLeft": 0,
+      "marginRight": 10
+    },
+    {
       "id": "system-load",
       "enabled": true,
       "marginLeft": 0,

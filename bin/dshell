@@ -333,6 +333,18 @@ Subcommands:
 EOF
 }
 
+# -- wallpaper ---------------------------------------------------------------
+
+wallpaper_usage() {
+  cat <<EOF
+Usage: dshell wallpaper <subcommand>
+
+Subcommands:
+  browse          Toggle the wallpaper browser panel
+  set <path>      Set a wallpaper by file path
+EOF
+}
+
 # -- dispatch ----------------------------------------------------------------
 
 usage() {
@@ -349,6 +361,7 @@ Commands:
   screen-recording  Screen recording file browser
   settings          Settings panel
   theme             Theme management
+  wallpaper         Wallpaper browser and setter
 EOF
 }
 
@@ -437,6 +450,17 @@ theme)
   refresh) theme_refresh ;;
   -h | --help | "") theme_usage ;;
   *) die "unknown subcommand: theme ${2:-}" ;;
+  esac
+  ;;
+wallpaper)
+  case "${2:-}" in
+  browse) ipc wallpaper browse ;;
+  set)
+    [[ -z "${3:-}" ]] && die "usage: dshell wallpaper set <path>"
+    ipc wallpaper set "${3}"
+    ;;
+  -h | --help | "") wallpaper_usage ;;
+  *) die "unknown subcommand: wallpaper ${2:-}" ;;
   esac
   ;;
 -h | --help | "") usage ;;

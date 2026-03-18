@@ -46,7 +46,7 @@ _dshell_complete() {
 
 	case "$COMP_CWORD" in
 	1)
-		COMPREPLY=($(compgen -W "bar idle notifications power popup profile screen-recording settings theme" -- "$cur"))
+		COMPREPLY=($(compgen -W "bar idle notifications power popup profile screen-recording settings theme wallpaper" -- "$cur"))
 		;;
 	2)
 		case "${COMP_WORDS[1]}" in
@@ -59,6 +59,7 @@ _dshell_complete() {
 		screen-recording) COMPREPLY=($(compgen -W "files" -- "$cur")) ;;
 		settings) COMPREPLY=($(compgen -W "toggle show-category" -- "$cur")) ;;
 		theme) COMPREPLY=($(compgen -W "list set current refresh" -- "$cur")) ;;
+		wallpaper) COMPREPLY=($(compgen -W "browse set" -- "$cur")) ;;
 		esac
 		;;
 	3)
@@ -74,6 +75,9 @@ _dshell_complete() {
 			;;
 		popup:toggle)
 			COMPREPLY=($(compgen -W "$(_dshell_popup_modules)" -- "$cur"))
+			;;
+		wallpaper:set)
+			COMPREPLY=($(compgen -f -- "$cur"))
 			;;
 		esac
 		;;
