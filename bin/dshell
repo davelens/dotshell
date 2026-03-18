@@ -335,13 +335,52 @@ EOF
 
 # -- wallpaper ---------------------------------------------------------------
 
+wallpaper_restore() {
+  local fallback="${1:-}"
+
+  # Read active profile dir from general.json
+  local profile_dir=""
+  if [[ -f "$GENERAL_JSON" ]]; then
+    profile_dir="$(sed -n 's/.*"activeProfile" *: *"\([^"]*\)".*/\1/p' "$GENERAL_JSON" | head -1)"
+  fi
+
+  # Read saved wallpaper path from profile state
+  local wallpaper=""
+  local state_file="$DATA_DIR/${profile_dir}/wallpaper.json"
+  if [[ -n "$profile_dir" && -f "$state_file" ]]; then
+    wallpaper="$(sed -n 's/.*"currentWallpaper" *: *"\([^"]*\)".*/\1/p' "$state_file" | head -1)"
+  fi
+
+  # Fall back if no saved wallpaper or file is missing
+  if [[ -z "$wallpaper" || ! -f "$wallpaper" ]]; then
+    if [[ -n "$fallback" && -f "$fallback" ]]; then
+      wallpaper="$fallback"
+    else
+      echo "No saved wallpaper found" >&2
+      return 1
+    fi
+  fi
+
+  # Detect compositor and apply
+  if [[ -n "${SWAYSOCK:-}" || -n "${I3SOCK:-}" ]]; then
+    swaymsg output '*' bg "$wallpaper" fill
+  else
+    # Niri or other wlroots compositor: manage swaybg directly
+    pkill -x swaybg 2>/dev/null || true
+    sleep 0.1
+    swaybg -o '*' -i "$wallpaper" -m fill &
+    disown
+  fi
+}
+
 wallpaper_usage() {
   cat <<EOF
 Usage: dshell wallpaper <subcommand>
 
 Subcommands:
-  browse          Toggle the wallpaper browser panel
-  set <path>      Set a wallpaper by file path
+  browse              Toggle the wallpaper browser panel
+  set <path>          Set a wallpaper by file path
+  restore [fallback]  Restore saved wallpaper (optional fallback image path)
 EOF
 }
 
@@ -459,6 +498,7 @@ wallpaper)
     [[ -z "${3:-}" ]] && die "usage: dshell wallpaper set <path>"
     ipc wallpaper set "${3}"
     ;;
+  restore) wallpaper_restore "${3:-}" ;;
   -h | --help | "") wallpaper_usage ;;
   *) die "unknown subcommand: wallpaper ${2:-}" ;;
   esac

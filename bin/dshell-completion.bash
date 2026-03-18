@@ -59,7 +59,7 @@ _dshell_complete() {
 		screen-recording) COMPREPLY=($(compgen -W "files" -- "$cur")) ;;
 		settings) COMPREPLY=($(compgen -W "toggle show-category" -- "$cur")) ;;
 		theme) COMPREPLY=($(compgen -W "list set current refresh" -- "$cur")) ;;
-		wallpaper) COMPREPLY=($(compgen -W "browse set" -- "$cur")) ;;
+		wallpaper) COMPREPLY=($(compgen -W "browse set restore" -- "$cur")) ;;
 		esac
 		;;
 	3)
@@ -76,7 +76,7 @@ _dshell_complete() {
 		popup:toggle)
 			COMPREPLY=($(compgen -W "$(_dshell_popup_modules)" -- "$cur"))
 			;;
-		wallpaper:set)
+		wallpaper:set|wallpaper:restore)
 			COMPREPLY=($(compgen -f -- "$cur"))
 			;;
 		esac
