@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Wrapper for opencode that exposes the internal HTTP server on a discoverable
+# port. Writes a registry file so the dotshell status bar module can find and
+# query each instance's session status (idle/busy/retry).
+#
+# Registry: $XDG_RUNTIME_DIR/opencode-ports/<pid>.json
+# Each file contains: {"port": N, "cwd": "/path/to/project"}
+#
+# Port allocation: deterministic hash of CWD into 14000-14999 range, with
+# linear probing to avoid collisions when multiple instances share a directory.
+set -eo pipefail
+
+registry_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/opencode-ports"
+
+# -- helpers -------------------------------------------------------------------
+
+cleanup() {
+  rm -f "$registry_dir/$$.json"
+}
+
+port_in_use() {
+  ss -tln 2>/dev/null | grep -q ":$1 " && return 0
+  return 1
+}
+
+hash_port() {
+  local hash
+  hash=$(printf '%s' "$1" | cksum | awk '{print $1}')
+  echo $(( (hash % 1000) + 14000 ))
+}
+
+# Clean up stale registry files from dead processes
+sweep_stale() {
+  [ -d "$registry_dir" ] || return 0
+  for f in "$registry_dir"/*.json; do
+    [ -f "$f" ] || continue
+    local pid
+    pid=$(basename "$f" .json)
+    if ! kill -0 "$pid" 2>/dev/null; then
+      rm -f "$f"
+    fi
+  done
+}
+
+# -- main ----------------------------------------------------------------------
+
+mkdir -p "$registry_dir"
+sweep_stale
+
+cwd=$(pwd)
+port=$(hash_port "$cwd")
+max_port=14999
+
+# Linear probe for a free port
+while port_in_use "$port"; do
+  port=$((port + 1))
+  if [ "$port" -gt "$max_port" ]; then
+    port=14000
+  fi
+done
+
+trap cleanup EXIT INT TERM HUP
+
+printf '{"port":%d,"cwd":"%s"}\n' "$port" "$cwd" > "$registry_dir/$$.json"
+
+exec opencode --port "$port" "$@"
