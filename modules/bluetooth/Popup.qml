@@ -11,10 +11,9 @@ Variants {
 
   // Start/stop scan when popup opens/closes
   onIsOpenChanged: {
-    if (isOpen && BluetoothManager.powered) {
+    if (isOpen) {
       BluetoothManager.connectError = ""
       BluetoothManager.connectErrorAddress = ""
-      BluetoothManager.startScan()
     } else {
       BluetoothManager.stopScan()
     }

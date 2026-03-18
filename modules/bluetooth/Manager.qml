@@ -283,6 +283,9 @@ Singleton {
       for (var j = 0; j < updatedDevices.length; j++) {
         updatedDevices[j].paired = pairedAddresses.indexOf(updatedDevices[j].address) >= 0
       }
+      updatedDevices.sort(function(a, b) {
+        return (a.paired === b.paired) ? 0 : (a.paired ? -1 : 1)
+      })
       bluetoothManager.devices = updatedDevices
     }
   }
