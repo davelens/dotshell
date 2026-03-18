@@ -112,8 +112,13 @@ Singleton {
       centerItems = filterValidItems(config.center || [])
       rightItems = filterValidItems(config.right || [])
 
+      // Auto-merge new modules not yet in any section
+      var merged = mergeNewModules()
+
       ready = true
       console.log("[StatusbarManager] Loaded config:", leftItems.length, "left,", centerItems.length, "center,", rightItems.length, "right")
+
+      if (merged) saveConfig()
     } catch (e) {
       console.error("[StatusbarManager] Failed to parse config:", e)
     }
@@ -124,6 +129,44 @@ Singleton {
     return items.filter(function(item) {
       return ModuleRegistry.hasBarComponent(item.id)
     })
+  }
+
+  // Detect modules with bar components not present in any section and
+  // prepend them (disabled) to the right section. Returns true if any
+  // modules were added so the caller can persist the change.
+  function mergeNewModules() {
+    // Build a set of all IDs already in the config
+    var known = {}
+    var sections = [leftItems, centerItems, rightItems]
+    for (var s = 0; s < sections.length; s++) {
+      for (var i = 0; i < sections[s].length; i++) {
+        known[sections[s][i].id] = true
+      }
+    }
+
+    // Find bar-capable modules missing from the config
+    var barComponents = ModuleRegistry.getBarComponents()
+    var added = []
+    for (var j = 0; j < barComponents.length; j++) {
+      var id = barComponents[j].id
+      if (!known[id]) {
+        added.push({
+          id: id,
+          enabled: false,
+          marginLeft: 0,
+          marginRight: 10
+        })
+      }
+    }
+
+    if (added.length === 0) return false
+
+    // Prepend to right section (leftmost position in the right group)
+    rightItems = added.concat(rightItems)
+    for (var k = 0; k < added.length; k++) {
+      console.log("[StatusbarManager] Auto-merged new module:", added[k].id, "(disabled, right section)")
+    }
+    return true
   }
 
   // Get all items across all sections (for settings panel)
