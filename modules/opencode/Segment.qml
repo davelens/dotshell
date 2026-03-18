@@ -74,53 +74,69 @@ Item {
 
     Column {
       width: parent.width
-      spacing: 4
+      spacing: 8
 
       Repeater {
         model: OpencodeManager.instances
 
-        Row {
+        Column {
           required property var modelData
           width: parent.width
-          spacing: 8
+          spacing: 2
 
-          Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: {
-              if (modelData.status === "busy") return "󰝤"
-              if (modelData.status === "idle") return "󰝦"
-              return "󰝤"
+          Row {
+            width: parent.width
+            spacing: 8
+
+            Text {
+              id: statusIcon
+              anchors.verticalCenter: parent.verticalCenter
+              text: {
+                if (modelData.status === "busy") return "󰝤"
+                if (modelData.status === "idle") return "󰝦"
+                return "󰝤"
+              }
+              color: {
+                if (modelData.status === "busy") return Theme.warning
+                if (modelData.status === "idle") return Theme.success
+                if (modelData.status === "error") return Theme.danger
+                return Theme.textMuted
+              }
+              font.pixelSize: 14
+              font.family: "Symbols Nerd Font"
             }
-            color: {
-              if (modelData.status === "busy") return Theme.warning
-              if (modelData.status === "idle") return Theme.success
-              if (modelData.status === "error") return Theme.danger
-              return Theme.textMuted
+
+            Text {
+              anchors.verticalCenter: parent.verticalCenter
+              text: modelData.project
+              color: Theme.textPrimary
+              font.pixelSize: 14
+              elide: Text.ElideRight
+              width: parent.width - 70
             }
-            font.pixelSize: 14
-            font.family: "Symbols Nerd Font"
+
+            Text {
+              anchors.verticalCenter: parent.verticalCenter
+              text: modelData.status
+              color: {
+                if (modelData.status === "busy") return Theme.warning
+                if (modelData.status === "idle") return Theme.success
+                if (modelData.status === "error") return Theme.danger
+                return Theme.textMuted
+              }
+              font.pixelSize: 14
+              horizontalAlignment: Text.AlignRight
+            }
           }
 
           Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: modelData.project
-            color: Theme.textPrimary
-            font.pixelSize: 14
+            visible: modelData.sessionTitle !== ""
+            text: modelData.sessionTitle
+            color: Theme.textSecondary
+            font.pixelSize: 12
             elide: Text.ElideRight
-            width: parent.width - 70
-          }
-
-          Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: modelData.status
-            color: {
-              if (modelData.status === "busy") return Theme.warning
-              if (modelData.status === "idle") return Theme.success
-              if (modelData.status === "error") return Theme.danger
-              return Theme.textMuted
-            }
-            font.pixelSize: 14
-            horizontalAlignment: Text.AlignRight
+            width: parent.width
+            leftPadding: statusIcon.width + 8
           }
         }
       }

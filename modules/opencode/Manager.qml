@@ -13,7 +13,7 @@ Singleton {
   property int idleCount: 0
   property int errorCount: 0
 
-  // Per-instance details: [{project, cwd, port, status}]
+  // Per-instance details: [{project, cwd, port, status, sessionTitle}]
   property var instances: []
 
   // Registry directory (set once at startup)
@@ -76,7 +76,8 @@ Singleton {
             port: info.port,
             cwd: info.cwd,
             project: parts[parts.length - 1],
-            status: "unknown"
+            status: "unknown",
+            sessionTitle: ""
           })
         } catch(e) {
           // Skip malformed registry files
@@ -91,6 +92,13 @@ Singleton {
         manager.errorCount = 0
         return
       }
+
+      // Carry over session titles from previous cycle (matched by PID)
+      var prev = {}
+      for (var j = 0; j < manager.instances.length; j++)
+        prev[manager.instances[j].pid] = manager.instances[j].sessionTitle || ""
+      for (var k = 0; k < discovered.length; k++)
+        if (prev[discovered[k].pid]) discovered[k].sessionTitle = prev[discovered[k].pid]
 
       // Store discovered instances, then query their status
       manager._pending = discovered
@@ -138,6 +146,7 @@ Singleton {
     }
     onExited: function(exitCode, exitStatus) {
       var idx = manager._pendingIdx
+      var sessionId = ""
       if (idx < manager._pending.length) {
         if (exitCode === 0 && statusProc.output.trim() !== "") {
           try {
@@ -154,12 +163,47 @@ Singleton {
             if (hasRetry) manager._pending[idx].status = "error"
             else if (hasBusy) manager._pending[idx].status = "busy"
             else manager._pending[idx].status = "idle"
+
+            // Pick the first session ID for title lookup
+            if (keys.length > 0) sessionId = keys[0]
           } catch(e) {
             manager._pending[idx].status = "error"
           }
         } else {
           // curl failed — server unreachable
           manager._pending[idx].status = "error"
+        }
+      }
+
+      // If we have a session ID, fetch its title before advancing
+      if (sessionId !== "") {
+        var instance = manager._pending[idx]
+        sessionProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
+          "http://127.0.0.1:" + instance.port + "/session/" + sessionId]
+        sessionProc.running = true
+      } else {
+        manager._pendingIdx++
+        manager._queryNext()
+      }
+    }
+  }
+
+  // Step 3: fetch session title for the active session
+  Process {
+    id: sessionProc
+    property string output: ""
+    onStarted: output = ""
+    stdout: SplitParser {
+      onRead: data => sessionProc.output += data + "\n"
+    }
+    onExited: function(exitCode, exitStatus) {
+      var idx = manager._pendingIdx
+      if (idx < manager._pending.length && exitCode === 0 && sessionProc.output.trim() !== "") {
+        try {
+          var session = JSON.parse(sessionProc.output.trim())
+          if (session.title) manager._pending[idx].sessionTitle = session.title
+        } catch(e) {
+          // Title unavailable — leave empty
         }
       }
 
