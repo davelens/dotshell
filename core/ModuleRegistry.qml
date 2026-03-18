@@ -91,6 +91,20 @@ Singleton {
     for (var j = 0; j < loadedModules.length; j++) {
       console.log("[ModuleRegistry]   -", loadedModules[j].name)
     }
+
+    // Symlink module binaries into ~/.local/bin
+    symlinkProc.command = ["sh", "-c",
+      "mkdir -p \"$HOME/.local/bin\" && " +
+      "for f in " + registry.modulesPath + "/*/bin/*; do " +
+      "  [ -x \"$f\" ] && ln -sfn \"$f\" \"$HOME/.local/bin/$(basename \"$f\")\"; " +
+      "done"
+    ]
+    symlinkProc.running = true
+  }
+
+  // Symlinks executables from modules/*/bin/ into ~/.local/bin
+  Process {
+    id: symlinkProc
   }
 
   // Get modules that have a settings component
