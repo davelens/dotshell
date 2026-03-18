@@ -50,6 +50,13 @@ Singleton {
     onLoadFailed: writeAdapter()
     onAdapterUpdated: writeAdapter()
 
+    // Restore wallpaper once the state file has actually been loaded
+    onLoaded: {
+      if (stateAdapter.currentWallpaper) {
+        wallpaperManager.applyWallpaper(stateAdapter.currentWallpaper)
+      }
+    }
+
     JsonAdapter {
       id: stateAdapter
       property string currentWallpaper: ""
@@ -61,16 +68,6 @@ Singleton {
     target: stateAdapter
     function onCurrentWallpaperChanged() {
       wallpaperManager.currentWallpaper = stateAdapter.currentWallpaper
-    }
-  }
-
-  // Restore wallpaper on profile load
-  Connections {
-    target: DataManager
-    function onReadyChanged() {
-      if (DataManager.ready && stateAdapter.currentWallpaper) {
-        wallpaperManager.applyWallpaper(stateAdapter.currentWallpaper)
-      }
     }
   }
 
