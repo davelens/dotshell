@@ -512,7 +512,7 @@ Scope {
 
                 // Submit search on Enter for browse tab
                 Keys.onReturnPressed: {
-                  if (panel.activeTab === "browse" && text) {
+                  if (panel.activeTab === "browse") {
                     WallpaperManager.search(text, panel.browseSorting, 1)
                     focus = false
                     panel.contentItem.forceActiveFocus()
@@ -629,6 +629,7 @@ Scope {
                         onClicked: {
                           panel.browseSorting = modelData.value
                           sortMenu.visible = false
+                          WallpaperManager.search(searchInput.text, modelData.value, 1)
                         }
                       }
                     }
