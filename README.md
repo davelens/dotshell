@@ -28,17 +28,23 @@ A custom, keyboard-driven shell featuring a modular status bar and settings pane
 ## Features
 
 - Modular status bar with drop-in modules:
-  - battery
-  - bluetooth
-  - brightness
-  - clock
-  - display
+  - battery - Charge level and AC adapter status
+  - bluetooth - Device pairing and connection management
+  - brightness - Backlight control for laptop and external monitors
+  - clock - Date and time display
+  - display - Monitor layout and scaling settings
+  - idle-inhibitor - Toggle to prevent the system from going idle/sleeping
   - media - Play/pause toggles for music
-  - notifications
-  - volume
-  - wireless
-  - workspaces
-  - ...
+  - notifications - Desktop notification history and management
+  - opencode - Status indicator for running OpenCode AI agent sessions
+  - power - Lock, suspend, logout, reboot, and shutdown actions
+  - recording - Screenshot and screencast capture with file browsing
+  - system-load - Live CPU and memory usage display
+  - updates - Package update checker for pacman, AUR, and Flatpak
+  - volume - Audio output and input level control
+  - wallpaper - Browse, download, and apply wallpapers via Wallhaven
+  - wireless - Wi-Fi network scanning and connection management
+  - workspaces - Window manager workspace indicators and switching
 - Workspace support for Sway/i3 and Niri compositors
 - Settings panel with basic profile management
 - Keyboard-driven navigation throughout, status bar included
