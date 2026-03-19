@@ -50,6 +50,11 @@ A custom, keyboard-driven shell featuring a modular status bar and settings pane
 - Keyboard-driven navigation throughout, status bar included
 - Catppuccin Mocha color scheme - Not configurable yet, but you can alter `core/Colors.qml`
 
+### Module: opencode
+
+This module requires starting OpenCode with the `oc` binary it provides. This 
+makes the status bar segment aware of OpenCode's state in real time.
+
 ## Dependencies
 There's quite a few you will need to install, seeing as this is mostly a personal setup.
 Though I dare say most of them are common, and widely used.
