@@ -10,8 +10,8 @@ import qs.core.components
 Scope {
   id: root
 
-  // Keep the PanelWindow alive during the slide-out animation.
-  // panelVisible stays true until the closing animation finishes.
+  // One-way latch: create the PanelWindow on first open, then keep it
+  // alive so the QML tree stays laid out and the slide animation is smooth.
   property bool panelVisible: false
 
   Connections {
@@ -20,9 +20,6 @@ Scope {
       if (NotificationManager.panelOpen) {
         root.panelVisible = true
       }
-      // When closing, panelVisible stays true so the PanelWindow
-      // remains alive for the slide-out animation. The animation's
-      // onRunningChanged sets panelVisible = false when it finishes.
     }
   }
 
@@ -51,9 +48,21 @@ Scope {
       exclusionMode: ExclusionMode.Ignore
 
       WlrLayershell.namespace: "quickshell-notification-panel"
-      WlrLayershell.layer: WlrLayer.Overlay
+      // Stay on Overlay while open or while the slide-out animation is
+      // running, then drop to Background so the surface doesn't intercept
+      // clicks.
+      property bool animating: false
+      WlrLayershell.layer: (NotificationManager.panelOpen || panel.animating)
+        ? WlrLayer.Overlay : WlrLayer.Background
       WlrLayershell.keyboardFocus: NotificationManager.panelOpen
         ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+      Connections {
+        target: NotificationManager
+        function onPanelOpenChanged() {
+          if (!NotificationManager.panelOpen) panel.animating = true
+        }
+      }
 
       // Keyboard focus cycling state
       property var focusables: []
@@ -159,7 +168,8 @@ Scope {
         }
       }
 
-      // Slide animation: start off-screen, animate in; reverse on close
+      // Ensure the panel starts offscreen on first creation so the
+      // Behavior has an actual value change to animate.
       property bool slideIn: false
       Component.onCompleted: Qt.callLater(function() { panel.slideIn = true })
 
@@ -190,7 +200,7 @@ Scope {
             easing.type: Easing.OutCubic
             onRunningChanged: {
               if (!running && !NotificationManager.panelOpen) {
-                root.panelVisible = false
+                panel.animating = false
               }
             }
           }
