@@ -94,33 +94,38 @@ The setup script will:
 
 If you need external monitor brightness control you will need a reboot to refresh the i2c group membership.
 
-## Toggling window panels
+## CLI
 
-dotshell provides IPC targets for Quickshell to call from the command line.
-Useful for binding to keymaps in a window manager:
+dotshell ships a `dshell` CLI for controlling the shell from the command line or window manager keybinds. It is symlinked to `~/.local/bin/dshell` on startup, so make sure to add that to your `$PATH`.
+
 ```sh
-qs ipc call <target> <command> [args]
+dshell <command> <subcommand> [args]
 ```
 
-| Target | Command | Description |
+| Command | Subcommand | Description |
 |---|---|---|
-| `settings` | `toggle` | Toggle the settings panel |
-| `settings` | `show` | Open the settings panel |
-| `settings` | `hide` | Close the settings panel |
-| `settings` | `showCategory <id>` | Open the settings panel at a specific category |
-| `bar` | `toggle` | Toggle bar focus mode |
-| `popup` | `toggle <name>` | Toggle a popup by name (e.g. `volume`, `bluetooth`, `brightness`) |
-| `notifications` | `toggle` | Toggle the notification panel |
-| `notifications` | `show` | Open the notification panel |
-| `notifications` | `hide` | Close the notification panel |
-| `notifications` | `clearAll` | Clear the notification history |
-| `idle` | `toggle` | Toggle idle inhibition |
-| `idle` | `enable` | Prevent system idle/sleep |
-| `idle` | `disable` | Allow system idle/sleep |
-| `idle` | `state` | Print current inhibition state |
-| `profile` | `list` | List all profile names |
-| `profile` | `current` | Print the active profile name |
-| `profile` | `enable <name>` | Switch to a profile by display name |
+| `bar` | `focus` | Toggle bar focus mode |
+| `idle` | `enable` | Enable idle inhibitor |
+| `idle` | `disable` | Disable idle inhibitor |
+| `idle` | `toggle` | Toggle idle inhibitor |
+| `idle` | `state` | Show idle inhibitor state |
+| `notifications` | `toggle` | Toggle notification panel |
+| `notifications` | `clear-all` | Clear notification history |
+| `popup` | `toggle <name>` | Toggle a popup (e.g. `volume`, `brightness`, `wireless`) |
+| `power` | `toggle` | Toggle power menu |
+| `profile` | `list` | List all profiles |
+| `profile` | `current` | Show active profile name |
+| `profile` | `enable <name>` | Switch to a profile |
+| `screen-recording` | `files` | Toggle screen recording file browser |
+| `settings` | `toggle` | Toggle settings panel |
+| `settings` | `show-category <id>` | Open settings to a specific category |
+| `theme` | `list` | List available themes |
+| `theme` | `set <name>` | Switch to a theme |
+| `theme` | `current` | Show active theme name |
+| `theme` | `refresh` | Regenerate GTK CSS for the active theme |
+| `wallpaper` | `browse` | Toggle wallpaper browser |
+| `wallpaper` | `set <path>` | Set a wallpaper by file path |
+| `wallpaper` | `restore [fallback]` | Restore saved wallpaper |
 
 ## License
 
