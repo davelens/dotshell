@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="${1:-${HOME}/Repositories}"
+
+if ! command -v jq >/dev/null 2>&1; then
+  printf '[]\n'
+  exit 0
+fi
+
+now="$(date +%s)"
+
+shopt -s nullglob
+files=("$repo_root"/*/*/.taskmaster)
+
+if [ "${#files[@]}" -eq 0 ]; then
+  printf '[]\n'
+  exit 0
+fi
+
+for file in "${files[@]}"; do
+  project_fallback="$(basename "$(dirname "$file")")"
+
+  jq --arg projectFallback "$project_fallback" --argjson now "$now" '
+    (.project.name // $projectFallback) as $project
+    | [(.branches // [])[]?
+      | (.task.sessions // []) as $sessions
+      | if ($sessions | length) == 0 then empty else $sessions[-1] end
+      | select((.start != null) and (.stop == null))
+      | (.start | tonumber?) as $start
+      | select($start != null)
+      | (($now - $start) | if . < 0 then 0 else . end) as $elapsed
+      | {
+          project: ($project | tostring),
+          sessionDescription: ((.description // "") | tostring),
+          duration: (
+            (((($elapsed / 3600) | floor | tostring) | if length < 2 then "0" + . else . end)
+              + ":"
+              + (((($elapsed % 3600) / 60 | floor | tostring) | if length < 2 then "0" + . else . end))
+            )
+          ),
+          start: $start
+        }
+    ]
+  ' "$file" 2>/dev/null || printf '[]\n'
+done | jq -s 'add | sort_by(.start)'

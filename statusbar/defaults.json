@@ -42,19 +42,25 @@
       "id": "opencode",
       "enabled": true,
       "marginLeft": 0,
-      "marginRight": 10
+      "marginRight": 20
+    },
+    {
+      "id": "taskmaster",
+      "enabled": true,
+      "marginLeft": 0,
+      "marginRight": 20
     },
     {
       "id": "wallpaper",
       "enabled": true,
       "marginLeft": 0,
-      "marginRight": 10
+      "marginRight": 20
     },
     {
       "id": "system-load",
       "enabled": true,
       "marginLeft": 0,
-      "marginRight": 16
+      "marginRight": 20
     },
     {
       "id": "recording",
