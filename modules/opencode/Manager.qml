@@ -226,6 +226,38 @@ Singleton {
         }
       }
 
+      // If still busy (no questions found), check for pending permissions
+      if (manager._pending[idx].status === "busy") {
+        var instance = manager._pending[idx]
+        permissionProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
+          "http://127.0.0.1:" + instance.port + "/permission"]
+        permissionProc.running = true
+      } else {
+        manager._fetchSessionOrAdvance()
+      }
+    }
+  }
+
+  // Step 3b: check for pending permissions (only when busy + no questions)
+  Process {
+    id: permissionProc
+    property string output: ""
+    onStarted: output = ""
+    stdout: SplitParser {
+      onRead: data => permissionProc.output += data + "\n"
+    }
+    onExited: function(exitCode, exitStatus) {
+      var idx = manager._pendingIdx
+      if (idx < manager._pending.length && exitCode === 0 && permissionProc.output.trim() !== "") {
+        try {
+          var permissions = JSON.parse(permissionProc.output.trim())
+          if (Array.isArray(permissions) && permissions.length > 0)
+            manager._pending[idx].status = "input"
+        } catch(e) {
+          // Parse failed — keep busy status
+        }
+      }
+
       manager._fetchSessionOrAdvance()
     }
   }
