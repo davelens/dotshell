@@ -543,7 +543,7 @@ Scope {
           // Content area
           Row {
             width: parent.width
-            height: parent.height - 56
+            height: parent.height - 56 - keybindFooter.height
 
             // Sidebar
             Rectangle {
@@ -767,6 +767,93 @@ Scope {
                 color: Theme.textMuted
                 font.pixelSize: 14
                 visible: !contentLoader.source || contentLoader.status !== Loader.Ready
+              }
+            }
+          }
+
+          // Keybind footer
+          Rectangle {
+            id: keybindFooter
+            width: parent.width
+            height: 36
+            color: Theme.bgBaseAlt
+
+            Rectangle {
+              anchors.top: parent.top
+              width: parent.width
+              height: 1
+              color: Theme.bgCard
+            }
+
+            // Cover bottom corners so the panel radius shows through
+            Rectangle {
+              anchors.bottom: parent.bottom
+              anchors.left: parent.left
+              width: 8
+              height: 8
+              color: Theme.bgBaseAlt
+              radius: 8
+
+              Rectangle {
+                anchors.top: parent.top
+                anchors.right: parent.right
+                width: 8
+                height: 8
+                color: Theme.bgBaseAlt
+              }
+            }
+
+            Rectangle {
+              anchors.bottom: parent.bottom
+              anchors.right: parent.right
+              width: 8
+              height: 8
+              color: Theme.bgBaseAlt
+              radius: 8
+
+              Rectangle {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                width: 8
+                height: 8
+                color: Theme.bgBaseAlt
+              }
+            }
+
+            Row {
+              anchors.centerIn: parent
+              spacing: 20
+
+              Row {
+                spacing: 4
+                KeyboardTag { text: "Ctrl+F"; fontSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                AnnotationText { text: "Search"; anchors.verticalCenter: parent.verticalCenter }
+              }
+
+              Row {
+                spacing: 4
+                KeyboardTag { text: "Ctrl+H"; fontSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                AnnotationText { text: "Focus categories"; anchors.verticalCenter: parent.verticalCenter }
+              }
+
+              Row {
+                spacing: 4
+                KeyboardTag { text: "Ctrl+L"; fontSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                AnnotationText { text: "Focus content"; anchors.verticalCenter: parent.verticalCenter }
+              }
+
+              Row {
+                spacing: 4
+                KeyboardTag { text: "Ctrl+N"; fontSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                Text { text: "/"; color: Theme.textMuted; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                KeyboardTag { text: "Ctrl+P"; fontSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                AnnotationText { text: "Navigate inputs"; anchors.verticalCenter: parent.verticalCenter }
+              }
+
+              Row {
+                spacing: 4
+                KeyboardTag { text: "Esc"; fontSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                AnnotationText { text: "Close"; anchors.verticalCenter: parent.verticalCenter }
               }
             }
           }
