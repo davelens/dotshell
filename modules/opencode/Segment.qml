@@ -76,6 +76,18 @@ Item {
       width: parent.width
       spacing: 8
 
+      Text {
+        text: "OpenCode Sessions"
+        color: Theme.textPrimary
+        font.pixelSize: 14
+      }
+
+      Rectangle {
+        width: parent.width
+        height: 1
+        color: Theme.bgBorder
+      }
+
       Repeater {
         model: OpencodeManager.instances
 
