@@ -26,9 +26,9 @@ Singleton {
     registryDir = xdgRuntime + "/opencode-ports"
   }
 
-  // Poll every 3 seconds
+  // Poll every 10 seconds
   Timer {
-    interval: 3000
+    interval: 10000
     running: manager.registryDir !== ""
     repeat: true
     triggeredOnStart: true
