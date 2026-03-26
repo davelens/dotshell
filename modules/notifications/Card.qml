@@ -160,8 +160,10 @@ Rectangle {
       source: image || ""
       width: visible ? parent.width : 0
       height: visible ? implicitHeight * (parent.width / Math.max(implicitWidth, 1)) : 0
+      sourceSize.width: parent.width * 2
       fillMode: Image.PreserveAspectFit
       smooth: true
+      cache: false
     }
 
     // Action buttons
