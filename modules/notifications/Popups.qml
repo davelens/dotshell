@@ -4,16 +4,17 @@ import Quickshell.Services.Notifications
 import QtQuick
 import qs
 
-// Notification popups window - displays in top-right corner
+// Notification popups window - displays in top-right corner.
+// Deferred: PanelWindow only exists when there are visible notifications.
 Variants {
-  model: ScreenManager.primaryScreen ? [ScreenManager.primaryScreen] : []
+  model: NotificationManager.visibleNotifications.count > 0 && ScreenManager.primaryScreen
+    ? [ScreenManager.primaryScreen] : []
 
   PanelWindow {
     required property var modelData
 
     id: popupWindow
     screen: modelData
-    visible: NotificationManager.visibleNotifications.count > 0
 
     anchors {
       top: true
