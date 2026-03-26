@@ -65,6 +65,12 @@ Singleton {
 
   function closePanel() {
     panelOpen = false
+    screenshots = []
+    screenshotCount = 0
+    screencasts = []
+    screencastCount = 0
+    _pendingThumbnails = ({})
+    _thumbnailQueue = []
   }
 
   // File listing

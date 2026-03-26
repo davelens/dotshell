@@ -87,6 +87,10 @@ Singleton {
 
   function closePanel() {
     panelOpen = false
+    localFiles = []
+    localFileCount = 0
+    searchResults = []
+    searchResultCount = 0
   }
 
   // -- Local files ----------------------------------------------------------
