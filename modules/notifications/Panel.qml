@@ -10,8 +10,8 @@ import qs.core.components
 Scope {
   id: root
 
-  // One-way latch: create the PanelWindow on first open, then keep it
-  // alive so the QML tree stays laid out and the slide animation is smooth.
+  // Deferred latch: create the PanelWindow on open, destroy after the
+  // slide-out animation finishes to free the QML tree and GPU textures.
   property bool panelVisible: false
 
   Connections {
@@ -201,6 +201,7 @@ Scope {
             onRunningChanged: {
               if (!running && !NotificationManager.panelOpen) {
                 panel.animating = false
+                root.panelVisible = false
               }
             }
           }
