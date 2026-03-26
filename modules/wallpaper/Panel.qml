@@ -161,9 +161,13 @@ Scope {
         scrollToCell(selectedIndex)
       }
 
+      // Resolve the active GridView for the current tab
+      readonly property GridView activeGridView: activeTab === "local" ? gridView : browseGridView
+
       function pageUp() {
         if (!ensureSelection()) return
-        var visibleRows = Math.max(1, Math.floor(gridView.height / gridView.cellHeight))
+        var gv = activeGridView
+        var visibleRows = Math.max(1, Math.floor(gv.height / gv.cellHeight))
         var target = selectedIndex - (visibleRows * columnsPerRow)
         selectedIndex = Math.max(0, target)
         scrollToCell(selectedIndex)
@@ -172,23 +176,25 @@ Scope {
       function pageDown() {
         var count = activeTab === "local" ? displayCount : WallpaperManager.searchResultCount
         if (!ensureSelection()) return
-        var visibleRows = Math.max(1, Math.floor(gridView.height / gridView.cellHeight))
+        var gv = activeGridView
+        var visibleRows = Math.max(1, Math.floor(gv.height / gv.cellHeight))
         var target = selectedIndex + (visibleRows * columnsPerRow)
         selectedIndex = Math.min(count - 1, target)
         scrollToCell(selectedIndex)
       }
 
       function scrollToCell(idx) {
-        if (idx < 0 || !gridView.cellHeight) return
+        var gv = activeGridView
+        if (idx < 0 || !gv.cellHeight) return
         var row = Math.floor(idx / columnsPerRow)
-        var cellTop = row * gridView.cellHeight
-        var cellBottom = cellTop + gridView.cellHeight
-        var viewTop = gridView.contentY
-        var viewBottom = viewTop + gridView.height
+        var cellTop = row * gv.cellHeight
+        var cellBottom = cellTop + gv.cellHeight
+        var viewTop = gv.contentY
+        var viewBottom = viewTop + gv.height
         if (cellTop < viewTop) {
-          gridView.contentY = cellTop
+          gv.contentY = cellTop
         } else if (cellBottom > viewBottom) {
-          gridView.contentY = cellBottom - gridView.height
+          gv.contentY = cellBottom - gv.height
         }
       }
 
@@ -881,6 +887,7 @@ Scope {
                       sourceSize.width: browseGridView.cellWidth * 2
                       sourceSize.height: browseGridView.cellHeight * 2
                       asynchronous: true
+                      cache: false
                     }
 
                     // Loading spinner placeholder
