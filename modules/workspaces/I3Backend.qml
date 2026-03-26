@@ -3,7 +3,7 @@ import Quickshell.I3
 import Quickshell.Io
 
 // Sway/i3 workspace backend using native Quickshell.I3 API.
-// Exposes normalized workspace data for Segment.qml consumption.
+// Uses I3.rawEvent for event-driven updates instead of polling.
 Item {
   id: backend
   visible: false
@@ -37,15 +37,22 @@ Item {
     return arr
   }
 
-  // Poll for window state changes (open/close/move don't trigger I3.workspaces)
-  Timer {
-    interval: 500
-    running: true
-    repeat: true
-    triggeredOnStart: true
-    onTriggered: {
+  // Listen for Sway IPC events that affect workspace occupancy
+  Connections {
+    target: I3
+    function onRawEvent(event) {
+      if (event.type === "window" || event.type === "workspace" || event.type === "move") {
+        if (!refreshProc.running) refreshProc.running = true
+      }
+    }
+    function onConnected() {
       if (!refreshProc.running) refreshProc.running = true
     }
+  }
+
+  // Initial refresh at startup
+  Component.onCompleted: {
+    refreshProc.running = true
   }
 
   Process {

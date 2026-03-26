@@ -2,8 +2,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Niri workspace backend using CLI IPC.
-// Polls `niri msg -j workspaces` and exposes normalized data.
+// Niri workspace backend using persistent event stream.
+// Listens to `niri msg event-stream` for real-time updates instead of polling.
 Item {
   id: backend
   visible: false
@@ -29,18 +29,72 @@ Item {
     }
   }
 
-  // Poll timer
-  Timer {
-    interval: 750
-    running: backend.socket !== ""
-    repeat: true
-    triggeredOnStart: true
-    onTriggered: {
-      if (!pollProc.running) pollProc.running = true
+  // Fetch full workspace state (used on startup and when event stream signals changes)
+  function refresh() {
+    if (backend.socket !== "" && !pollProc.running) pollProc.running = true
+  }
+
+  // Initial fetch + start event stream when socket becomes available
+  onSocketChanged: {
+    if (socket !== "") {
+      refresh()
+      startEventStream()
     }
   }
 
-  // Workspace polling process
+  Component.onCompleted: {
+    if (socket !== "") {
+      refresh()
+      startEventStream()
+    }
+  }
+
+  function startEventStream() {
+    if (eventProc.running || backend.socket === "") return
+    eventProc.command = ["sh", "-c",
+      "NIRI_SOCKET='" + backend.socket + "' niri msg event-stream"]
+    eventProc.running = true
+  }
+
+  // Persistent event stream process
+  Process {
+    id: eventProc
+
+    stdout: SplitParser {
+      onRead: line => {
+        // Each line is a JSON object with an event type key
+        // Workspace-relevant events: WorkspacesChanged, WorkspaceActivated,
+        // WindowOpenedOrChanged, WindowClosed, WindowsChanged, WindowFocusChanged
+        var trimmed = line.trim()
+        if (trimmed === "" || trimmed === "{" || trimmed === "}") return
+
+        // Event lines look like: "EventName": { ... }
+        // We only need to detect the event type, not parse the payload
+        if (trimmed.indexOf("WorkspacesChanged") >= 0 ||
+            trimmed.indexOf("WorkspaceActivated") >= 0 ||
+            trimmed.indexOf("WindowOpenedOrChanged") >= 0 ||
+            trimmed.indexOf("WindowClosed") >= 0 ||
+            trimmed.indexOf("WindowsChanged") >= 0 ||
+            trimmed.indexOf("WindowFocusChanged") >= 0) {
+          backend.refresh()
+        }
+      }
+    }
+
+    onExited: (code) => {
+      // Restart event stream after a brief delay if it dies unexpectedly
+      restartTimer.start()
+    }
+  }
+
+  Timer {
+    id: restartTimer
+    interval: 2000
+    repeat: false
+    onTriggered: backend.startEventStream()
+  }
+
+  // One-shot workspace fetch process
   Process {
     id: pollProc
     command: ["sh", "-c", "NIRI_SOCKET='" + backend.socket + "' niri msg -j workspaces"]
