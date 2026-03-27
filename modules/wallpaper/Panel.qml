@@ -71,6 +71,8 @@ Scope {
         if (activeTab === "local") {
           WallpaperManager.refreshLocalFiles()
         }
+
+        contentItem.forceActiveFocus()
       }
 
       // -- Computed display lists -------------------------------------------
@@ -109,7 +111,10 @@ Scope {
       Connections {
         target: WallpaperManager
         function onLocalFilesRefreshed() { panel.updateDisplayFiles() }
-        function onSearchCompleted() { panel.updateDisplayFiles() }
+        function onSearchCompleted() {
+          panel.updateDisplayFiles()
+          panel.contentItem.forceActiveFocus()
+        }
         function onPanelOpenChanged() {
           if (WallpaperManager.panelOpen) {
             panel.activeTab = "local"
