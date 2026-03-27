@@ -61,10 +61,7 @@ Rectangle {
     id: hoverHandler
   }
 
-  // Only enable shadow layer for popup cards — compact history cards are
-  // inside a panel with its own background and don't need per-card GPU
-  // framebuffers for shadow rendering.
-  layer.enabled: !compact
+  layer.enabled: true
   layer.effect: MultiEffect {
     shadowEnabled: true
     shadowColor: Theme.overlay
