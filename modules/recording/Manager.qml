@@ -35,6 +35,60 @@ Singleton {
     }
   }
 
+  // Recording detection (polling)
+  property bool isRecording: false
+  property bool _stopping: false
+
+  Timer {
+    interval: 2000
+    running: !recordingManager._stopping
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: {
+      _checkRecordingProc.command = ["pidof", recordingManager.processName]
+      _checkRecordingProc.running = true
+    }
+  }
+
+  Process {
+    id: _checkRecordingProc
+    onExited: function(exitCode, exitStatus) {
+      recordingManager.isRecording = (exitCode === 0)
+    }
+  }
+
+  function stopRecording() {
+    _stopping = true
+    isRecording = false
+    _stopProc.command = ["pkill", "-f", "-SIGINT", processName]
+    _stopProc.running = true
+  }
+
+  // Wait for the process to actually exit before resuming polling
+  Process {
+    id: _stopProc
+    onExited: function(exitCode, exitStatus) {
+      _waitProc.command = ["bash", "-c", "while pidof " + recordingManager.processName + " > /dev/null 2>&1; do sleep 0.2; done"]
+      _waitProc.running = true
+    }
+  }
+
+  // Once the process has fully exited, copy the path and resume polling
+  Process {
+    id: _waitProc
+    onExited: function(exitCode, exitStatus) {
+      recordingManager.isRecording = false
+      recordingManager._stopping = false
+      _copyLatestPathProc.running = true
+    }
+  }
+
+  // Copy the absolute path of the latest screencast to clipboard
+  Process {
+    id: _copyLatestPathProc
+    command: ["bash", "-c", "ls -t \"$HOME/Videos/screencasts/\"*.mp4 2>/dev/null | head -1 | tr -d '\\n' | wl-copy"]
+  }
+
   // Panel state
   property bool panelOpen: false
 
