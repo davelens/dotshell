@@ -161,12 +161,14 @@ Scope {
         scrollToCell(selectedIndex)
       }
 
-      // Resolve the active GridView for the current tab
-      readonly property GridView activeGridView: activeTab === "local" ? gridView : browseGridView
+      function getActiveGridView() {
+        return activeTab === "local" ? gridView : browseGridView
+      }
 
       function pageUp() {
         if (!ensureSelection()) return
-        var gv = activeGridView
+        var gv = getActiveGridView()
+        if (!gv || !gv.cellHeight) return
         var visibleRows = Math.max(1, Math.floor(gv.height / gv.cellHeight))
         var target = selectedIndex - (visibleRows * columnsPerRow)
         selectedIndex = Math.max(0, target)
@@ -176,7 +178,8 @@ Scope {
       function pageDown() {
         var count = activeTab === "local" ? displayCount : WallpaperManager.searchResultCount
         if (!ensureSelection()) return
-        var gv = activeGridView
+        var gv = getActiveGridView()
+        if (!gv || !gv.cellHeight) return
         var visibleRows = Math.max(1, Math.floor(gv.height / gv.cellHeight))
         var target = selectedIndex + (visibleRows * columnsPerRow)
         selectedIndex = Math.min(count - 1, target)
@@ -184,8 +187,8 @@ Scope {
       }
 
       function scrollToCell(idx) {
-        var gv = activeGridView
-        if (idx < 0 || !gv.cellHeight) return
+        var gv = getActiveGridView()
+        if (!gv || idx < 0 || !gv.cellHeight) return
         var row = Math.floor(idx / columnsPerRow)
         var cellTop = row * gv.cellHeight
         var cellBottom = cellTop + gv.cellHeight
@@ -715,7 +718,6 @@ Scope {
                         return Theme.focusRing
                       return Theme.bgBorder
                     }
-                    clip: true
 
                     property string filePath: index < panel.displayFiles.length ? panel.displayFiles[index] : ""
 
@@ -874,7 +876,6 @@ Scope {
                     color: index === panel.selectedIndex ? Theme.bgCardHover : Theme.bgCard
                     border.width: index === panel.selectedIndex ? 2 : 1
                     border.color: index === panel.selectedIndex ? Theme.focusRing : Theme.bgBorder
-                    clip: true
 
                     property var itemData: index < WallpaperManager.searchResults.length
                                              ? WallpaperManager.searchResults[index] : null
@@ -1155,6 +1156,7 @@ Scope {
                         return "file://" + panel.previewSource
                       return panel.previewSource
                     }
+                    sourceSize.width: parent.width * 2
                     asynchronous: true
                     cache: false
                   }
