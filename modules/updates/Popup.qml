@@ -139,7 +139,9 @@ Variants {
         anchors.left: parent.left
         anchors.leftMargin: 170
         anchors.verticalCenter: parent.verticalCenter
-        text: "Full system upgrade (pacman + AUR)"
+        text: UpdatesManager.includeFlatpak
+          ? "Full system upgrade (pacman + AUR + Flatpak)"
+          : "Full system upgrade (pacman + AUR)"
         color: Theme.textMuted
         font.pixelSize: 12
         visible: !UpdatesManager.systemUpdating
@@ -149,7 +151,9 @@ Variants {
         anchors.left: parent.left
         anchors.leftMargin: 170
         anchors.verticalCenter: parent.verticalCenter
-        text: "Running paru -Syu... All other updates are blocked."
+        text: UpdatesManager.includeFlatpak
+          ? "Running paru -Syu + flatpak update... All other updates are blocked."
+          : "Running paru -Syu... All other updates are blocked."
         color: Theme.warning
         font.pixelSize: 12
         visible: UpdatesManager.systemUpdating

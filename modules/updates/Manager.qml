@@ -151,11 +151,15 @@ Singleton {
     }
   }
 
-  // Full system update (paru -Syu). Blocks everything.
+  // Full system update (paru -Syu, optionally flatpak). Blocks everything.
   function systemUpdate() {
     if (systemUpdating) return
     systemUpdating = true
-    systemUpdateProc.command = ["paru", "-Syu", "--noconfirm"]
+    if (includeFlatpak) {
+      systemUpdateProc.command = ["bash", "-c", "paru -Syu --noconfirm && flatpak update -y"]
+    } else {
+      systemUpdateProc.command = ["paru", "-Syu", "--noconfirm"]
+    }
     systemUpdateProc.running = true
   }
 
