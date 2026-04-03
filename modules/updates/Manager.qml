@@ -8,6 +8,33 @@ import qs
 Singleton {
   id: manager
 
+  // Settings (persisted via JsonAdapter)
+  property alias includeFlatpak: settingsAdapter.includeFlatpak
+
+  readonly property string statePath: DataManager.getStatePath("updates")
+  readonly property string defaultsPath: DataManager.getDefaultsPath("updates")
+  property bool fileReady: false
+
+  Process {
+    id: ensureDefaults
+    command: ["sh", "-c", "test -f '" + manager.statePath + "' || cp '" + manager.defaultsPath + "' '" + manager.statePath + "'"]
+    running: DataManager.ready
+    onExited: { manager.fileReady = true }
+  }
+
+  FileView {
+    id: settingsFile
+    path: manager.fileReady ? manager.statePath : ""
+    watchChanges: true
+    onFileChanged: reload()
+    onAdapterUpdated: writeAdapter()
+
+    JsonAdapter {
+      id: settingsAdapter
+      property bool includeFlatpak: false
+    }
+  }
+
   // Package update lists
   // Each item: { name: string, currentVersion: string, newVersion: string, source: string }
   property var pacmanUpdates: []
