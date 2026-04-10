@@ -42,6 +42,10 @@ Singleton {
     _ccTasksDir = xdgConfig + "/claude/tasks"
   }
 
+  // Guard flags to prevent re-entry and coordinate merge timing
+  property bool _ocBusy: false
+  property bool _ccBusy: false
+
   // Poll every 10 seconds — orchestrates all provider discovery passes
   Timer {
     interval: 10000
@@ -49,9 +53,17 @@ Singleton {
     repeat: true
     triggeredOnStart: true
     onTriggered: {
-      _ocDiscover()
-      _ccDiscover()
+      if (manager._ocBusy || manager._ccBusy) return
+      manager._ocBusy = true
+      manager._ccBusy = true
+      manager._ocDiscover()
+      manager._ccDiscover()
     }
+  }
+
+  // Only merge when both providers have finished their current cycle
+  function _tryMerge() {
+    if (!_ocBusy && !_ccBusy) _mergeProviders()
   }
 
   // Merge completed provider instance arrays into the shared `instances` list
@@ -149,7 +161,8 @@ Singleton {
 
       if (discovered.length === 0) {
         manager._ocInstances = []
-        manager._mergeProviders()
+        manager._ocBusy = false
+        manager._tryMerge()
         return
       }
 
@@ -170,9 +183,10 @@ Singleton {
   // Drive the per-instance OpenCode query chain
   function _ocQueryNext() {
     if (_ocPendingIdx >= _ocPending.length) {
-      // All OpenCode queries done — publish results and merge
+      // All OpenCode queries done — publish results
       manager._ocInstances = _ocPending
-      manager._mergeProviders()
+      manager._ocBusy = false
+      manager._tryMerge()
       return
     }
 
@@ -343,11 +357,7 @@ Singleton {
       "shopt -s nullglob; " +
       "for f in \"" + manager._ccSessionsDir + "\"/*.json; do " +
       "  pid=$(basename \"$f\" .json); " +
-      "  if kill -0 \"$pid\" 2>/dev/null; then " +
-      "    echo \"$pid:$(cat \"$f\")\"; " +
-      "  else " +
-      "    rm -f \"$f\"; " +
-      "  fi; " +
+      "  kill -0 \"$pid\" 2>/dev/null && echo \"$pid:$(cat \"$f\")\"; " +
       "done"
     ]
     ccDiscoverProc.running = true
@@ -392,7 +402,8 @@ Singleton {
 
       if (discovered.length === 0) {
         manager._ccInstances = []
-        manager._mergeProviders()
+        manager._ccBusy = false
+        manager._tryMerge()
         return
       }
 
@@ -406,7 +417,8 @@ Singleton {
   function _ccQueryNext() {
     if (_ccPendingIdx >= _ccPending.length) {
       manager._ccInstances = _ccPending
-      manager._mergeProviders()
+      manager._ccBusy = false
+      manager._tryMerge()
       return
     }
 
