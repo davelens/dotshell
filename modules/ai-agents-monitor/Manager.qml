@@ -25,6 +25,9 @@ Singleton {
   // Sessions directory for Claude Code (set once at startup)
   property string _ccSessionsDir: ""
 
+  // Tasks directory for Claude Code (set once at startup)
+  property string _ccTasksDir: ""
+
   Component.onCompleted: {
     var xdgRuntime = Quickshell.env("XDG_RUNTIME_DIR")
     if (!xdgRuntime) xdgRuntime = "/run/user/1000"
@@ -36,6 +39,7 @@ Singleton {
       xdgConfig = (home ? home : "/root") + "/.config"
     }
     _ccSessionsDir = xdgConfig + "/claude/sessions"
+    _ccTasksDir = xdgConfig + "/claude/tasks"
   }
 
   // Poll every 10 seconds — orchestrates all provider discovery passes
@@ -329,6 +333,10 @@ Singleton {
   // Completed Claude Code instances for the current poll cycle
   property var _ccInstances: []
 
+  // State for the async status query chain
+  property var _ccPending: []
+  property int _ccPendingIdx: 0
+
   // Kick off Claude Code discovery
   function _ccDiscover() {
     ccDiscoverProc.command = ["bash", "-c",
@@ -382,8 +390,79 @@ Singleton {
         }
       }
 
-      manager._ccInstances = discovered
+      if (discovered.length === 0) {
+        manager._ccInstances = []
+        manager._mergeProviders()
+        return
+      }
+
+      manager._ccPending = discovered
+      manager._ccPendingIdx = 0
+      manager._ccQueryNext()
+    }
+  }
+
+  // Drive the per-instance Claude Code task status query chain
+  function _ccQueryNext() {
+    if (_ccPendingIdx >= _ccPending.length) {
+      manager._ccInstances = _ccPending
       manager._mergeProviders()
+      return
+    }
+
+    var instance = _ccPending[_ccPendingIdx]
+    var sessionId = instance.sessionId || ""
+    var tasksDir = manager._ccTasksDir + (sessionId ? "/" + sessionId : "")
+    ccStatusProc.command = ["bash", "-c",
+      "shopt -s nullglob; " +
+      "for f in \"" + tasksDir + "\"/*.json; do " +
+      "  cat \"$f\"; " +
+      "  echo '__SEP__'; " +
+      "done"
+    ]
+    ccStatusProc.running = true
+  }
+
+  // Read task JSON files for the current Claude session
+  Process {
+    id: ccStatusProc
+    property string output: ""
+    onStarted: output = ""
+    stdout: SplitParser {
+      onRead: data => ccStatusProc.output += data + "\n"
+    }
+    onExited: function(exitCode, exitStatus) {
+      var idx = manager._ccPendingIdx
+      if (idx < manager._ccPending.length) {
+        var raw = ccStatusProc.output.trim()
+        var hasInProgress = false
+        var hasError = false
+
+        if (raw !== "") {
+          var chunks = raw.split("__SEP__")
+          for (var i = 0; i < chunks.length; i++) {
+            var chunk = chunks[i].trim()
+            if (chunk === "") continue
+            try {
+              var task = JSON.parse(chunk)
+              if (task.status === "in_progress") hasInProgress = true
+              if (task.title && !manager._ccPending[idx].sessionTitle)
+                manager._ccPending[idx].sessionTitle = task.title
+            } catch(e) {
+              hasError = true
+            }
+          }
+        }
+
+        if (hasError && !hasInProgress)
+          manager._ccPending[idx].status = "error"
+        else if (hasInProgress)
+          manager._ccPending[idx].status = "busy"
+        // else: leave as "idle" (no tasks or all pending)
+      }
+
+      manager._ccPendingIdx++
+      manager._ccQueryNext()
     }
   }
 }
