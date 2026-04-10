@@ -11,7 +11,7 @@ Item {
   width: row.width
   height: row.height
 
-  property bool showInBar: OpencodeManager.totalCount > 0
+  property bool showInBar: AiAgentsMonitorManager.totalCount > 0
 
   Row {
     id: row
@@ -27,7 +27,7 @@ Item {
 
     Text {
       anchors.verticalCenter: parent.verticalCenter
-      text: OpencodeManager.idleCount
+      text: AiAgentsMonitorManager.idleCount
       color: Theme.success
       font.pixelSize: 14
     }
@@ -41,7 +41,7 @@ Item {
 
     Text {
       anchors.verticalCenter: parent.verticalCenter
-      text: OpencodeManager.busyCount
+      text: AiAgentsMonitorManager.busyCount
       color: Theme.warning
       font.pixelSize: 14
     }
@@ -55,7 +55,7 @@ Item {
 
     Text {
       anchors.verticalCenter: parent.verticalCenter
-      text: OpencodeManager.errorCount + OpencodeManager.questionCount
+      text: AiAgentsMonitorManager.errorCount + AiAgentsMonitorManager.questionCount
       color: Theme.danger
       font.pixelSize: 14
     }
@@ -77,7 +77,7 @@ Item {
       spacing: 8
 
       Text {
-        text: "OpenCode Sessions"
+        text: "AI Agent Sessions"
         color: Theme.textPrimary
         font.pixelSize: 14
       }
@@ -89,7 +89,7 @@ Item {
       }
 
       Repeater {
-        model: OpencodeManager.instances
+        model: AiAgentsMonitorManager.instances
 
         Column {
           required property var modelData
