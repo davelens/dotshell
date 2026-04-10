@@ -159,7 +159,7 @@ Item {
             font.pixelSize: 12
             elide: Text.ElideRight
             width: parent.width
-            leftPadding: statusIcon.width + 8
+            leftPadding: statusIcon.width + providerLabel.width + 16
           }
         }
       }
