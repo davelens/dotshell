@@ -14,10 +14,12 @@ Singleton {
   property int errorCount: 0
   property int questionCount: 0
 
-  // Per-instance details: [{project, cwd, port, status, sessionTitle}]
+  // Per-instance details — normalized across all providers:
+  //   { provider, pid, cwd, project, status, sessionTitle, <provider-specific> }
+  // OpenCode extras: port
   property var instances: []
 
-  // Registry directory (set once at startup)
+  // Registry directory for OpenCode (set once at startup)
   property string registryDir: ""
 
   Component.onCompleted: {
@@ -26,30 +28,74 @@ Singleton {
     registryDir = xdgRuntime + "/opencode-ports"
   }
 
-  // Poll every 10 seconds
+  // Poll every 10 seconds — orchestrates all provider discovery passes
   Timer {
     interval: 10000
     running: manager.registryDir !== ""
     repeat: true
     triggeredOnStart: true
     onTriggered: {
-      // Step 1: discover instances from registry files
-      discoverProc.command = ["bash", "-c",
-        "shopt -s nullglob; " +
-        "for f in \"" + manager.registryDir + "\"/*.json; do " +
-        "  pid=$(basename \"$f\" .json); " +
-        "  if kill -0 \"$pid\" 2>/dev/null; then " +
-        "    echo \"$pid:$(cat \"$f\")\"; " +
-        "  else " +
-        "    rm -f \"$f\"; " +
-        "  fi; " +
-        "done"
-      ]
-      discoverProc.running = true
+      _ocDiscover()
+      // _ccDiscover() will be added here in Task 4
     }
   }
 
-  // Step 1: read registry files and validate PIDs
+  // Merge completed provider instance arrays into the shared `instances` list
+  // and recompute aggregated counts.
+  // Add each provider's array as a parameter when Task 4 introduces Claude.
+  function _mergeProviders() {
+    var merged = []
+    for (var i = 0; i < _ocInstances.length; i++)
+      merged.push(_ocInstances[i])
+
+    manager.instances = merged
+    manager.totalCount = merged.length
+
+    var busy = 0
+    var idle = 0
+    var errors = 0
+    var questions = 0
+    for (var j = 0; j < merged.length; j++) {
+      if (merged[j].status === "busy") busy++
+      else if (merged[j].status === "idle") idle++
+      else if (merged[j].status === "error") errors++
+      else if (merged[j].status === "input") questions++
+    }
+    manager.busyCount = busy
+    manager.idleCount = idle
+    manager.errorCount = errors
+    manager.questionCount = questions
+  }
+
+  // -------------------------------------------------------------------------
+  // OpenCode provider discovery
+  // -------------------------------------------------------------------------
+
+  // Completed OpenCode instances for the current poll cycle
+  property var _ocInstances: []
+
+  // State for the async query chain
+  property var _ocPending: []
+  property int _ocPendingIdx: 0
+  property string _ocPendingSessionId: ""
+
+  // Kick off OpenCode discovery (Step 1)
+  function _ocDiscover() {
+    discoverProc.command = ["bash", "-c",
+      "shopt -s nullglob; " +
+      "for f in \"" + manager.registryDir + "\"/*.json; do " +
+      "  pid=$(basename \"$f\" .json); " +
+      "  if kill -0 \"$pid\" 2>/dev/null; then " +
+      "    echo \"$pid:$(cat \"$f\")\"; " +
+      "  else " +
+      "    rm -f \"$f\"; " +
+      "  fi; " +
+      "done"
+    ]
+    discoverProc.running = true
+  }
+
+  // Step 1: read OpenCode registry files and validate PIDs
   Process {
     id: discoverProc
     property string output: ""
@@ -73,6 +119,7 @@ Singleton {
           var info = JSON.parse(jsonStr)
           var parts = info.cwd.split("/")
           discovered.push({
+            provider: "opencode",
             pid: pid,
             port: info.port,
             cwd: info.cwd,
@@ -86,76 +133,54 @@ Singleton {
       }
 
       if (discovered.length === 0) {
-        manager.instances = []
-        manager.totalCount = 0
-        manager.busyCount = 0
-        manager.idleCount = 0
-        manager.errorCount = 0
-        manager.questionCount = 0
+        manager._ocInstances = []
+        manager._mergeProviders()
         return
       }
 
       // Carry over session titles from previous cycle (matched by PID)
       var prev = {}
-      for (var j = 0; j < manager.instances.length; j++)
-        prev[manager.instances[j].pid] = manager.instances[j].sessionTitle || ""
+      for (var j = 0; j < manager._ocInstances.length; j++)
+        prev[manager._ocInstances[j].pid] = manager._ocInstances[j].sessionTitle || ""
       for (var k = 0; k < discovered.length; k++)
         if (prev[discovered[k].pid]) discovered[k].sessionTitle = prev[discovered[k].pid]
 
       // Store discovered instances, then query their status
-      manager._pending = discovered
-      manager._pendingIdx = 0
-      manager._queryNext()
+      manager._ocPending = discovered
+      manager._ocPendingIdx = 0
+      manager._ocQueryNext()
     }
   }
 
-  // Pending status queries
-  property var _pending: []
-  property int _pendingIdx: 0
-  property string _pendingSessionId: ""
-
-  function _queryNext() {
-    if (_pendingIdx >= _pending.length) {
-      // All queries done, update public properties
-      manager.instances = _pending
-      manager.totalCount = _pending.length
-      var busy = 0
-      var idle = 0
-      var errors = 0
-      var questions = 0
-      for (var i = 0; i < _pending.length; i++) {
-        if (_pending[i].status === "busy") busy++
-        else if (_pending[i].status === "idle") idle++
-        else if (_pending[i].status === "error") errors++
-        else if (_pending[i].status === "input") questions++
-      }
-      manager.busyCount = busy
-      manager.idleCount = idle
-      manager.errorCount = errors
-      manager.questionCount = questions
+  // Drive the per-instance OpenCode query chain
+  function _ocQueryNext() {
+    if (_ocPendingIdx >= _ocPending.length) {
+      // All OpenCode queries done — publish results and merge
+      manager._ocInstances = _ocPending
+      manager._mergeProviders()
       return
     }
 
-    var instance = _pending[_pendingIdx]
+    var instance = _ocPending[_ocPendingIdx]
     statusProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
       "http://127.0.0.1:" + instance.port + "/session/status"]
     statusProc.running = true
   }
 
   // Advance to session title fetch or next instance
-  function _fetchSessionOrAdvance() {
-    if (manager._pendingSessionId !== "") {
-      var instance = manager._pending[manager._pendingIdx]
+  function _ocFetchSessionOrAdvance() {
+    if (manager._ocPendingSessionId !== "") {
+      var instance = manager._ocPending[manager._ocPendingIdx]
       sessionProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
-        "http://127.0.0.1:" + instance.port + "/session/" + manager._pendingSessionId]
+        "http://127.0.0.1:" + instance.port + "/session/" + manager._ocPendingSessionId]
       sessionProc.running = true
     } else {
-      manager._pendingIdx++
-      manager._queryNext()
+      manager._ocPendingIdx++
+      manager._ocQueryNext()
     }
   }
 
-  // Step 2: query each instance's session status via HTTP
+  // Step 2: query each OpenCode instance's session status via HTTP
   Process {
     id: statusProc
     property string output: ""
@@ -164,9 +189,9 @@ Singleton {
       onRead: data => statusProc.output += data + "\n"
     }
     onExited: function(exitCode, exitStatus) {
-      var idx = manager._pendingIdx
-      manager._pendingSessionId = ""
-      if (idx < manager._pending.length) {
+      var idx = manager._ocPendingIdx
+      manager._ocPendingSessionId = ""
+      if (idx < manager._ocPending.length) {
         if (exitCode === 0 && statusProc.output.trim() !== "") {
           try {
             // Response is { "sessionId": { "type": "idle"|"busy"|"retry", ... }, ... }
@@ -179,29 +204,29 @@ Singleton {
               if (s && s.type === "busy") hasBusy = true
               else if (s && s.type === "retry") hasRetry = true
             }
-            if (hasRetry) manager._pending[idx].status = "error"
-            else if (hasBusy) manager._pending[idx].status = "busy"
-            else manager._pending[idx].status = "idle"
+            if (hasRetry) manager._ocPending[idx].status = "error"
+            else if (hasBusy) manager._ocPending[idx].status = "busy"
+            else manager._ocPending[idx].status = "idle"
 
             // Pick the first session ID for title lookup
-            if (keys.length > 0) manager._pendingSessionId = keys[0]
+            if (keys.length > 0) manager._ocPendingSessionId = keys[0]
           } catch(e) {
-            manager._pending[idx].status = "error"
+            manager._ocPending[idx].status = "error"
           }
         } else {
           // curl failed — server unreachable
-          manager._pending[idx].status = "error"
+          manager._ocPending[idx].status = "error"
         }
       }
 
       // If the instance is busy, check for pending questions
-      if (manager._pending[idx].status === "busy") {
-        var instance = manager._pending[idx]
+      if (manager._ocPending[idx].status === "busy") {
+        var instance = manager._ocPending[idx]
         questionProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
           "http://127.0.0.1:" + instance.port + "/question"]
         questionProc.running = true
       } else {
-        manager._fetchSessionOrAdvance()
+        manager._ocFetchSessionOrAdvance()
       }
     }
   }
@@ -215,25 +240,25 @@ Singleton {
       onRead: data => questionProc.output += data + "\n"
     }
     onExited: function(exitCode, exitStatus) {
-      var idx = manager._pendingIdx
-      if (idx < manager._pending.length && exitCode === 0 && questionProc.output.trim() !== "") {
+      var idx = manager._ocPendingIdx
+      if (idx < manager._ocPending.length && exitCode === 0 && questionProc.output.trim() !== "") {
         try {
           var questions = JSON.parse(questionProc.output.trim())
           if (Array.isArray(questions) && questions.length > 0)
-            manager._pending[idx].status = "input"
+            manager._ocPending[idx].status = "input"
         } catch(e) {
           // Parse failed — keep busy status
         }
       }
 
       // If still busy (no questions found), check for pending permissions
-      if (manager._pending[idx].status === "busy") {
-        var instance = manager._pending[idx]
+      if (manager._ocPending[idx].status === "busy") {
+        var instance = manager._ocPending[idx]
         permissionProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
           "http://127.0.0.1:" + instance.port + "/permission"]
         permissionProc.running = true
       } else {
-        manager._fetchSessionOrAdvance()
+        manager._ocFetchSessionOrAdvance()
       }
     }
   }
@@ -247,22 +272,22 @@ Singleton {
       onRead: data => permissionProc.output += data + "\n"
     }
     onExited: function(exitCode, exitStatus) {
-      var idx = manager._pendingIdx
-      if (idx < manager._pending.length && exitCode === 0 && permissionProc.output.trim() !== "") {
+      var idx = manager._ocPendingIdx
+      if (idx < manager._ocPending.length && exitCode === 0 && permissionProc.output.trim() !== "") {
         try {
           var permissions = JSON.parse(permissionProc.output.trim())
           if (Array.isArray(permissions) && permissions.length > 0)
-            manager._pending[idx].status = "input"
+            manager._ocPending[idx].status = "input"
         } catch(e) {
           // Parse failed — keep busy status
         }
       }
 
-      manager._fetchSessionOrAdvance()
+      manager._ocFetchSessionOrAdvance()
     }
   }
 
-  // Step 4: fetch session title for the active session
+  // Step 4: fetch session title for the active OpenCode session
   Process {
     id: sessionProc
     property string output: ""
@@ -271,18 +296,18 @@ Singleton {
       onRead: data => sessionProc.output += data + "\n"
     }
     onExited: function(exitCode, exitStatus) {
-      var idx = manager._pendingIdx
-      if (idx < manager._pending.length && exitCode === 0 && sessionProc.output.trim() !== "") {
+      var idx = manager._ocPendingIdx
+      if (idx < manager._ocPending.length && exitCode === 0 && sessionProc.output.trim() !== "") {
         try {
           var session = JSON.parse(sessionProc.output.trim())
-          if (session.title) manager._pending[idx].sessionTitle = session.title
+          if (session.title) manager._ocPending[idx].sessionTitle = session.title
         } catch(e) {
           // Title unavailable — leave empty
         }
       }
 
-      manager._pendingIdx++
-      manager._queryNext()
+      manager._ocPendingIdx++
+      manager._ocQueryNext()
     }
   }
 }
