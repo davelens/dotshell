@@ -120,12 +120,20 @@ Item {
             }
 
             Text {
+              id: providerLabel
+              anchors.verticalCenter: parent.verticalCenter
+              text: modelData.provider === "opencode" ? "OC" : "CC"
+              color: Theme.textMuted
+              font.pixelSize: 12
+            }
+
+            Text {
               anchors.verticalCenter: parent.verticalCenter
               text: modelData.project
               color: Theme.textPrimary
               font.pixelSize: 14
               elide: Text.ElideRight
-              width: parent.width - statusIcon.width - statusLabel.width - 16
+              width: parent.width - statusIcon.width - providerLabel.width - statusLabel.width - 24
             }
 
             Text {
