@@ -22,31 +22,39 @@ Singleton {
   // Registry directory for OpenCode (set once at startup)
   property string registryDir: ""
 
+  // Sessions directory for Claude Code (set once at startup)
+  property string _ccSessionsDir: ""
+
   Component.onCompleted: {
     var xdgRuntime = Quickshell.env("XDG_RUNTIME_DIR")
     if (!xdgRuntime) xdgRuntime = "/run/user/1000"
     registryDir = xdgRuntime + "/opencode-ports"
+
+    var xdgConfig = Quickshell.env("XDG_CONFIG_HOME")
+    if (!xdgConfig) xdgConfig = Quickshell.env("HOME") + "/.config"
+    _ccSessionsDir = xdgConfig + "/claude/sessions"
   }
 
   // Poll every 10 seconds — orchestrates all provider discovery passes
   Timer {
     interval: 10000
-    running: manager.registryDir !== ""
+    running: true
     repeat: true
     triggeredOnStart: true
     onTriggered: {
       _ocDiscover()
-      // _ccDiscover() will be added here in Task 4
+      _ccDiscover()
     }
   }
 
   // Merge completed provider instance arrays into the shared `instances` list
   // and recompute aggregated counts.
-  // Add each provider's array as a parameter when Task 4 introduces Claude.
   function _mergeProviders() {
     var merged = []
     for (var i = 0; i < _ocInstances.length; i++)
       merged.push(_ocInstances[i])
+    for (var i = 0; i < _ccInstances.length; i++)
+      merged.push(_ccInstances[i])
 
     manager.instances = merged
     manager.totalCount = merged.length
@@ -308,6 +316,71 @@ Singleton {
 
       manager._ocPendingIdx++
       manager._ocQueryNext()
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Claude Code provider discovery
+  // -------------------------------------------------------------------------
+
+  // Completed Claude Code instances for the current poll cycle
+  property var _ccInstances: []
+
+  // Kick off Claude Code discovery
+  function _ccDiscover() {
+    ccDiscoverProc.command = ["bash", "-c",
+      "shopt -s nullglob; " +
+      "for f in \"" + manager._ccSessionsDir + "\"/*.json; do " +
+      "  pid=$(basename \"$f\" .json); " +
+      "  if kill -0 \"$pid\" 2>/dev/null; then " +
+      "    echo \"$pid:$(cat \"$f\")\"; " +
+      "  else " +
+      "    rm -f \"$f\"; " +
+      "  fi; " +
+      "done"
+    ]
+    ccDiscoverProc.running = true
+  }
+
+  // Read Claude session files and validate PIDs
+  Process {
+    id: ccDiscoverProc
+    property string output: ""
+    onStarted: output = ""
+    stdout: SplitParser {
+      onRead: data => ccDiscoverProc.output += data + "\n"
+    }
+    onExited: {
+      var lines = ccDiscoverProc.output.trim().split("\n")
+      var discovered = []
+
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i] === "") continue
+        var colonIdx = lines[i].indexOf(":")
+        if (colonIdx < 0) continue
+
+        var pid = lines[i].substring(0, colonIdx)
+        var jsonStr = lines[i].substring(colonIdx + 1)
+
+        try {
+          var info = JSON.parse(jsonStr)
+          var parts = info.cwd.split("/")
+          discovered.push({
+            provider: "claude-code",
+            pid: pid,
+            sessionId: info.sessionId,
+            cwd: info.cwd,
+            project: parts[parts.length - 1],
+            status: "idle",
+            sessionTitle: ""
+          })
+        } catch(e) {
+          // Skip malformed session files
+        }
+      }
+
+      manager._ccInstances = discovered
+      manager._mergeProviders()
     }
   }
 }
