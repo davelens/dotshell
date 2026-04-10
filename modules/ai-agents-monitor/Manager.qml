@@ -31,14 +31,17 @@ Singleton {
     registryDir = xdgRuntime + "/opencode-ports"
 
     var xdgConfig = Quickshell.env("XDG_CONFIG_HOME")
-    if (!xdgConfig) xdgConfig = Quickshell.env("HOME") + "/.config"
+    if (!xdgConfig) {
+      var home = Quickshell.env("HOME")
+      xdgConfig = (home ? home : "/root") + "/.config"
+    }
     _ccSessionsDir = xdgConfig + "/claude/sessions"
   }
 
   // Poll every 10 seconds — orchestrates all provider discovery passes
   Timer {
     interval: 10000
-    running: true
+    running: manager.registryDir !== "" || manager._ccSessionsDir !== ""
     repeat: true
     triggeredOnStart: true
     onTriggered: {
