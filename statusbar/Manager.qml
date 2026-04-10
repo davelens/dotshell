@@ -107,13 +107,27 @@ Singleton {
       // Load popup stem setting
       popupStem = config.popupStem !== undefined ? config.popupStem : false
 
+      // Migrate renamed module IDs in saved configs
+      var migrated = false
+      var sections = ["left", "center", "right"]
+      for (var s = 0; s < sections.length; s++) {
+        var items = config[sections[s]] || []
+        for (var m = 0; m < items.length; m++) {
+          var newId = _migrateId(items[m].id)
+          if (newId) {
+            items[m].id = newId
+            migrated = true
+          }
+        }
+      }
+
       // Load items, filtering out modules that don't exist
       leftItems = filterValidItems(config.left || [])
       centerItems = filterValidItems(config.center || [])
       rightItems = filterValidItems(config.right || [])
 
       // Auto-merge new modules not yet in any section
-      var merged = mergeNewModules()
+      var merged = mergeNewModules() || migrated
 
       ready = true
       console.log("[StatusbarManager] Loaded config:", leftItems.length, "left,", centerItems.length, "center,", rightItems.length, "right")
@@ -122,6 +136,16 @@ Singleton {
     } catch (e) {
       console.error("[StatusbarManager] Failed to parse config:", e)
     }
+  }
+
+  // Renamed module IDs: old → new. Add entries here when a module is renamed.
+  readonly property var _renamedModules: ({
+    "opencode": "ai-agents-monitor"
+  })
+
+  // Returns the new ID if the module was renamed, or empty string if no migration needed
+  function _migrateId(id) {
+    return _renamedModules[id] || ""
   }
 
   // Filter out items whose modules don't exist
