@@ -412,7 +412,15 @@ Singleton {
 
     var instance = _ccPending[_ccPendingIdx]
     var sessionId = instance.sessionId || ""
-    var tasksDir = manager._ccTasksDir + (sessionId ? "/" + sessionId : "")
+
+    // Skip status query if sessionId is missing to avoid reading root tasks dir
+    if (!sessionId) {
+      manager._ccPendingIdx++
+      manager._ccQueryNext()
+      return
+    }
+
+    var tasksDir = manager._ccTasksDir + "/" + sessionId
     ccStatusProc.command = ["bash", "-c",
       "shopt -s nullglob; " +
       "for f in \"" + tasksDir + "\"/*.json; do " +
