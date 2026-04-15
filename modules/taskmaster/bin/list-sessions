@@ -11,7 +11,7 @@ fi
 now="$(date +%s)"
 
 shopt -s nullglob
-files=("$repo_root"/*/*/.taskmaster)
+files=("$repo_root"/*/*/.taskmaster/active.json)
 
 if [ "${#files[@]}" -eq 0 ]; then
   printf '[]\n'
@@ -19,7 +19,7 @@ if [ "${#files[@]}" -eq 0 ]; then
 fi
 
 for file in "${files[@]}"; do
-  project_fallback="$(basename "$(dirname "$file")")"
+  project_fallback="$(basename "$(dirname "$(dirname "$file")")")"
 
   jq --arg projectFallback "$project_fallback" --argjson now "$now" '
     (.project.name // $projectFallback) as $project
