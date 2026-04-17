@@ -11,7 +11,7 @@ Item {
   width: row.width
   height: row.height
 
-  property bool showInBar: TaskmasterManager.totalCount > 0
+  property bool showInBar: ActiveCollabManager.totalCount > 0
 
   Row {
     id: row
@@ -27,7 +27,7 @@ Item {
 
     Text {
       anchors.verticalCenter: parent.verticalCenter
-      text: TaskmasterManager.totalCount
+      text: ActiveCollabManager.totalCount
       color: Theme.textPrimary
       font.pixelSize: 14
     }
@@ -49,7 +49,7 @@ Item {
       spacing: 8
 
       Text {
-        text: "Taskmaster Sessions"
+        text: "ActiveCollab Sessions"
         color: Theme.textPrimary
         font.pixelSize: 14
       }
@@ -61,7 +61,7 @@ Item {
       }
 
       Repeater {
-        model: TaskmasterManager.runningTasks
+        model: ActiveCollabManager.runningTasks
 
         Column {
           required property var modelData

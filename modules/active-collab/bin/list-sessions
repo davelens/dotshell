@@ -11,7 +11,7 @@ fi
 now="$(date +%s)"
 
 shopt -s nullglob
-files=("$repo_root"/*/*/.taskmaster/active.json)
+files=("$repo_root"/*/*/.active-collab/active.json)
 
 if [ "${#files[@]}" -eq 0 ]; then
   printf '[]\n'

@@ -17,7 +17,7 @@ Singleton {
     repeat: true
     triggeredOnStart: true
     onTriggered: {
-      pollProc.command = ["bash", Quickshell.shellDir + "/modules/taskmaster/bin/list-sessions"]
+      pollProc.command = ["bash", Quickshell.shellDir + "/modules/active-collab/bin/list-sessions"]
       pollProc.running = true
     }
   }
