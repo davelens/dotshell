@@ -39,12 +39,6 @@
   ],
   "right": [
     {
-      "id": "power-meter",
-      "enabled": true,
-      "marginLeft": 0,
-      "marginRight": 16
-    },
-    {
       "id": "ai-agents-monitor",
       "enabled": true,
       "marginLeft": 0,
