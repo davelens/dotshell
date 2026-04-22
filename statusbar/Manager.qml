@@ -122,12 +122,20 @@ Singleton {
       }
 
       // Load items, filtering out modules that don't exist
-      leftItems = filterValidItems(config.left || [])
-      centerItems = filterValidItems(config.center || [])
-      rightItems = filterValidItems(config.right || [])
+      var rawLeft = config.left || []
+      var rawCenter = config.center || []
+      var rawRight = config.right || []
+      leftItems = filterValidItems(rawLeft)
+      centerItems = filterValidItems(rawCenter)
+      rightItems = filterValidItems(rawRight)
+
+      // Detect if any stale (removed module) entries were dropped so we can persist
+      var dropped = (leftItems.length !== rawLeft.length)
+                 || (centerItems.length !== rawCenter.length)
+                 || (rightItems.length !== rawRight.length)
 
       // Auto-merge new modules not yet in any section
-      var merged = mergeNewModules() || migrated
+      var merged = mergeNewModules() || migrated || dropped
 
       ready = true
       console.log("[StatusbarManager] Loaded config:", leftItems.length, "left,", centerItems.length, "center,", rightItems.length, "right")
