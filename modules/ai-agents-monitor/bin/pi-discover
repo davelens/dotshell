@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# Discovers running Pi (pi.dev) coding agent instances and reports per-cwd
+# status by inspecting the JSONL session log Pi writes to disk.
+#
+# Pi has no PID-keyed registry and no HTTP endpoint, so we correlate live
+# `pi` processes (via pgrep -x pi) against ~/.config/pi/sessions/<slug>/*.jsonl
+# by working directory. The slug is the cwd with `/` replaced by `-`, wrapped
+# in `--...--`. The newest .jsonl in that directory is the active session.
+#
+# Status inference (newest 50 lines of active session):
+#   - error: last assistant message has stopReason == "aborted" or
+#            non-empty errorMessage, with no later user/toolResult message.
+#   - busy:  last user/toolResult message is newer than the last assistant
+#            message with stopReason == "stop".
+#   - idle:  otherwise (last assistant has stopReason == "stop", or session
+#            has no messages yet).
+#
+# Output: one tab-separated line per instance:
+#   <pid>\t<cwd>\t<sessionId>\t<status>\t<sessionTitle>
+#
+# When multiple `pi` processes share a cwd, the lowest PID wins (one entry
+# per cwd). Title is derived from the first user-text message, normalised to
+# a single line and truncated to 80 chars.
+
+set -eo pipefail
+
+sessions_dir="${PI_SESSIONS_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/pi/sessions}"
+
+if ! command -v jq >/dev/null 2>&1; then
+  exit 0
+fi
+
+# Collect (pid, cwd) pairs for live pi processes, dedup by cwd keeping lowest PID
+declare -A cwd_pid
+
+while read -r pid; do
+  [ -n "$pid" ] || continue
+  cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null) || continue
+  [ -n "$cwd" ] || continue
+  if [ -z "${cwd_pid[$cwd]:-}" ] || [ "$pid" -lt "${cwd_pid[$cwd]}" ]; then
+    cwd_pid[$cwd]=$pid
+  fi
+done < <(pgrep -x pi 2>/dev/null || true)
+
+[ "${#cwd_pid[@]}" -eq 0 ] && exit 0
+
+# Slugify a cwd path the way Pi does: strip leading/trailing slash, replace /
+# with -, wrap with -- on both ends. e.g. /home/x/y -> --home-x-y--
+slugify() {
+  local path="$1"
+  path="${path#/}"
+  path="${path%/}"
+  printf -- '--%s--' "${path//\//-}"
+}
+
+# Replace tabs/newlines with spaces, collapse whitespace, truncate to 80 chars
+normalise_title() {
+  local raw="$1"
+  raw="${raw//$'\t'/ }"
+  raw="${raw//$'\n'/ }"
+  raw="${raw//$'\r'/ }"
+  # Collapse runs of whitespace
+  raw=$(printf '%s' "$raw" | tr -s ' ')
+  # Trim leading/trailing space
+  raw="${raw#"${raw%%[![:space:]]*}"}"
+  raw="${raw%"${raw##*[![:space:]]}"}"
+  if [ "${#raw}" -gt 80 ]; then
+    raw="${raw:0:77}..."
+  fi
+  printf '%s' "$raw"
+}
+
+shopt -s nullglob
+
+for cwd in "${!cwd_pid[@]}"; do
+  pid="${cwd_pid[$cwd]}"
+  slug=$(slugify "$cwd")
+  dir="$sessions_dir/$slug"
+
+  [ -d "$dir" ] || continue
+
+  # Newest .jsonl by mtime
+  active_file=""
+  active_mtime=0
+  for f in "$dir"/*.jsonl; do
+    [ -f "$f" ] || continue
+    mtime=$(stat -c '%Y' "$f" 2>/dev/null || echo 0)
+    if [ "$mtime" -gt "$active_mtime" ]; then
+      active_mtime=$mtime
+      active_file=$f
+    fi
+  done
+
+  [ -n "$active_file" ] || continue
+
+  # Session id from the first line (type=session)
+  session_id=$(head -n 1 "$active_file" | jq -r 'select(.type=="session") | .id // ""' 2>/dev/null || echo "")
+
+  # Status inference from the tail
+  status=$(tail -n 50 "$active_file" | jq -rs '
+    # Walk events in order; track last assistant stop event vs last user/toolResult
+    reduce .[] as $e (
+      {lastAssistantStop: null, lastAssistantError: null, lastUserOrTool: null};
+      if $e.type == "message" then
+        if $e.message.role == "assistant" then
+          (if ($e.message.stopReason == "stop") then
+            .lastAssistantStop = $e.timestamp
+          else . end)
+          | (if ($e.message.stopReason == "aborted")
+                or (($e.message.errorMessage // "") != "") then
+            .lastAssistantError = $e.timestamp
+          else . end)
+        elif ($e.message.role == "user") or ($e.message.role == "toolResult") then
+          .lastUserOrTool = $e.timestamp
+        else . end
+      else . end
+    )
+    | if (.lastAssistantError != null)
+        and ((.lastUserOrTool == null) or (.lastUserOrTool < .lastAssistantError))
+      then "error"
+      elif (.lastUserOrTool != null)
+        and ((.lastAssistantStop == null) or (.lastUserOrTool > .lastAssistantStop))
+      then "busy"
+      else "idle"
+      end
+  ' 2>/dev/null || echo "idle")
+
+  [ -n "$status" ] || status="idle"
+
+  # First user-text message anywhere in the session
+  raw_title=$(jq -rs '
+    [ .[]
+      | select(.type == "message" and .message.role == "user")
+      | (.message.content // [])[]?
+      | select(.type == "text")
+      | .text
+    ] | (.[0] // "")
+  ' "$active_file" 2>/dev/null || echo "")
+
+  title=$(normalise_title "$raw_title")
+
+  printf '%s\t%s\t%s\t%s\t%s\n' "$pid" "$cwd" "$session_id" "$status" "$title"
+done

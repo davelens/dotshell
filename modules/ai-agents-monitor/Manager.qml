@@ -28,6 +28,9 @@ Singleton {
   // Tasks directory for Claude Code (set once at startup)
   property string _ccTasksDir: ""
 
+  // Sessions directory for Pi (set once at startup)
+  property string _piSessionsDir: ""
+
   Component.onCompleted: {
     var xdgRuntime = Quickshell.env("XDG_RUNTIME_DIR")
     if (!xdgRuntime) xdgRuntime = "/run/user/1000"
@@ -40,30 +43,34 @@ Singleton {
     }
     _ccSessionsDir = xdgConfig + "/claude/sessions"
     _ccTasksDir = xdgConfig + "/claude/tasks"
+    _piSessionsDir = xdgConfig + "/pi/sessions"
   }
 
   // Guard flags to prevent re-entry and coordinate merge timing
   property bool _ocBusy: false
   property bool _ccBusy: false
+  property bool _piBusy: false
 
   // Poll every 10 seconds — orchestrates all provider discovery passes
   Timer {
     interval: 10000
-    running: manager.registryDir !== "" || manager._ccSessionsDir !== ""
+    running: manager.registryDir !== "" || manager._ccSessionsDir !== "" || manager._piSessionsDir !== ""
     repeat: true
     triggeredOnStart: true
     onTriggered: {
-      if (manager._ocBusy || manager._ccBusy) return
+      if (manager._ocBusy || manager._ccBusy || manager._piBusy) return
       manager._ocBusy = true
       manager._ccBusy = true
+      manager._piBusy = true
       manager._ocDiscover()
       manager._ccDiscover()
+      manager._piDiscover()
     }
   }
 
-  // Only merge when both providers have finished their current cycle
+  // Only merge when all providers have finished their current cycle
   function _tryMerge() {
-    if (!_ocBusy && !_ccBusy) _mergeProviders()
+    if (!_ocBusy && !_ccBusy && !_piBusy) _mergeProviders()
   }
 
   // Merge completed provider instance arrays into the shared `instances` list
@@ -74,6 +81,8 @@ Singleton {
       merged.push(_ocInstances[i])
     for (var i = 0; i < _ccInstances.length; i++)
       merged.push(_ccInstances[i])
+    for (var i = 0; i < _piInstances.length; i++)
+      merged.push(_piInstances[i])
 
     manager.instances = merged
     manager.totalCount = merged.length
@@ -483,6 +492,67 @@ Singleton {
 
       manager._ccPendingIdx++
       manager._ccQueryNext()
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Pi provider discovery
+  // -------------------------------------------------------------------------
+
+  // Completed Pi instances for the current poll cycle
+  property var _piInstances: []
+
+  // Kick off Pi discovery — delegates to bin/pi-discover which correlates
+  // live `pi` processes against on-disk JSONL session files by cwd.
+  function _piDiscover() {
+    if (manager._piSessionsDir === "") {
+      manager._piInstances = []
+      manager._piBusy = false
+      manager._tryMerge()
+      return
+    }
+    piDiscoverProc.command = ["bash",
+      Quickshell.shellDir + "/modules/ai-agents-monitor/bin/pi-discover"]
+    piDiscoverProc.running = true
+  }
+
+  Process {
+    id: piDiscoverProc
+    property string output: ""
+    onStarted: output = ""
+    stdout: SplitParser {
+      onRead: data => piDiscoverProc.output += data + "\n"
+    }
+    onExited: {
+      var lines = piDiscoverProc.output.trim().split("\n")
+      var discovered = []
+
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i] === "") continue
+        var fields = lines[i].split("\t")
+        if (fields.length < 4) continue
+
+        var pid = fields[0]
+        var cwd = fields[1]
+        var sessionId = fields[2]
+        var status = fields[3]
+        var sessionTitle = fields.length >= 5 ? fields[4] : ""
+
+        var parts = cwd.split("/")
+        discovered.push({
+          provider: "pi",
+          pid: pid,
+          sessionId: sessionId,
+          cwd: cwd,
+          project: parts[parts.length - 1],
+          status: status,
+          sessionTitle: sessionTitle
+        })
+      }
+
+      manager._piInstances = discovered
+      manager._piBusy = false
+      manager._tryMerge()
     }
   }
 }

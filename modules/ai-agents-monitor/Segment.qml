@@ -122,7 +122,14 @@ Item {
             Text {
               id: providerLabel
               anchors.verticalCenter: parent.verticalCenter
-              text: modelData.provider === "opencode" ? "OC" : "CC"
+              width: 18
+              horizontalAlignment: Text.AlignLeft
+              text: {
+                if (modelData.provider === "opencode") return "OC"
+                if (modelData.provider === "claude-code") return "CC"
+                if (modelData.provider === "pi") return "PI"
+                return "??"
+              }
               color: Theme.textMuted
               font.pixelSize: 12
             }

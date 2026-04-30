@@ -3,7 +3,7 @@
   "name": "AI Agents Monitor",
   "icon": "󰚩",
   "order": 205,
-  "keywords": "opencode claude agents monitor ai coding llm busy idle",
+  "keywords": "opencode claude pi agents monitor ai coding llm busy idle",
   "components": {
     "manager": "Manager.qml",
     "segment": "Segment.qml"
