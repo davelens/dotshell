@@ -526,7 +526,7 @@ Variants {
                   text: "󰇚"
                   color: {
                     if (UpdatesManager.blocked) return Theme.bgBorder
-                    if (UpdatesManager.isUpdating(modelData.name)) return Theme.warning
+                    if (UpdatesManager.isUpdating(modelData.appId)) return Theme.warning
                     return fpPkgMouse.containsMouse ? Theme.success : Theme.textMuted
                   }
                   font.pixelSize: 13

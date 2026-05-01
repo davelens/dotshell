@@ -110,7 +110,7 @@ Singleton {
     if (source === "flatpak") {
       singleUpdateHelper.start(["flatpak", "update", "-y", name], name, from, to)
     } else if (source === "aur") {
-      singleUpdateHelper.start(["paru", "-S", "--needed", "--noconfirm", name], name, from, to)
+      singleUpdateHelper.start(["paru", "-S", "--needed", "--noconfirm", "--skipreview", "--sudoloop", name], name, from, to)
     } else {
       singleUpdateHelper.start(["bash", "-c", "sudo pacman -Sy && sudo pacman -S --needed --noconfirm " + name], name, from, to)
     }
@@ -133,7 +133,7 @@ Singleton {
     } else if (source === "aur") {
       if (aurUpdates.length === 0) return
       sourceUpdateProc.source = source
-      sourceUpdateProc.command = ["paru", "-S", "--needed", "--noconfirm"].concat(
+      sourceUpdateProc.command = ["paru", "-S", "--needed", "--noconfirm", "--skipreview", "--sudoloop"].concat(
         aurUpdates.map(function(p) { return p.name })
       )
       var aurPkgs = Object.assign({}, updatingPackages)
@@ -145,7 +145,7 @@ Singleton {
       sourceUpdateProc.source = source
       sourceUpdateProc.command = ["flatpak", "update", "-y"]
       var fpPkgs = Object.assign({}, updatingPackages)
-      for (var k = 0; k < flatpakUpdates.length; k++) fpPkgs[flatpakUpdates[k].name] = true
+      for (var k = 0; k < flatpakUpdates.length; k++) fpPkgs[flatpakUpdates[k].appId] = true
       updatingPackages = fpPkgs
       sourceUpdateProc.running = true
     }
@@ -156,23 +156,34 @@ Singleton {
     if (systemUpdating) return
     systemUpdating = true
     if (includeFlatpak) {
-      systemUpdateProc.command = ["bash", "-c", "paru -Syu --noconfirm && flatpak update -y"]
+      systemUpdateProc.command = ["bash", "-c", "paru -Syu --noconfirm --skipreview --sudoloop && flatpak update -y"]
     } else {
-      systemUpdateProc.command = ["paru", "-Syu", "--noconfirm"]
+      systemUpdateProc.command = ["paru", "-Syu", "--noconfirm", "--skipreview", "--sudoloop"]
     }
     systemUpdateProc.running = true
   }
 
-  function onSystemUpdateComplete(success) {
+  function onSystemUpdateComplete(success, exitCode) {
     systemUpdating = false
     updatingPackages = {}
     if (success) {
       notifyProc.command = ["notify-send", "-a", "General", "System Updates", "System update completed successfully", "-i", "package-install"]
     } else {
-      notifyProc.command = ["notify-send", "-a", "General", "System Updates", "System update failed", "-i", "dialog-error"]
+      var body = "System update failed (exit " + exitCode + ")"
+      var tail = tailLines(systemUpdateProc.stderrBuf, 8)
+      if (tail) body += "\n" + tail
+      notifyProc.command = ["notify-send", "-a", "General", "-u", "critical", "System Updates", body, "-i", "dialog-error"]
     }
     notifyProc.running = true
     recheckTimer.restart()
+  }
+
+  // Return the last `n` non-empty lines of a buffer, joined by newlines.
+  function tailLines(buf, n) {
+    if (!buf) return ""
+    var lines = String(buf).split("\n").filter(function(l) { return l.trim().length > 0 })
+    if (lines.length === 0) return ""
+    return lines.slice(Math.max(0, lines.length - n)).join("\n")
   }
 
   // Helper object to manage concurrent single-package updates.
@@ -210,7 +221,10 @@ Singleton {
         if (fromVersion && toVersion) body += "\n" + fromVersion + " → " + toVersion
         notifyProc.command = ["notify-send", "-a", "General", "System Updates", body, "-i", "package-install"]
       } else {
-        notifyProc.command = ["notify-send", "-a", "General", "System Updates", "Failed to update " + pkgName, "-i", "dialog-error"]
+        var errBody = "Failed to update " + pkgName + " (exit " + exitCode + ")"
+        var tail = manager.tailLines(singleProc.stderrBuf, 6)
+        if (tail) errBody += "\n" + tail
+        notifyProc.command = ["notify-send", "-a", "General", "-u", "critical", "System Updates", errBody, "-i", "dialog-error"]
       }
       notifyProc.running = true
 
@@ -332,6 +346,11 @@ Singleton {
     property string pkgName: ""
     property string fromVersion: ""
     property string toVersion: ""
+    property string stderrBuf: ""
+    onStarted: stderrBuf = ""
+    stderr: SplitParser {
+      onRead: data => singleProc.stderrBuf += data + "\n"
+    }
     onExited: exitCode => singleUpdateHelper.onFinished(pkgName, fromVersion, toVersion, exitCode)
   }
 
@@ -339,6 +358,11 @@ Singleton {
   Process {
     id: sourceUpdateProc
     property string source: ""
+    property string stderrBuf: ""
+    onStarted: stderrBuf = ""
+    stderr: SplitParser {
+      onRead: data => sourceUpdateProc.stderrBuf += data + "\n"
+    }
     onExited: exitCode => {
       // Clear all updating flags for this source
       var pkgs = Object.assign({}, manager.updatingPackages)
@@ -346,14 +370,18 @@ Singleton {
                 : source === "aur" ? manager.aurUpdates
                 : manager.flatpakUpdates
       for (var i = 0; i < list.length; i++) {
-        delete pkgs[list[i].name]
+        var key = source === "flatpak" ? list[i].appId : list[i].name
+        delete pkgs[key]
       }
       manager.updatingPackages = pkgs
 
       if (exitCode === 0) {
         notifyProc.command = ["notify-send", "-a", "General", "System Updates", "Updated all " + source + " packages", "-i", "package-install"]
       } else {
-        notifyProc.command = ["notify-send", "-a", "General", "System Updates", "Failed to update " + source + " packages", "-i", "dialog-error"]
+        var srcErrBody = "Failed to update " + source + " packages (exit " + exitCode + ")"
+        var srcTail = manager.tailLines(sourceUpdateProc.stderrBuf, 6)
+        if (srcTail) srcErrBody += "\n" + srcTail
+        notifyProc.command = ["notify-send", "-a", "General", "-u", "critical", "System Updates", srcErrBody, "-i", "dialog-error"]
       }
       notifyProc.running = true
       recheckTimer.restart()
@@ -363,7 +391,12 @@ Singleton {
   // System update process (paru -Syu)
   Process {
     id: systemUpdateProc
-    onExited: exitCode => manager.onSystemUpdateComplete(exitCode === 0)
+    property string stderrBuf: ""
+    onStarted: stderrBuf = ""
+    stderr: SplitParser {
+      onRead: data => systemUpdateProc.stderrBuf += data + "\n"
+    }
+    onExited: exitCode => manager.onSystemUpdateComplete(exitCode === 0, exitCode)
   }
 
   // Notification process
