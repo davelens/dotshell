@@ -90,9 +90,32 @@ Singleton {
               : source === "aur" ? aurUpdates
               : flatpakUpdates
     for (var i = 0; i < list.length; i++) {
-      if (list[i].name === name) return list[i]
+      var key = source === "flatpak" ? list[i].appId : list[i].name
+      if (key === name) return list[i]
     }
     return null
+  }
+
+  // Remove an updated package from its source list without re-checking all sources.
+  function removePackage(name, source) {
+    var list = source === "pacman" ? pacmanUpdates
+              : source === "aur" ? aurUpdates
+              : flatpakUpdates
+    var newList = list.filter(function(p) {
+      var key = source === "flatpak" ? p.appId : p.name
+      return key !== name
+    })
+
+    if (source === "pacman") {
+      pacmanUpdates = newList
+      pacmanCount = newList.length
+    } else if (source === "aur") {
+      aurUpdates = newList
+      aurCount = newList.length
+    } else {
+      flatpakUpdates = newList
+      flatpakCount = newList.length
+    }
   }
 
   // Update a single package
@@ -108,11 +131,11 @@ Singleton {
     var to = pkg ? pkg.newVersion : ""
 
     if (source === "flatpak") {
-      singleUpdateHelper.start(["flatpak", "update", "-y", name], name, from, to)
+      singleUpdateHelper.start(["flatpak", "update", "-y", name], name, source, from, to)
     } else if (source === "aur") {
-      singleUpdateHelper.start(["paru", "-S", "--needed", "--noconfirm", "--skipreview", "--sudoloop", name], name, from, to)
+      singleUpdateHelper.start(["paru", "-S", "--needed", "--noconfirm", "--skipreview", "--sudoloop", name], name, source, from, to)
     } else {
-      singleUpdateHelper.start(["bash", "-c", "sudo pacman -Sy && sudo pacman -S --needed --noconfirm " + name], name, from, to)
+      singleUpdateHelper.start(["bash", "-c", "sudo pacman -Sy && sudo pacman -S --needed --noconfirm " + name], name, source, from, to)
     }
   }
 
@@ -193,8 +216,8 @@ Singleton {
     property var queue: []
     property bool busy: false
 
-    function start(cmd, pkgName, fromVersion, toVersion) {
-      queue.push({ command: cmd, name: pkgName, from: fromVersion || "", to: toVersion || "" })
+    function start(cmd, pkgName, source, fromVersion, toVersion) {
+      queue.push({ command: cmd, name: pkgName, source: source, from: fromVersion || "", to: toVersion || "" })
       processNext()
     }
 
@@ -203,13 +226,14 @@ Singleton {
       busy = true
       var item = queue.shift()
       singleProc.pkgName = item.name
+      singleProc.source = item.source
       singleProc.fromVersion = item.from
       singleProc.toVersion = item.to
       singleProc.command = item.command
       singleProc.running = true
     }
 
-    function onFinished(pkgName, fromVersion, toVersion, exitCode) {
+    function onFinished(pkgName, source, fromVersion, toVersion, exitCode) {
       busy = false
       // Remove from updatingPackages
       var pkgs = Object.assign({}, manager.updatingPackages)
@@ -220,6 +244,7 @@ Singleton {
         var body = "Updated " + pkgName
         if (fromVersion && toVersion) body += "\n" + fromVersion + " → " + toVersion
         notifyProc.command = ["notify-send", "-a", "General", "System Updates", body, "-i", "package-install"]
+        manager.removePackage(pkgName, source)
       } else {
         var errBody = "Failed to update " + pkgName + " (exit " + exitCode + ")"
         var tail = manager.tailLines(singleProc.stderrBuf, 6)
@@ -228,11 +253,9 @@ Singleton {
       }
       notifyProc.running = true
 
-      // Process next in queue, or re-check if queue is empty
+      // Process next in queue
       if (queue.length > 0) {
         processNext()
-      } else {
-        recheckTimer.restart()
       }
     }
   }
@@ -344,6 +367,7 @@ Singleton {
   Process {
     id: singleProc
     property string pkgName: ""
+    property string source: ""
     property string fromVersion: ""
     property string toVersion: ""
     property string stderrBuf: ""
@@ -351,7 +375,7 @@ Singleton {
     stderr: SplitParser {
       onRead: data => singleProc.stderrBuf += data + "\n"
     }
-    onExited: exitCode => singleUpdateHelper.onFinished(pkgName, fromVersion, toVersion, exitCode)
+    onExited: exitCode => singleUpdateHelper.onFinished(pkgName, source, fromVersion, toVersion, exitCode)
   }
 
   // Source-level update process (update all in one source)
