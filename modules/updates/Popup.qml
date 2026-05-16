@@ -255,12 +255,14 @@ Variants {
               model: UpdatesManager.pacmanUpdates
 
               Rectangle {
+                id: pacPkgRow
                 required property var modelData
                 required property int index
+                readonly property bool updating: UpdatesManager.isUpdating(modelData.name)
                 width: parent.width
                 height: popup.rowHeight
                 radius: 4
-                color: pacPkgMouse.containsMouse ? Theme.bgCard : "transparent"
+                color: updating ? Theme.bgBaseAlt : (pacPkgMouse.containsMouse ? Theme.bgCard : "transparent")
 
                 Column {
                   anchors.left: parent.left
@@ -273,7 +275,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.name
-                    color: Theme.textPrimary
+                    color: pacPkgRow.updating ? Theme.textMuted : Theme.textPrimary
                     font.pixelSize: 13
                     elide: Text.ElideRight
                   }
@@ -281,7 +283,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.currentVersion + " \u2192 " + modelData.newVersion
-                    color: Theme.textMuted
+                    color: pacPkgRow.updating ? Theme.textSubtle : Theme.textMuted
                     font.pixelSize: 10
                     elide: Text.ElideMiddle
                   }
@@ -292,23 +294,31 @@ Variants {
                   anchors.right: parent.right
                   anchors.rightMargin: 14
                   anchors.verticalCenter: parent.verticalCenter
-                  text: "󰇚"
+                  text: pacPkgRow.updating ? "󰔿" : "󰇚"
                   color: {
                     if (UpdatesManager.blocked) return Theme.bgBorder
-                    if (UpdatesManager.isUpdating(modelData.name)) return Theme.warning
+                    if (pacPkgRow.updating) return Theme.textMuted
                     return pacPkgMouse.containsMouse ? Theme.success : Theme.textMuted
                   }
                   font.pixelSize: 13
                   font.family: "Symbols Nerd Font"
+
+                  RotationAnimation on rotation {
+                    running: pacPkgRow.updating
+                    from: 0
+                    to: 360
+                    duration: 1000
+                    loops: Animation.Infinite
+                  }
                 }
 
                 MouseArea {
                   id: pacPkgMouse
                   anchors.fill: parent
                   hoverEnabled: true
-                  cursorShape: UpdatesManager.blocked ? Qt.ForbiddenCursor : Qt.PointingHandCursor
+                  cursorShape: UpdatesManager.blocked || pacPkgRow.updating ? Qt.ForbiddenCursor : Qt.PointingHandCursor
                   onClicked: {
-                    if (!UpdatesManager.blocked) {
+                    if (!UpdatesManager.blocked && !pacPkgRow.updating) {
                       UpdatesManager.updatePackage(modelData.name, "pacman")
                     }
                   }
@@ -371,12 +381,14 @@ Variants {
               model: UpdatesManager.aurUpdates
 
               Rectangle {
+                id: aurPkgRow
                 required property var modelData
                 required property int index
+                readonly property bool updating: UpdatesManager.isUpdating(modelData.name)
                 width: parent.width
                 height: popup.rowHeight
                 radius: 4
-                color: aurPkgMouse.containsMouse ? Theme.bgCard : "transparent"
+                color: updating ? Theme.bgBaseAlt : (aurPkgMouse.containsMouse ? Theme.bgCard : "transparent")
 
                 Column {
                   anchors.left: parent.left
@@ -389,7 +401,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.name
-                    color: Theme.textPrimary
+                    color: aurPkgRow.updating ? Theme.textMuted : Theme.textPrimary
                     font.pixelSize: 13
                     elide: Text.ElideRight
                   }
@@ -397,7 +409,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.currentVersion + " \u2192 " + modelData.newVersion
-                    color: Theme.textMuted
+                    color: aurPkgRow.updating ? Theme.textSubtle : Theme.textMuted
                     font.pixelSize: 10
                     elide: Text.ElideMiddle
                   }
@@ -408,23 +420,31 @@ Variants {
                   anchors.right: parent.right
                   anchors.rightMargin: 14
                   anchors.verticalCenter: parent.verticalCenter
-                  text: "󰇚"
+                  text: aurPkgRow.updating ? "󰔿" : "󰇚"
                   color: {
                     if (UpdatesManager.blocked) return Theme.bgBorder
-                    if (UpdatesManager.isUpdating(modelData.name)) return Theme.warning
+                    if (aurPkgRow.updating) return Theme.textMuted
                     return aurPkgMouse.containsMouse ? Theme.success : Theme.textMuted
                   }
                   font.pixelSize: 13
                   font.family: "Symbols Nerd Font"
+
+                  RotationAnimation on rotation {
+                    running: aurPkgRow.updating
+                    from: 0
+                    to: 360
+                    duration: 1000
+                    loops: Animation.Infinite
+                  }
                 }
 
                 MouseArea {
                   id: aurPkgMouse
                   anchors.fill: parent
                   hoverEnabled: true
-                  cursorShape: UpdatesManager.blocked ? Qt.ForbiddenCursor : Qt.PointingHandCursor
+                  cursorShape: UpdatesManager.blocked || aurPkgRow.updating ? Qt.ForbiddenCursor : Qt.PointingHandCursor
                   onClicked: {
-                    if (!UpdatesManager.blocked) {
+                    if (!UpdatesManager.blocked && !aurPkgRow.updating) {
                       UpdatesManager.updatePackage(modelData.name, "aur")
                     }
                   }
@@ -486,12 +506,14 @@ Variants {
               model: UpdatesManager.flatpakUpdates
 
               Rectangle {
+                id: fpPkgRow
                 required property var modelData
                 required property int index
+                readonly property bool updating: UpdatesManager.isUpdating(modelData.appId)
                 width: parent.width
                 height: popup.rowHeight
                 radius: 4
-                color: fpPkgMouse.containsMouse ? Theme.bgCard : "transparent"
+                color: updating ? Theme.bgBaseAlt : (fpPkgMouse.containsMouse ? Theme.bgCard : "transparent")
 
                 Column {
                   anchors.left: parent.left
@@ -504,7 +526,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.name
-                    color: Theme.textPrimary
+                    color: fpPkgRow.updating ? Theme.textMuted : Theme.textPrimary
                     font.pixelSize: 13
                     elide: Text.ElideRight
                   }
@@ -512,7 +534,7 @@ Variants {
                   Text {
                     width: parent.width
                     text: modelData.newVersion ? modelData.newVersion : modelData.appId
-                    color: Theme.textMuted
+                    color: fpPkgRow.updating ? Theme.textSubtle : Theme.textMuted
                     font.pixelSize: 10
                     elide: Text.ElideMiddle
                   }
@@ -523,23 +545,31 @@ Variants {
                   anchors.right: parent.right
                   anchors.rightMargin: 14
                   anchors.verticalCenter: parent.verticalCenter
-                  text: "󰇚"
+                  text: fpPkgRow.updating ? "󰔿" : "󰇚"
                   color: {
                     if (UpdatesManager.blocked) return Theme.bgBorder
-                    if (UpdatesManager.isUpdating(modelData.appId)) return Theme.warning
+                    if (fpPkgRow.updating) return Theme.textMuted
                     return fpPkgMouse.containsMouse ? Theme.success : Theme.textMuted
                   }
                   font.pixelSize: 13
                   font.family: "Symbols Nerd Font"
+
+                  RotationAnimation on rotation {
+                    running: fpPkgRow.updating
+                    from: 0
+                    to: 360
+                    duration: 1000
+                    loops: Animation.Infinite
+                  }
                 }
 
                 MouseArea {
                   id: fpPkgMouse
                   anchors.fill: parent
                   hoverEnabled: true
-                  cursorShape: UpdatesManager.blocked ? Qt.ForbiddenCursor : Qt.PointingHandCursor
+                  cursorShape: UpdatesManager.blocked || fpPkgRow.updating ? Qt.ForbiddenCursor : Qt.PointingHandCursor
                   onClicked: {
-                    if (!UpdatesManager.blocked) {
+                    if (!UpdatesManager.blocked && !fpPkgRow.updating) {
                       UpdatesManager.updatePackage(modelData.appId, "flatpak")
                     }
                   }
