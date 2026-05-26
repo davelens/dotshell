@@ -360,15 +360,12 @@ Singleton {
   property var _ccPending: []
   property int _ccPendingIdx: 0
 
-  // Kick off Claude Code discovery
+  // Kick off Claude Code discovery. The helper filters Claude processes that
+  // are descendants of Pi, which means pi-claude-bridge is driving Claude and
+  // Pi should be the single counted agent instance.
   function _ccDiscover() {
-    ccDiscoverProc.command = ["bash", "-c",
-      "shopt -s nullglob; " +
-      "for f in \"" + manager._ccSessionsDir + "\"/*.json; do " +
-      "  pid=$(basename \"$f\" .json); " +
-      "  kill -0 \"$pid\" 2>/dev/null && echo \"$pid:$(cat \"$f\")\"; " +
-      "done"
-    ]
+    ccDiscoverProc.command = ["bash",
+      Quickshell.shellDir + "/modules/ai-agents-monitor/bin/claude-discover"]
     ccDiscoverProc.running = true
   }
 

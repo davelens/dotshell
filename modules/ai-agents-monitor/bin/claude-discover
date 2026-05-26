@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# Discovers running Claude Code instances from ~/.config/claude/sessions.
+#
+# The pi-claude-bridge extension launches Claude as a child/descendant of the
+# Pi process that owns the actual agent session. Those Claude processes should
+# not be counted as separate agents, so this filters session PIDs whose process
+# ancestry contains `pi`.
+#
+# Output: one line per standalone Claude Code instance:
+#   <pid>:<session-json>
+
+set -eo pipefail
+
+sessions_dir="${CLAUDE_SESSIONS_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/claude/sessions}"
+proc_root="${PROC_ROOT:-/proc}"
+
+process_exists() {
+  local pid="$1"
+  if [ "$proc_root" = "/proc" ]; then
+    kill -0 "$pid" 2>/dev/null
+  else
+    [ -d "$proc_root/$pid" ]
+  fi
+}
+
+process_comm() {
+  local pid="$1"
+  if [ -r "$proc_root/$pid/comm" ]; then
+    tr -d '\n' < "$proc_root/$pid/comm"
+    return 0
+  fi
+
+  # Fallback for minimal /proc fixtures: /proc/<pid>/stat field 2 is comm in
+  # parentheses. This is intentionally simple; Linux comm cannot contain `)`.
+  if [ -r "$proc_root/$pid/stat" ]; then
+    local stat rest
+    stat=$(<"$proc_root/$pid/stat") || return 1
+    rest="${stat#* (}"
+    printf '%s' "${rest%%)*}"
+    return 0
+  fi
+
+  return 1
+}
+
+process_ppid() {
+  local pid="$1"
+  if [ -r "$proc_root/$pid/status" ]; then
+    awk '/^PPid:/ { print $2; exit }' "$proc_root/$pid/status"
+    return 0
+  fi
+
+  if [ -r "$proc_root/$pid/stat" ]; then
+    local stat after_comm
+    stat=$(<"$proc_root/$pid/stat") || return 1
+    after_comm="${stat##*) }"
+    # after_comm starts with: state ppid ...
+    set -- $after_comm
+    printf '%s\n' "${2:-0}"
+    return 0
+  fi
+
+  return 1
+}
+
+is_pi_driven() {
+  local pid="$1"
+  local seen=0
+
+  while [ -n "$pid" ] && [ "$pid" != "0" ] && [ "$pid" != "1" ]; do
+    # Guard against malformed process trees.
+    seen=$((seen + 1))
+    [ "$seen" -le 64 ] || return 1
+
+    local comm
+    comm=$(process_comm "$pid" 2>/dev/null || true)
+    if [ "$comm" = "pi" ]; then
+      return 0
+    fi
+
+    pid=$(process_ppid "$pid" 2>/dev/null || true)
+  done
+
+  return 1
+}
+
+shopt -s nullglob
+
+for f in "$sessions_dir"/*.json; do
+  [ -f "$f" ] || continue
+  pid=$(basename "$f" .json)
+  process_exists "$pid" || continue
+  is_pi_driven "$pid" && continue
+  printf '%s:%s\n' "$pid" "$(cat "$f")"
+done
