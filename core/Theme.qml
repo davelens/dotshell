@@ -36,80 +36,58 @@ Singleton {
   readonly property string themeFileName: GeneralSettings.theme + ".json"
 
   // User overrides in $XDG_DATA_HOME/dotshell/themes/ take precedence
-  readonly property string userThemePath: DataManager.themesDir + "/"
-    + themeFileName
+  readonly property string userThemePath: DataManager.themesDir + "/" + themeFileName
 
   // Bundled themes in the shell config directory
-  readonly property string bundledThemePath: Quickshell.shellDir + "/themes/"
-    + themeFileName
+  readonly property string bundledThemePath: Quickshell.shellDir + "/themes/" + themeFileName
 
-  // Resolved path: user override if it exists, otherwise bundled
-  property string resolvedThemePath: ""
-  property bool pathReady: false
+  // Gate: both data dir and general settings must be ready before we look up files
+  readonly property bool pathsReady: DataManager.dataDirReady && GeneralSettings.ready
 
-  // Pending paths for the current resolve operation — stored here so the
-  // async SplitParser callback uses the exact paths the command was built with.
-  property string _pendingUserPath: ""
-  property string _pendingBundledPath: ""
+  // Track load state of both candidates so resolveAndApply() can pick the user
+  // override when present and fall back to bundled otherwise. Flags reset on
+  // theme name change so stale text from a previous theme can't leak through.
+  property bool userLoaded: false
+  property bool bundledLoaded: false
 
-  // Resolve which file to use: prefer user override, fall back to bundled.
-  // Uses sh -c so we can do the conditional in a single process.
-  Process {
-    id: resolveProcess
-    running: DataManager.dataDirReady && GeneralSettings.ready
-    command: ["sh", "-c",
-      "if [ -f '" + theme.userThemePath + "' ]; then echo user; else echo bundled; fi"]
-    stdout: SplitParser {
-      onRead: data => {
-        theme.resolvedThemePath = data.trim() === "user"
-          ? theme._pendingUserPath
-          : theme._pendingBundledPath
-        theme.pathReady = true
-      }
+  onThemeFileNameChanged: {
+    userLoaded = false
+    bundledLoaded = false
+  }
+
+  FileView {
+    id: userTheme
+    path: theme.pathsReady ? theme.userThemePath : ""
+    watchChanges: true
+    onFileChanged: reload()
+    onLoaded: {
+      theme.userLoaded = true
+      theme.resolveAndApply()
+    }
+    onLoadFailed: {
+      theme.userLoaded = false
+      theme.resolveAndApply()
     }
   }
 
   FileView {
-    id: themeFile
-    path: theme.pathReady ? theme.resolvedThemePath : ""
+    id: bundledTheme
+    path: theme.pathsReady ? theme.bundledThemePath : ""
     watchChanges: true
     onFileChanged: reload()
-
     onLoaded: {
-      theme.applyTheme(themeFile.text())
+      theme.bundledLoaded = true
+      theme.resolveAndApply()
     }
-
     onLoadFailed: error => {
-      console.error("[Theme] Failed to load theme file:", error)
+      theme.bundledLoaded = false
+      console.error("[Theme] Failed to load bundled theme:", theme.bundledThemePath, error)
     }
   }
 
-  // Re-resolve when theme name changes (e.g. via IPC).
-  // Compute paths directly from GeneralSettings.theme — the readonly binding
-  // chain (themeFileName → userThemePath/bundledThemePath) may not have
-  // propagated yet in this event loop tick.
-  function resolveTheme() {
-    pathReady = false
-    resolvedThemePath = ""
-
-    var fileName = GeneralSettings.theme + ".json"
-    _pendingUserPath = DataManager.themesDir + "/" + fileName
-    _pendingBundledPath = Quickshell.shellDir + "/themes/" + fileName
-
-    resolveProcess.command = ["sh", "-c",
-      "if [ -f '" + _pendingUserPath + "' ]; then echo user; else echo bundled; fi"]
-    resolveProcess.running = true
-  }
-
-  // Initial boot: seed pending paths from the declarative bindings
-  Component.onCompleted: {
-    _pendingUserPath = userThemePath
-    _pendingBundledPath = bundledThemePath
-  }
-
-  onThemeFileNameChanged: {
-    if (DataManager.dataDirReady && GeneralSettings.ready)
-      resolveTheme()
+  function resolveAndApply() {
+    if (userLoaded) applyTheme(userTheme.text())
+    else if (bundledLoaded) applyTheme(bundledTheme.text())
   }
 
   function applyTheme(text) {
