@@ -12,11 +12,16 @@ ShellRoot {
 
   SettingsPanel {}
 
-  // Dynamically load module popups and root components from manifests
+  property bool _componentsLoaded: false
+
+  // Dynamically load module popups and root components from manifests.
+  // Guarded with _componentsLoaded so a future ModuleRegistry.ready re-trigger
+  // (e.g. profile switch causing rediscovery) does not double-instantiate.
   Connections {
     target: ModuleRegistry
     function onReadyChanged() {
-      if (!ModuleRegistry.ready) return
+      if (!ModuleRegistry.ready || root._componentsLoaded) return
+      root._componentsLoaded = true
 
       // Module popups (e.g. volume, bluetooth, wireless popup windows)
       var popups = ModuleRegistry.getPopupModules()
