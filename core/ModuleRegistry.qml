@@ -142,30 +142,23 @@ Singleton {
     return null
   }
 
+  // Internal: return the bar component file for a module (button or segment), or ""
+  function _barFile(module) {
+    if (!module || !module.components) return ""
+    return module.components.button || module.components.segment || ""
+  }
+
   // Get modules that have a bar component (button or segment)
   function getBarComponents() {
-    return modules.filter(function(m) {
-      return m.components && (m.components.button || m.components.segment)
-    }).map(function(m) {
-      var type = m.components.button ? "button" : "segment"
-      var file = m.components.button || m.components.segment
+    return modules.filter(function(m) { return _barFile(m) !== "" }).map(function(m) {
       return {
         id: m.id,
         name: m.name,
         icon: m.icon,
-        type: type,
-        url: "file://" + m.path + "/" + file
+        type: m.components.button ? "button" : "segment",
+        url: "file://" + m.path + "/" + _barFile(m)
       }
     })
-  }
-
-  // Get the URL for a bar component by module ID
-  function getBarComponentUrl(id) {
-    var module = getModule(id)
-    if (!module || !module.components) return ""
-    var file = module.components.button || module.components.segment
-    if (!file) return ""
-    return "file://" + module.path + "/" + file
   }
 
   // Get path relative to config root for a module file
@@ -183,10 +176,8 @@ Singleton {
   // Used to avoid file:// singleton isolation with Loader.setSource()
   function getBarComponentRelPath(id) {
     var module = getModule(id)
-    if (!module || !module.components) return ""
-    var file = module.components.button || module.components.segment
-    if (!file) return ""
-    return getRelPath(module, file)
+    var file = _barFile(module)
+    return file ? getRelPath(module, file) : ""
   }
 
   // Get the relative path for a settings component (from shell root)
@@ -198,14 +189,13 @@ Singleton {
 
   // Check if a module exists and has a bar component
   function hasBarComponent(id) {
-    var module = getModule(id)
-    return module && module.components && (module.components.button || module.components.segment)
+    return _barFile(getModule(id)) !== ""
   }
 
   // Check if a module's bar component is a button (vs segment)
   function isButton(id) {
     var module = getModule(id)
-    return module && module.components && module.components.button
+    return !!(module && module.components && module.components.button)
   }
 
   // Check if a module has a popup component
