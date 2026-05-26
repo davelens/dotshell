@@ -97,23 +97,26 @@ Singleton {
     return base + "-" + generateId()
   }
 
-  // First-run: auto-create "Default" profile and migrate existing flat state files
+  // First-run: auto-create "Default" profile and migrate any existing flat
+  // state files. Discovers them dynamically: any *.json directly in dataDir
+  // that is not the shell-level general.json or a *-general.json (which are
+  // profile-independent by design) is moved into the new profile folder.
   function initDefaultProfile() {
     activeProfile = "defaults"
     activeProfileName = "Default"
     profiles = [{ name: "Default", dir: "defaults" }]
 
-    // Migrate existing flat state files into defaults/ dir, then save config
     var profilePath = DataManager.dataDir + "/defaults"
-    var moduleIds = ["statusbar", "notifications", "display", "recording"]
-    var cmds = ["mkdir -p '" + profilePath + "'"]
-    for (var i = 0; i < moduleIds.length; i++) {
-      var flatFile = DataManager.dataDir + "/" + moduleIds[i] + ".json"
-      var profileFile = profilePath + "/" + moduleIds[i] + ".json"
-      // Move existing flat file into defaults dir if it exists
-      cmds.push("[ -f '" + flatFile + "' ] && mv '" + flatFile + "' '" + profileFile + "'")
-    }
-    migrationProc.command = ["sh", "-c", cmds.join(" ; ") + " ; true"]
+    var script =
+      "shopt -s nullglob; " +
+      "mkdir -p '" + profilePath + "'; " +
+      "for f in '" + DataManager.dataDir + "'/*.json; do " +
+      "  base=$(basename \"$f\"); " +
+      "  case \"$base\" in general.json|*-general.json) continue ;; esac; " +
+      "  mv \"$f\" '" + profilePath + "'/\"$base\"; " +
+      "done; " +
+      "true"
+    migrationProc.command = ["bash", "-c", script]
     migrationProc.running = true
   }
 
