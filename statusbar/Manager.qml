@@ -374,7 +374,11 @@ Singleton {
   Process {
     id: saveProc
     property string configJson: ""
-    command: ["sh", "-c", "cat > " + manager.statePath + " << 'STATUSBAR_EOF'\n" + configJson + "\nSTATUSBAR_EOF"]
+    // Atomic write: stage to .tmp then mv into place so a crash mid-write
+    // can never leave a half-written statusbar.json on disk.
+    command: ["sh", "-c",
+      "cat > '" + manager.statePath + ".tmp' << 'STATUSBAR_EOF'\n" + configJson + "\nSTATUSBAR_EOF\n" +
+      "mv -f '" + manager.statePath + ".tmp' '" + manager.statePath + "'"]
     onExited: (code) => {
       if (code !== 0) {
         console.error("[StatusbarManager] Failed to save config")

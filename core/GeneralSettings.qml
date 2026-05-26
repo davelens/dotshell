@@ -138,7 +138,12 @@ Singleton {
       activeProfileName: activeProfileName,
       profiles: profiles
     }
-    saveProc.command = ["sh", "-c", "cat > '" + statePath + "' << 'JSONEOF'\n" + JSON.stringify(config, null, 2) + "\nJSONEOF"]
+    var json = JSON.stringify(config, null, 2)
+    // Atomic write: stage to .tmp then mv into place so a crash mid-write
+    // can never leave a half-written general.json on disk.
+    saveProc.command = ["sh", "-c",
+      "cat > '" + statePath + ".tmp' << 'JSONEOF'\n" + json + "\nJSONEOF\n" +
+      "mv -f '" + statePath + ".tmp' '" + statePath + "'"]
     saveProc.running = true
   }
 
