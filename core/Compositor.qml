@@ -10,15 +10,29 @@ import qs
 Singleton {
   id: compositor
 
-  // Detected compositor from environment ("sway" or "niri")
+  // Detected compositor from environment ("sway" or "niri").
+  // When no env vars are set, defaults to "sway" so QML bindings that switch
+  // on backend keep working — but `detected` will be false and command
+  // helpers below will no-op + warn instead of firing swaymsg blindly.
   readonly property string resolvedBackend: {
-    var swaysock = Quickshell.env("SWAYSOCK")
-    if (swaysock) return "sway"
-    var i3sock = Quickshell.env("I3SOCK")
-    if (i3sock) return "sway"
-    var niriSocket = Quickshell.env("NIRI_SOCKET")
-    if (niriSocket) return "niri"
+    if (Quickshell.env("SWAYSOCK") || Quickshell.env("I3SOCK")) return "sway"
+    if (Quickshell.env("NIRI_SOCKET")) return "niri"
     return "sway"
+  }
+
+  readonly property bool detected:
+    Quickshell.env("SWAYSOCK") || Quickshell.env("I3SOCK") || Quickshell.env("NIRI_SOCKET")
+
+  Component.onCompleted: {
+    if (!detected) {
+      console.warn("[Compositor] No SWAYSOCK / I3SOCK / NIRI_SOCKET set; compositor commands disabled.")
+    }
+  }
+
+  function _skip(name) {
+    if (detected) return false
+    console.warn("[Compositor]", name, "skipped — no compositor detected.")
+    return true
   }
 
   // Emitted when fetchOutputs() completes with JSON output data
@@ -30,6 +44,7 @@ Singleton {
   // Rotate a display. transform values: "normal", "90", "180", "270"
   function setTransform(name, transform) {
     if (!name) return
+    if (_skip("setTransform")) return
     if (resolvedBackend === "niri") {
       niriTransformProc.command = ["niri", "msg", "output", name, "transform", transform]
       niriTransformProc.running = true
@@ -42,6 +57,7 @@ Singleton {
   // Focus a window by app_id / desktop entry
   function focusWindow(appId) {
     if (!appId) return
+    if (_skip("focusWindow")) return
     if (resolvedBackend === "niri") {
       niriFocusProc.command = ["niri", "msg", "action", "focus-window", "--app-id", appId]
       niriFocusProc.running = true
@@ -54,6 +70,10 @@ Singleton {
   // Set monitor position (one call per output)
   function applyPosition(name, x, y) {
     if (!name) return
+    if (_skip("applyPosition")) {
+      compositor.positionApplied(false)
+      return
+    }
     if (resolvedBackend === "niri") {
       niriPositionProc.command = ["niri", "msg", "output", name, "position", "set",
         String(x), String(y)]
@@ -66,6 +86,10 @@ Singleton {
 
   // Fetch all outputs (async). Result delivered via outputsFetched signal.
   function fetchOutputs() {
+    if (_skip("fetchOutputs")) {
+      compositor.outputsFetched("[]")
+      return
+    }
     if (resolvedBackend === "niri") {
       niriFetchProc.output = ""
       niriFetchProc.running = true
