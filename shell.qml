@@ -95,22 +95,18 @@ ShellRoot {
         return { section: "right", localIndex: idx - rightOffset, items: rightEnabledItems }
       }
 
+      function sectionFor(name) {
+        if (name === "left") return leftSection
+        if (name === "center") return centerSection
+        return rightSection
+      }
+
       function isFocusable(idx) {
         if (idx < 0 || idx >= totalFocusItems) return false
         var resolved = resolveSection(idx)
         if (skipModules.indexOf(resolved.items[resolved.localIndex].id) !== -1) return false
-
-        // Check delegate visibility
-        if (resolved.section === "left") {
-          var d = leftSection.repeater.itemAt(resolved.localIndex)
-          return d && d.visible
-        } else if (resolved.section === "center") {
-          var d = centerSection.repeater.itemAt(resolved.localIndex)
-          return d && d.visible
-        } else {
-          var d = rightRepeater.itemAt(resolved.localIndex)
-          return d && d.visible
-        }
+        var d = sectionFor(resolved.section).repeater.itemAt(resolved.localIndex)
+        return d && d.visible
       }
 
       function nextFocusIndex(from) {
@@ -146,31 +142,22 @@ ShellRoot {
       onBarFocusActiveChanged: updateSegmentFocus()
 
       function updateSegmentFocus() {
-        // Compute local focus indices for each BarSection
         var resolved = barFocusActive ? resolveSection(barFocusIndex) : null
 
         leftSection.focusLocalIndex = (resolved && resolved.section === "left") ? resolved.localIndex : -1
         centerSection.focusLocalIndex = (resolved && resolved.section === "center") ? resolved.localIndex : -1
+        rightSection.focusLocalIndex = (resolved && resolved.section === "right") ? resolved.localIndex : -1
 
-        // Update barFocused on left section segments
-        for (var i = 0; i < leftEnabledItems.length; i++) {
-          var item = leftSection.itemAt(i)
+        applyBarFocusedFlag(leftSection, leftEnabledItems.length, 0)
+        applyBarFocusedFlag(centerSection, centerEnabledItems.length, centerOffset)
+        applyBarFocusedFlag(rightSection, rightEnabledItems.length, rightOffset)
+      }
+
+      function applyBarFocusedFlag(sect, count, offset) {
+        for (var i = 0; i < count; i++) {
+          var item = sect.itemAt(i)
           if (item && item.hasOwnProperty("barFocused")) {
-            item.barFocused = barFocusActive && barFocusIndex === i
-          }
-        }
-
-        // Update barFocused on right section segments
-        for (var i = 0; i < rightEnabledItems.length; i++) {
-          var delegate = rightRepeater.itemAt(i)
-          if (!delegate) continue
-          var wrapper = delegate.children[1]
-          if (!wrapper) continue
-          var loader = wrapper.children[0]
-          if (!loader || !loader.item) continue
-
-          if (loader.item.hasOwnProperty("barFocused")) {
-            loader.item.barFocused = barFocusActive && barFocusIndex === (i + rightOffset)
+            item.barFocused = barFocusActive && barFocusIndex === (i + offset)
           }
         }
       }
@@ -226,19 +213,10 @@ ShellRoot {
 
         var resolved = resolveSection(barFocusIndex)
         var moduleId = resolved.items[resolved.localIndex].id
-
-        // Get the delegate and wrapper for anchor computation
-        var wrapper = null
-        if (resolved.section === "left") {
-          var d = leftSection.repeater.itemAt(resolved.localIndex)
-          if (d) wrapper = d.children[1]
-        } else if (resolved.section === "center") {
-          var d = centerSection.repeater.itemAt(resolved.localIndex)
-          if (d) wrapper = d.children[1]
-        } else {
-          var d = rightRepeater.itemAt(resolved.localIndex)
-          if (d) wrapper = d.children[1]
-        }
+        var sect = sectionFor(resolved.section)
+        var delegate = sect.repeater.itemAt(resolved.localIndex)
+        var wrapper = delegate ? delegate.children[1] : null
+        var loaded = sect.itemAt(resolved.localIndex)
 
         // Compute anchor position for popups
         var anchorRight = panel.width - 10
@@ -254,22 +232,14 @@ ShellRoot {
 
         // Buttons without popups: trigger their clicked signal directly
         if (ModuleRegistry.isButton(moduleId)) {
-          if (wrapper) {
-            var loader = wrapper.children[0]
-            if (loader && loader.item && loader.item.clicked) {
-              loader.item.clicked()
-            }
-          }
+          if (loaded && loaded.clicked) loaded.clicked()
           return
         }
 
         // Segments with activate (e.g. media play/pause)
-        if (wrapper) {
-          var loader = wrapper.children[0]
-          if (loader && loader.item && typeof loader.item.activate === "function") {
-            loader.item.activate()
-            return
-          }
+        if (loaded && typeof loaded.activate === "function") {
+          loaded.activate()
+          return
         }
 
         // Segments without activate: dismiss focus mode
@@ -321,58 +291,13 @@ ShellRoot {
       }
 
       // Right section
-      Row {
+      BarSection {
+        id: rightSection
         anchors.right: parent.right
         anchors.rightMargin: StatusbarManager.barMargins.right
-        anchors.verticalCenter: parent.verticalCenter
         spacing: StatusbarManager.sectionSpacing.right
-
-        Repeater {
-          id: rightRepeater
-          model: panel.rightEnabledItems
-
-          Row {
-            required property var modelData
-            required property int index
-            visible: !loader.item || (loader.item.showInBar !== undefined ? loader.item.showInBar : true)
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 0
-
-            Item { width: modelData.marginLeft; height: 1 }
-
-            // Wrapper for Loader + focus highlight ring
-            Item {
-              width: loader.width
-              height: loader.height
-              anchors.verticalCenter: parent.verticalCenter
-
-              Loader {
-                id: loader
-                anchors.verticalCenter: parent.verticalCenter
-
-                Component.onCompleted: {
-                  var relPath = ModuleRegistry.getBarComponentRelPath(modelData.id)
-                  if (relPath) {
-                    setSource(relPath, panel.buildBarComponentProps(modelData.id))
-                  }
-                }
-              }
-
-              // Focus highlight ring (matching keyboard focus convention)
-              Rectangle {
-                anchors.fill: parent
-                anchors.margins: -3
-                radius: 6
-                color: "transparent"
-                border.width: 2
-                border.color: Theme.focusRing
-                visible: panel.barFocusActive && (index + panel.rightOffset) === panel.barFocusIndex
-              }
-            }
-
-            Item { width: modelData.marginRight; height: 1 }
-          }
-        }
+        items: StatusbarManager.rightItems
+        buildProps: panel.buildBarComponentProps
       }
     }
   }
