@@ -18,13 +18,25 @@ Singleton {
   readonly property string configRoot: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/dotshell"
   readonly property string modulesPath: configRoot + "/modules"
 
+  // Top-level directories (relative to configRoot) that ship a module.json but
+  // are not removable user modules. The statusbar lives outside modules/ so it
+  // can own its own settings panel without being a togglable feature.
+  readonly property var coreManifestDirs: ["statusbar"]
+
+  function _buildDiscoveryGlobs() {
+    var globs = [registry.modulesPath + "/*/module.json"]
+    for (var i = 0; i < coreManifestDirs.length; i++) {
+      globs.push(registry.configRoot + "/" + coreManifestDirs[i] + "/module.json")
+    }
+    return globs.join(" ")
+  }
+
   // Single discovery process - find and cat all module.json files
   Process {
     id: discoveryProc
     command: [
       "sh", "-c",
-      "for f in " + registry.modulesPath + "/*/module.json " +
-        registry.configRoot + "/statusbar/module.json; do " +
+      "for f in " + registry._buildDiscoveryGlobs() + "; do " +
         "[ -f \"$f\" ] && echo \"__PATH__:$f\" && cat \"$f\" && echo \"__END__\"; " +
       "done"
     ]
@@ -92,9 +104,17 @@ Singleton {
       console.log("[ModuleRegistry]   -", loadedModules[j].name)
     }
 
-    // Symlink module binaries into ~/.local/bin
+    // Symlink module binaries into ~/.local/bin.
+    // First prune any dangling symlinks whose target lives under modulesPath
+    // (e.g. binaries from a module folder the user has since removed).
     symlinkProc.command = ["sh", "-c",
       "mkdir -p \"$HOME/.local/bin\" && " +
+      "for l in \"$HOME/.local/bin\"/*; do " +
+      "  if [ -L \"$l\" ]; then " +
+      "    t=$(readlink \"$l\"); " +
+      "    case \"$t\" in " + registry.modulesPath + "/*) [ ! -e \"$l\" ] && rm \"$l\" ;; esac; " +
+      "  fi; " +
+      "done; " +
       "for f in " + registry.modulesPath + "/*/bin/*; do " +
       "  [ -x \"$f\" ] && ln -sfn \"$f\" \"$HOME/.local/bin/$(basename \"$f\")\"; " +
       "done"
