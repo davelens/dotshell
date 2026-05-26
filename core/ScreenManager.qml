@@ -13,11 +13,11 @@ Singleton {
   property bool fileReady: false
 
   // Copy defaults if state file doesn't exist
-  Process {
-    id: ensureDefaults
-    command: ["sh", "-c", "test -f '" + screenManager.statePath + "' || cp '" + screenManager.defaultsPath + "' '" + screenManager.statePath + "'"]
-    running: DataManager.ready
-    onExited: { screenManager.fileReady = true }
+  EnsureFile {
+    source: screenManager.defaultsPath
+    target: screenManager.statePath
+    active: DataManager.ready
+    onDone: screenManager.fileReady = true
   }
 
   FileView {

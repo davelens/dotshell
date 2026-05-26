@@ -28,11 +28,11 @@ Singleton {
   property bool fileReady: false
 
   // Copy defaults if state file doesn't exist
-  Process {
-    id: ensureDefaults
-    command: ["sh", "-c", "test -f '" + settings.statePath + "' || cp '" + settings.defaultsPath + "' '" + settings.statePath + "'"]
-    running: DataManager.dataDirReady
-    onExited: { settings.fileReady = true }
+  EnsureFile {
+    source: settings.defaultsPath
+    target: settings.statePath
+    active: DataManager.dataDirReady
+    onDone: settings.fileReady = true
   }
 
   FileView {

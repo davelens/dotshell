@@ -31,11 +31,11 @@ Singleton {
   property bool fileReady: false
 
   // Copy defaults if state file doesn't exist
-  Process {
-    id: ensureDefaults
-    command: ["sh", "-c", "test -f '" + manager.statePath + "' || cp '" + manager.defaultsPath + "' '" + manager.statePath + "'"]
-    running: DataManager.ready
-    onExited: { manager.fileReady = true }
+  EnsureFile {
+    source: manager.defaultsPath
+    target: manager.statePath
+    active: DataManager.ready
+    onDone: manager.fileReady = true
   }
 
   // Track if we should reload when ModuleRegistry becomes ready
