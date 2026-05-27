@@ -12,6 +12,8 @@
 #            non-empty errorMessage, with no later user/toolResult message.
 #   - busy:  last user/toolResult message is newer than the last assistant
 #            message with stopReason == "stop".
+#   - input: last assistant stop message is newer than the last user/toolResult
+#            and appears to ask for user input.
 #   - idle:  otherwise (last assistant has stopReason == "stop", or session
 #            has no messages yet).
 #
@@ -19,8 +21,9 @@
 #   <pid>\t<cwd>\t<sessionId>\t<status>\t<sessionTitle>
 #
 # When multiple `pi` processes share a cwd, the lowest PID wins (one entry
-# per cwd). Title is derived from the first user-text message, normalised to
-# a single line and truncated to 80 chars.
+# per cwd). Title is derived from the latest session_info name when present,
+# falling back to the first user-text message, normalised to a single line and
+# truncated to 80 chars.
 
 set -eo pipefail
 
@@ -98,13 +101,21 @@ for cwd in "${!cwd_pid[@]}"; do
 
   # Status inference from the tail
   status=$(tail -n 50 "$active_file" | jq -rs '
-    # Walk events in order; track last assistant stop event vs last user/toolResult
+    def text_content:
+      [(.message.content // [])[]? | select(.type == "text") | .text] | join("\n");
+
+    def asks_for_input:
+      gsub("[[:space:]]+$"; "")
+      | test("\\?$|(?im)(^|\\n)\\s*(pick|choose|select|run|proceed|continue|which|want me to|should i|shall i|ok to|okay to|approve|confirm)\\b.*\\?\\s*$");
+
+    # Walk events in order; track last assistant stop/error, its text, and last user/toolResult.
     reduce .[] as $e (
-      {lastAssistantStop: null, lastAssistantError: null, lastUserOrTool: null};
+      {lastAssistantStop: null, lastAssistantStopText: "", lastAssistantError: null, lastUserOrTool: null};
       if $e.type == "message" then
         if $e.message.role == "assistant" then
           (if ($e.message.stopReason == "stop") then
             .lastAssistantStop = $e.timestamp
+            | .lastAssistantStopText = ($e | text_content)
           else . end)
           | (if ($e.message.stopReason == "aborted")
                 or (($e.message.errorMessage // "") != "") then
@@ -121,20 +132,29 @@ for cwd in "${!cwd_pid[@]}"; do
       elif (.lastUserOrTool != null)
         and ((.lastAssistantStop == null) or (.lastUserOrTool > .lastAssistantStop))
       then "busy"
+      elif (.lastAssistantStop != null)
+        and ((.lastUserOrTool == null) or (.lastAssistantStop > .lastUserOrTool))
+        and (.lastAssistantStopText | asks_for_input)
+      then "input"
       else "idle"
       end
   ' 2>/dev/null || echo "idle")
 
   [ -n "$status" ] || status="idle"
 
-  # First user-text message anywhere in the session
+  # Prefer the latest manual session name; fall back to the first user-text message
   raw_title=$(jq -rs '
-    [ .[]
+    ([ .[]
+      | select(.type == "session_info")
+      | (.name // "" | strings | gsub("^[[:space:]]+|[[:space:]]+$"; ""))
+      | select(. != "")
+    ] | last) //
+    ([ .[]
       | select(.type == "message" and .message.role == "user")
       | (.message.content // [])[]?
       | select(.type == "text")
       | .text
-    ] | (.[0] // "")
+    ] | (.[0] // ""))
   ' "$active_file" 2>/dev/null || echo "")
 
   title=$(normalise_title "$raw_title")
