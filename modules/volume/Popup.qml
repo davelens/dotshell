@@ -48,6 +48,14 @@ Variants {
     id: popupBase
     popupWidth: 360
 
+    // Bind every listed node so its `description`/`name` (and live audio
+    // state) are populated. Without this, only the current default sink is
+    // bound, so other devices (e.g. Bluetooth headphones) render as blank,
+    // unselectable rows in the Output/Input dropdowns.
+    PwObjectTracker {
+      objects: volumePopup.audioSinks.concat(volumePopup.audioSources)
+    }
+
     property var currentSink: Pipewire.defaultAudioSink
     property var currentSource: Pipewire.defaultAudioSource
 
