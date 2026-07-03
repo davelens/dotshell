@@ -28,8 +28,9 @@ PanelWindow {
   // Per-popup stem override (set to false to force-disable stem)
   property bool stemEnabled: true
 
-  // Resolved stem visibility: global setting AND per-popup override
-  readonly property bool showStem: StatusbarManager.popupStem && stemEnabled
+  // Resolved stem visibility: global setting AND per-popup override AND an
+  // actual bar button to point at
+  readonly property bool showStem: StatusbarManager.popupStem && stemEnabled && PopupManager.anchoredToButton
 
   // Stem connector dimensions
   property int stemWidth: 28

@@ -15,6 +15,11 @@ Singleton {
   // Anchor position for popup placement (screen-space X of the button's right edge)
   property real anchorRight: 0
 
+  // Whether the anchor points at an actual bar button. False when a popup
+  // is opened via IPC without its button in the statusbar; the stem
+  // connector would point at nothing, so PopupBase hides it.
+  property bool anchoredToButton: false
+
   // Registered button references per popup (for IPC toggle anchor computation)
   property var registeredButtons: ({})
 
@@ -48,6 +53,7 @@ Singleton {
       activePopup = name
       activePopupScreen = screen
       anchorRight = buttonRight
+      anchoredToButton = true
     }
   }
 
@@ -76,10 +82,13 @@ Singleton {
         popupManager.activePopup = name
         popupManager.activePopupScreen = anchor.screen
         popupManager.anchorRight = anchor.right
+        popupManager.anchoredToButton = true
       } else if (ScreenManager.primaryScreen) {
         popupManager.activePopup = name
         popupManager.activePopupScreen = ScreenManager.primaryScreen
-        popupManager.anchorRight = ScreenManager.primaryScreen.width - 10
+        // Right margin matches the 20px gap between statusbar and popup top
+        popupManager.anchorRight = ScreenManager.primaryScreen.width - 20
+        popupManager.anchoredToButton = false
       }
       return "Popup '" + name + "' opened"
     }
