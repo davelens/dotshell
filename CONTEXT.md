@@ -18,6 +18,11 @@ Terms used consistently across code and docs. Keep this list short and exact.
   `defaultConfig` object for manual-mode consumers). There are no
   `defaults.json` files and no defaults copy step; a missing state file is
   recreated from the QML defaults.
+- **SettingsPage** — the scaffold for module settings pages
+  (`core/components/SettingsPage.qml`): scroll chrome, optional `title`,
+  `contentSpacing`, `searchQuery`, and search highlighting. The highlight
+  markup itself is produced once by `Theme.highlightText(text, query)`;
+  pages render it with `Text.RichText`.
 - **Profile** — a named directory of profile-scoped state files under the
   data dir, managed by `GeneralSettings`. The first-run profile is named
   `defaults` (directory name), displayed as "Default".

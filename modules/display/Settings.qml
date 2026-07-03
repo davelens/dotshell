@@ -4,14 +4,8 @@ import QtQuick.Controls
 import qs
 import qs.core.components
 
-ScrollView {
+SettingsPage {
   id: settingsRoot
-  anchors.fill: parent
-  clip: true
-  contentWidth: availableWidth
-
-  // Search query passed from SettingsPanel
-  property string searchQuery: ""
 
   // All outputs from sway (including disabled)
   property var outputs: []
@@ -52,19 +46,6 @@ ScrollView {
       settingsRoot.guideLineX = snap.guideX
       settingsRoot.guideLineY = snap.guideY
     }
-  }
-
-  // Highlight matching text with yellow background
-  function highlightText(text, query) {
-    if (!query) return text
-    var lowerText = text.toLowerCase()
-    var lowerQuery = query.toLowerCase()
-    var idx = lowerText.indexOf(lowerQuery)
-    if (idx === -1) return text
-    var before = text.substring(0, idx)
-    var match = text.substring(idx, idx + query.length)
-    var after = text.substring(idx + query.length)
-    return before + '<span style="background-color: ' + Theme.warning + '; color: ' + Theme.bgDeep + ';">' + match + '</span>' + after
   }
 
   // Parse swaymsg output JSON

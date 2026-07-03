@@ -85,15 +85,7 @@ Scope {
 
   // Highlight matching text with yellow background
   function highlightText(text, query) {
-    if (!query) return text
-    var lowerText = text.toLowerCase()
-    var lowerQuery = query.toLowerCase()
-    var idx = lowerText.indexOf(lowerQuery)
-    if (idx === -1) return text
-    var before = text.substring(0, idx)
-    var match = text.substring(idx, idx + query.length)
-    var after = text.substring(idx + query.length)
-    return before + '<span style="background-color: ' + Theme.warning + '; color: ' + Theme.bgDeep + ';">' + match + '</span>' + after
+    return Theme.highlightText(text, query)
   }
 
   // Get visible categories (filtered by search)

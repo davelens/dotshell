@@ -14,6 +14,7 @@ FocusListItem 1.0 FocusListItem.qml
 FocusSlider 1.0 FocusSlider.qml
 FocusTextInput 1.0 FocusTextInput.qml
 PasswordInput 1.0 PasswordInput.qml
+SettingsPage 1.0 SettingsPage.qml
 SuccessText 1.0 SuccessText.qml
 SwitchToggle 1.0 SwitchToggle.qml
 TimePicker 1.0 TimePicker.qml

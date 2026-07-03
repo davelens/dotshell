@@ -33,6 +33,20 @@ Singleton {
   property color overlay
   property color knob
 
+  // Wrap the first match of `query` in `text` with a highlight span.
+  // Callers must render the result with Text.RichText.
+  function highlightText(text, query) {
+    if (!query) return text
+    var lowerText = text.toLowerCase()
+    var lowerQuery = query.toLowerCase()
+    var idx = lowerText.indexOf(lowerQuery)
+    if (idx === -1) return text
+    var before = text.substring(0, idx)
+    var match = text.substring(idx, idx + query.length)
+    var after = text.substring(idx + query.length)
+    return before + '<span style="background-color: ' + theme.warning + '; color: ' + theme.bgDeep + ';">' + match + '</span>' + after
+  }
+
   readonly property string themeFileName: GeneralSettings.theme + ".json"
 
   // User overrides in $XDG_DATA_HOME/dotshell/themes/ take precedence
