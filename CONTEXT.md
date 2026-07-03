@@ -25,6 +25,19 @@ Terms used consistently across code and docs. Keep this list short and exact.
   `defaultConfig` object for manual-mode consumers). There are no
   `defaults.json` files and no defaults copy step; a missing state file is
   recreated from the QML defaults.
+- **Overlay** — a full-screen surface: slide-in panel (notifications,
+  recording, wallpaper), power menu, or the settings panel. Identity lives
+  in **OverlayManager** (`core/OverlayManager.qml`): at most one overlay is
+  active; opening one closes the active popup and any other overlay, and
+  bar focus watches its single `overlayOpen` signal. Managers bind their
+  open state to `OverlayManager.isOpen(id)` and route open/close/toggle
+  through it. `open(id, context)` carries payloads (e.g. a settings
+  category); `opened(id)` fires on every open, including re-opens.
+- **PanelBase** — the full-screen overlay window scaffold
+  (`core/components/PanelBase.qml`): covers the screen, ignores exclusion
+  zones, exclusive keyboard focus, compositor namespace via
+  `namespaceName`. Used by recording/wallpaper/power/settings; the
+  notifications panel keeps its own latched window for slide animation.
 - **SettingsPage** — the scaffold for module settings pages
   (`core/components/SettingsPage.qml`): scroll chrome, optional `title`,
   `contentSpacing`, `searchQuery`, and search highlighting. The highlight
