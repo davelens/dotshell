@@ -31,7 +31,11 @@ Singleton {
 
   // -- Runtime state -------------------------------------------------------
 
-  property bool menuOpen: false
+  readonly property bool menuOpen: OverlayManager.isOpen("power")
+  onMenuOpenChanged: {
+    pendingAction = ""
+    if (menuOpen) uptimeProc.running = true
+  }
   property string pendingAction: ""
   property string username: ""
   property string uptime: ""
@@ -73,19 +77,15 @@ Singleton {
   // -- Public API ----------------------------------------------------------
 
   function toggle() {
-    if (menuOpen) close()
-    else open()
+    OverlayManager.toggle("power")
   }
 
   function open() {
-    pendingAction = ""
-    uptimeProc.running = true
-    menuOpen = true
+    OverlayManager.open("power")
   }
 
   function close() {
-    menuOpen = false
-    pendingAction = ""
+    OverlayManager.close("power")
   }
 
   function requestAction(actionId) {

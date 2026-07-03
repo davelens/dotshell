@@ -44,7 +44,8 @@ Singleton {
   // =========================================================================
 
   property bool dndEnabled: false              // manual DND toggle
-  property bool panelOpen: false               // history panel visibility
+  readonly property bool panelOpen: OverlayManager.isOpen("notifications") // history panel visibility
+  onPanelOpenChanged: if (panelOpen) Qt.callLater(markAllAsRead)
 
   // Use ListModel for proper add/remove animations
   property alias visibleNotifications: popupModel
@@ -497,31 +498,17 @@ Singleton {
   }
 
   function togglePanel() {
-    panelOpen = !panelOpen
-    if (panelOpen) {
-      SlideInOverlayManager.open()
-      Qt.callLater(markAllAsRead)
-    } else {
-      SlideInOverlayManager.close()
-    }
+    OverlayManager.toggle("notifications")
   }
 
   function closePanel() {
-    panelOpen = false
-    SlideInOverlayManager.close()
+    OverlayManager.close("notifications")
   }
 
   function openSettingsNotifications() {
-    // Close notification panel, open settings panel to Notifications category
-    panelOpen = false
-    SlideInOverlayManager.close()
-    // Use IPC to open settings panel
-    settingsIpcProc.running = true
-  }
-
-  Process {
-    id: settingsIpcProc
-    command: ["qs", "-p", Quickshell.shellDir, "ipc", "call", "settings", "showCategory", "notifications"]
+    // Open settings on the Notifications category; OverlayManager closes
+    // the notification panel as a side effect of switching overlays
+    OverlayManager.open("settings", { category: "notifications" })
   }
 
   // IPC handler for external control (e.g. qs ipc call notifications toggle)
@@ -529,11 +516,7 @@ Singleton {
     target: "notifications"
 
     function toggle(): void { notificationManager.togglePanel() }
-    function show(): void {
-      notificationManager.panelOpen = true
-      SlideInOverlayManager.open()
-      Qt.callLater(notificationManager.markAllAsRead)
-    }
+    function show(): void { OverlayManager.open("notifications") }
     function hide(): void { notificationManager.closePanel() }
     function dismiss(id: string): void { notificationManager.dismissById(parseInt(id)) }
     function clearAll(): void { notificationManager.clearHistory() }

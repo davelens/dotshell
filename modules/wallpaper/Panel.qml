@@ -1,6 +1,5 @@
 import Quickshell
 import Quickshell.Io
-import Quickshell.Wayland
 import QtQuick
 import QtQuick.Controls
 import qs
@@ -13,27 +12,9 @@ Scope {
     model: WallpaperManager.panelOpen && ScreenManager.primaryScreen
              ? [ScreenManager.primaryScreen] : []
 
-    PanelWindow {
-      required property var modelData
-
+    PanelBase {
       id: panel
-      screen: modelData
-
-      visible: true
-
-      anchors {
-        top: true
-        left: true
-        right: true
-        bottom: true
-      }
-
-      color: Theme.overlay
-      exclusionMode: ExclusionMode.Ignore
-
-      WlrLayershell.namespace: "quickshell-wallpaper"
-      WlrLayershell.layer: WlrLayer.Overlay
-      WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+      namespaceName: "quickshell-wallpaper"
 
       // -- State ------------------------------------------------------------
 

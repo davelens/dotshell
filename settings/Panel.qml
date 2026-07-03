@@ -1,6 +1,5 @@
 import Quickshell
 import Quickshell.Io
-import Quickshell.Wayland
 import QtQuick
 import QtQuick.Controls
 import qs.core
@@ -9,9 +8,19 @@ import qs.core.components
 Scope {
   id: root
 
-  property bool visible: false
+  readonly property bool visible: OverlayManager.isOpen("settings")
   property string searchQuery: ""
   property string activeCategory: ""
+
+  // Apply the open() context (e.g. a requested category), also on re-opens
+  Connections {
+    target: OverlayManager
+    function onOpened(id) {
+      if (id === "settings" && OverlayManager.overlayContext.category) {
+        root.activeCategory = OverlayManager.overlayContext.category
+      }
+    }
+  }
 
   // Focus mode: "categories" or "content"
   property string focusMode: "categories"
@@ -331,12 +340,11 @@ Scope {
   IpcHandler {
     target: "settings"
 
-    function toggle(): void { root.visible = !root.visible }
-    function show(): void { root.visible = true }
-    function hide(): void { root.visible = false }
+    function toggle(): void { OverlayManager.toggle("settings") }
+    function show(): void { OverlayManager.open("settings", undefined) }
+    function hide(): void { OverlayManager.close("settings") }
     function showCategory(categoryId: string): void {
-      root.activeCategory = categoryId
-      root.visible = true
+      OverlayManager.open("settings", { category: categoryId })
     }
   }
 
@@ -344,22 +352,8 @@ Scope {
   Variants {
     model: root.visible && ScreenManager.primaryScreen ? [ScreenManager.primaryScreen] : []
 
-    PanelWindow {
-      required property var modelData
-      screen: modelData
-
-      anchors {
-        top: true
-        left: true
-        right: true
-        bottom: true
-      }
-
-      color: Theme.overlay
-      exclusionMode: ExclusionMode.Ignore
-      WlrLayershell.namespace: "quickshell-settings"
-      WlrLayershell.layer: WlrLayer.Overlay
-      WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    PanelBase {
+      namespaceName: "quickshell-settings"
 
       // Handle keyboard input
       contentItem {
@@ -374,7 +368,7 @@ Scope {
             } else if (root.searchInputRef && root.searchInputRef.activeFocus) {
               panelRootItem.forceActiveFocus()
             } else {
-              root.visible = false
+              OverlayManager.close("settings")
             }
             event.accepted = true
           }
@@ -383,7 +377,7 @@ Scope {
             if (root.activeOverlay !== "") {
               root.activeOverlay = ""
             } else {
-              root.visible = false
+              OverlayManager.close("settings")
             }
             event.accepted = true
           }
@@ -436,7 +430,7 @@ Scope {
       // Click outside to close
       MouseArea {
         anchors.fill: parent
-        onClicked: root.visible = false
+        onClicked: OverlayManager.close("settings")
       }
 
       // Centered panel

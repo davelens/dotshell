@@ -57,24 +57,28 @@ Singleton {
 
   // -- Panel state ----------------------------------------------------------
 
-  property bool panelOpen: false
+  readonly property bool panelOpen: OverlayManager.isOpen("wallpaper")
+  onPanelOpenChanged: {
+    if (panelOpen) {
+      refreshLocalFiles()
+    } else {
+      localFiles = []
+      localFileCount = 0
+      searchResults = []
+      searchResultCount = 0
+    }
+  }
 
   function togglePanel() {
-    if (panelOpen) closePanel()
-    else openPanel()
+    OverlayManager.toggle("wallpaper")
   }
 
   function openPanel() {
-    panelOpen = true
-    refreshLocalFiles()
+    OverlayManager.open("wallpaper")
   }
 
   function closePanel() {
-    panelOpen = false
-    localFiles = []
-    localFileCount = 0
-    searchResults = []
-    searchResultCount = 0
+    OverlayManager.close("wallpaper")
   }
 
   // -- Local files ----------------------------------------------------------

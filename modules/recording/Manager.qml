@@ -83,7 +83,19 @@ Singleton {
   }
 
   // Panel state
-  property bool panelOpen: false
+  readonly property bool panelOpen: OverlayManager.isOpen("recording")
+  onPanelOpenChanged: {
+    if (panelOpen) {
+      refreshFiles()
+    } else {
+      screenshots = []
+      screenshotCount = 0
+      screencasts = []
+      screencastCount = 0
+      _pendingThumbnails = ({})
+      _thumbnailQueue = []
+    }
+  }
 
   // File lists (sorted newest first)
   property var screenshots: []
@@ -101,23 +113,15 @@ Singleton {
 
   // Panel toggle functions
   function togglePanel() {
-    if (panelOpen) closePanel()
-    else openPanel()
+    OverlayManager.toggle("recording")
   }
 
   function openPanel() {
-    panelOpen = true
-    refreshFiles()
+    OverlayManager.open("recording")
   }
 
   function closePanel() {
-    panelOpen = false
-    screenshots = []
-    screenshotCount = 0
-    screencasts = []
-    screencastCount = 0
-    _pendingThumbnails = ({})
-    _thumbnailQueue = []
+    OverlayManager.close("recording")
   }
 
   // File listing

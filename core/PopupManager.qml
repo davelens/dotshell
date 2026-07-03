@@ -44,6 +44,7 @@ Singleton {
     if (activePopup === name && activePopupScreen === screen) {
       close()
     } else {
+      OverlayManager.close("")
       activePopup = name
       activePopupScreen = screen
       anchorRight = buttonRight
@@ -67,6 +68,7 @@ Singleton {
       if (popupManager.activePopup === name) {
         popupManager.close()
       } else {
+        OverlayManager.close("")
         // Compute anchor from the registered button at toggle time
         var anchor = popupManager.getButtonAnchor(name)
         if (anchor) {

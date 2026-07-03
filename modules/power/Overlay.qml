@@ -1,5 +1,4 @@
 import Quickshell
-import Quickshell.Wayland
 import QtQuick
 import qs
 import qs.core.components
@@ -9,26 +8,10 @@ Scope {
     model: PowerManager.menuOpen && ScreenManager.primaryScreen
              ? [ScreenManager.primaryScreen] : []
 
-    PanelWindow {
-      required property var modelData
-
+    PanelBase {
       id: overlay
-      screen: modelData
-      visible: true
-
-      anchors {
-        top: true
-        left: true
-        right: true
-        bottom: true
-      }
-
+      namespaceName: "quickshell-power-menu"
       color: "transparent"
-      exclusionMode: ExclusionMode.Ignore
-
-      WlrLayershell.namespace: "quickshell-power-menu"
-      WlrLayershell.layer: WlrLayer.Overlay
-      WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     // Keyboard focus cycling state
     property var focusables: []

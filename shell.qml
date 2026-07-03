@@ -178,11 +178,11 @@ ShellRoot {
         }
       }
 
-      // Exit bar focus when a slide-in overlay opens
+      // Exit bar focus when an overlay (panel, power menu, settings) opens
       Connections {
-        target: SlideInOverlayManager
+        target: OverlayManager
         function onOverlayOpenChanged() {
-          if (SlideInOverlayManager.overlayOpen) {
+          if (OverlayManager.overlayOpen) {
             panel.barFocusActive = false
           }
         }
