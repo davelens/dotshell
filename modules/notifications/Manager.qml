@@ -515,11 +515,27 @@ Singleton {
   IpcHandler {
     target: "notifications"
 
-    function toggle(): void { notificationManager.togglePanel() }
-    function show(): void { OverlayManager.open("notifications") }
-    function hide(): void { notificationManager.closePanel() }
-    function dismiss(id: string): void { notificationManager.dismissById(parseInt(id)) }
-    function clearAll(): void { notificationManager.clearHistory() }
+    function toggle(): string {
+      notificationManager.togglePanel()
+      return OverlayManager.isOpen("notifications")
+        ? "Notifications panel opened" : "Notifications panel closed"
+    }
+    function open(): string {
+      OverlayManager.open("notifications")
+      return "Notifications panel opened"
+    }
+    function close(): string {
+      notificationManager.closePanel()
+      return "Notifications panel closed"
+    }
+    function dismiss(id: string): string {
+      notificationManager.dismissById(parseInt(id))
+      return "Notification " + id + " dismissed"
+    }
+    function clearAll(): string {
+      notificationManager.clearHistory()
+      return "Notification history cleared"
+    }
   }
 
   // =========================================================================

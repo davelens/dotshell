@@ -143,7 +143,7 @@ Singleton {
     configFile.setText(JSON.stringify(config, null, 2))
   }
 
-  // Profile IPC: qs ipc call profile {list,current,enable}
+  // Profile IPC: qs ipc call profile {list,current,set}
   IpcHandler {
     target: "profile"
 
@@ -159,13 +159,17 @@ Singleton {
       return settings.activeProfileName
     }
 
-    function enable(displayName: string): void {
+    function set(displayName: string): string {
       for (var i = 0; i < settings.profiles.length; i++) {
         if (settings.profiles[i].name === displayName) {
+          if (settings.profiles[i].dir === settings.activeProfile) {
+            return "Already on profile '" + displayName + "'"
+          }
           settings.switchProfile(settings.profiles[i].dir)
-          return
+          return "Switched to profile '" + displayName + "'"
         }
       }
+      return "error: profile '" + displayName + "' not found"
     }
   }
 
@@ -177,9 +181,10 @@ Singleton {
       return settings.theme
     }
 
-    function set(name: string): void {
+    function set(name: string): string {
       settings.theme = name
       settings.saveConfig()
+      return "Theme set to '" + name + "'"
     }
   }
 

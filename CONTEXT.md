@@ -46,3 +46,9 @@ Terms used consistently across code and docs. Keep this list short and exact.
 - **Profile** — a named directory of profile-scoped state files under the
   data dir, managed by `GeneralSettings`. The first-run profile is named
   `defaults` (directory name), displayed as "Default".
+- **Command registry** — the single source of truth for the `dshell` CLI
+  surface: the `COMMANDS` table in `bin/dshell`. Dispatch, usage text, and
+  bash completion (`dshell --complete`) are generated views of it; adding a
+  subcommand means adding one row plus its IpcHandler function. Verb
+  grammar and the `error:`-prefix feedback convention are recorded in
+  ADR-0002.

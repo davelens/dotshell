@@ -340,11 +340,21 @@ Scope {
   IpcHandler {
     target: "settings"
 
-    function toggle(): void { OverlayManager.toggle("settings") }
-    function show(): void { OverlayManager.open("settings", undefined) }
-    function hide(): void { OverlayManager.close("settings") }
-    function showCategory(categoryId: string): void {
+    function toggle(): string {
+      OverlayManager.toggle("settings")
+      return OverlayManager.isOpen("settings") ? "Settings panel opened" : "Settings panel closed"
+    }
+    function open(): string {
+      OverlayManager.open("settings", undefined)
+      return "Settings panel opened"
+    }
+    function close(): string {
+      OverlayManager.close("settings")
+      return "Settings panel closed"
+    }
+    function showCategory(categoryId: string): string {
       OverlayManager.open("settings", { category: categoryId })
+      return "Settings panel opened on '" + categoryId + "'"
     }
   }
 

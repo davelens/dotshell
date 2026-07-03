@@ -256,14 +256,19 @@ ShellRoot {
       IpcHandler {
         target: "bar"
 
-        function toggle(): void {
-          if (panel.barFocusActive) {
-            panel.barFocusActive = false
-          } else {
-            panel.barFocusActive = true
-            panel.barFocusIndex = panel.firstFocusIndex()
-          }
+        function enable(): string {
+          panel.barFocusActive = true
+          panel.barFocusIndex = panel.firstFocusIndex()
+          return "Bar focus is now enabled"
         }
+        function disable(): string {
+          panel.barFocusActive = false
+          return "Bar focus is now disabled"
+        }
+        function toggle(): string {
+          return panel.barFocusActive ? disable() : enable()
+        }
+        function state(): bool { return panel.barFocusActive }
       }
 
       // Helper function to build props for dynamically loaded bar components.

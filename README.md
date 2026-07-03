@@ -109,26 +109,33 @@ dshell <command> <subcommand> [args]
 
 | Command | Subcommand | Description |
 |---|---|---|
-| `bar` | `focus` | Toggle bar focus mode |
+| `bar` | `focus <verb>` | Bar focus mode: `toggle`, `enable`, `disable`, `state` |
 | `idle` | `enable` | Enable idle inhibitor |
 | `idle` | `disable` | Disable idle inhibitor |
 | `idle` | `toggle` | Toggle idle inhibitor |
 | `idle` | `state` | Show idle inhibitor state |
 | `notifications` | `toggle` | Toggle notification panel |
+| `notifications` | `open` | Open notification panel |
+| `notifications` | `close` | Close notification panel |
+| `notifications` | `dismiss <id>` | Dismiss a notification by id |
 | `notifications` | `clear-all` | Clear notification history |
 | `popup` | `toggle <name>` | Toggle a popup (e.g. `volume`, `brightness`, `wireless`) |
 | `power` | `toggle` | Toggle power menu |
+| `power` | `open` | Open power menu |
+| `power` | `close` | Close power menu |
 | `profile` | `list` | List all profiles |
 | `profile` | `current` | Show active profile name |
-| `profile` | `enable <name>` | Switch to a profile |
-| `screen-recording` | `files` | Toggle screen recording file browser |
+| `profile` | `set <name>` | Switch to a profile |
+| `screen-recording` | `files <verb>` | Screen recording file browser: `toggle`, `open`, `close` |
 | `settings` | `toggle` | Toggle settings panel |
+| `settings` | `open` | Open settings panel |
+| `settings` | `close` | Close settings panel |
 | `settings` | `show-category <id>` | Open settings to a specific category |
 | `theme` | `list` | List available themes |
 | `theme` | `set <name>` | Switch to a theme |
 | `theme` | `current` | Show active theme name |
 | `theme` | `refresh` | Regenerate GTK CSS for the active theme |
-| `wallpaper` | `browse` | Toggle wallpaper browser |
+| `wallpaper` | `browser <verb>` | Wallpaper browser panel: `toggle`, `open`, `close` |
 | `wallpaper` | `set <path>` | Set a wallpaper by file path |
 | `wallpaper` | `restore [fallback]` | Restore saved wallpaper |
 

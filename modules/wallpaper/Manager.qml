@@ -312,12 +312,22 @@ Singleton {
   IpcHandler {
     target: "wallpaper"
 
-    function browse(): void {
+    function toggleBrowser(): string {
       wallpaperManager.togglePanel()
+      return OverlayManager.isOpen("wallpaper")
+        ? "Wallpaper browser opened" : "Wallpaper browser closed"
     }
-
-    function set(path: string): void {
+    function openBrowser(): string {
+      wallpaperManager.openPanel()
+      return "Wallpaper browser opened"
+    }
+    function closeBrowser(): string {
+      wallpaperManager.closePanel()
+      return "Wallpaper browser closed"
+    }
+    function set(path: string): string {
       wallpaperManager.applyWallpaper(path)
+      return "Wallpaper set to '" + path + "'"
     }
   }
 }

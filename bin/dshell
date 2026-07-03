@@ -2,6 +2,11 @@
 
 # This is a CLI companion to dotshell. It's intended to be a functional,
 # autocompleted replacement for `qs ipc call` instructions.
+#
+# The COMMANDS registry below is the single source of truth for the CLI
+# surface: dispatch, usage text, and bash completion (`dshell --complete`)
+# are all generated from it. Adding a subcommand means adding one row
+# (plus its IpcHandler function on the QML side).
 
 set -euo pipefail
 
@@ -11,6 +16,68 @@ readonly BUNDLED_THEMES_DIR="$CONFIG_DIR/themes"
 readonly USER_THEMES_DIR="$DATA_DIR/themes"
 readonly GENERAL_JSON="$DATA_DIR/general.json"
 
+# -- command registry ----------------------------------------------------------
+#
+# Format: "path|handler|args|description"
+#   path        words after `dshell`, matched verbatim
+#   handler     "ipc <target> <function>" or "fn <local function>"
+#   args        space-separated tokens; <x> required, [x] optional.
+#               A :source suffix names the completion source
+#               (theme, profile, category, popup, file).
+#   description one line, shown in usage
+
+readonly -a COMMANDS=(
+  "bar focus toggle|ipc bar toggle||Toggle bar focus mode"
+  "bar focus enable|ipc bar enable||Enable bar focus mode"
+  "bar focus disable|ipc bar disable||Disable bar focus mode"
+  "bar focus state|ipc bar state||Show bar focus state"
+  "idle enable|ipc idle enable||Enable idle inhibitor"
+  "idle disable|ipc idle disable||Disable idle inhibitor"
+  "idle toggle|ipc idle toggle||Toggle idle inhibitor"
+  "idle state|ipc idle state||Show idle inhibitor state"
+  "notifications toggle|ipc notifications toggle||Toggle notification panel"
+  "notifications open|ipc notifications open||Open notification panel"
+  "notifications close|ipc notifications close||Close notification panel"
+  "notifications dismiss|ipc notifications dismiss|<id>|Dismiss a notification by id"
+  "notifications clear-all|ipc notifications clearAll||Clear notification history"
+  "popup toggle|ipc popup toggle|<name:popup>|Toggle a popup (e.g. volume, brightness)"
+  "power toggle|ipc power toggle||Toggle power menu"
+  "power open|ipc power open||Open power menu"
+  "power close|ipc power close||Close power menu"
+  "profile list|fn profile_list||List all profiles"
+  "profile current|fn profile_current||Show active profile name"
+  "profile set|ipc profile set|<name:profile>|Switch to a profile"
+  "screen-recording files toggle|ipc screen-recording toggleFiles||Toggle the screen recording file browser"
+  "screen-recording files open|ipc screen-recording openFiles||Open the screen recording file browser"
+  "screen-recording files close|ipc screen-recording closeFiles||Close the screen recording file browser"
+  "settings toggle|ipc settings toggle||Toggle settings panel"
+  "settings open|ipc settings open||Open settings panel"
+  "settings close|ipc settings close||Close settings panel"
+  "settings show-category|ipc settings showCategory|<id:category>|Open settings panel to a category"
+  "theme list|fn theme_list||List available themes"
+  "theme set|fn theme_set|<name:theme>|Switch to a theme"
+  "theme current|ipc theme current||Show active theme name"
+  "theme refresh|fn theme_refresh||Regenerate GTK CSS for the active theme"
+  "wallpaper browser toggle|ipc wallpaper toggleBrowser||Toggle the wallpaper browser"
+  "wallpaper browser open|ipc wallpaper openBrowser||Open the wallpaper browser"
+  "wallpaper browser close|ipc wallpaper closeBrowser||Close the wallpaper browser"
+  "wallpaper set|fn wallpaper_set|<path:file>|Set a wallpaper by file path"
+  "wallpaper restore|fn wallpaper_restore|[fallback:file]|Restore saved wallpaper (optional fallback)"
+)
+
+readonly -a GROUP_DESCRIPTIONS=(
+  "bar|Bar focus mode"
+  "idle|Idle inhibitor control"
+  "notifications|Notification panel and history"
+  "popup|Popup windows"
+  "power|Power menu"
+  "profile|Profile management"
+  "screen-recording|Screen recording file browser"
+  "settings|Settings panel"
+  "theme|Theme management"
+  "wallpaper|Wallpaper browser and setter"
+)
+
 # -- helpers -----------------------------------------------------------------
 
 die() {
@@ -18,7 +85,61 @@ die() {
   exit 1
 }
 
-ipc() { qs -p "$CONFIG_DIR" ipc call "$@"; }
+# IPC seam: QML handlers return feedback strings; an "error:" prefix
+# becomes stderr + non-zero exit (qs itself always exits 0).
+ipc() {
+  local out
+  out="$(qs -p "$CONFIG_DIR" ipc call "$@")"
+  if [[ "$out" == error:* ]]; then
+    echo "$out" >&2
+    return 1
+  fi
+  [[ -n "$out" ]] && echo "$out"
+  return 0
+}
+
+# Strip the :source suffixes from an args spec for display
+display_spec() {
+  [[ -z "$1" ]] && return 0
+  echo "$1" | sed 's/:[a-z-]*\([]>]\)/\1/g'
+}
+
+# -- completion value sources --------------------------------------------------
+
+# All theme names; user themes override bundled ones by name
+themes_all() {
+  local f base
+  for f in "$BUNDLED_THEMES_DIR"/*.json "$USER_THEMES_DIR"/*.json; do
+    [[ -f "$f" ]] || continue
+    base="${f##*/}"
+    echo "${base%.json}"
+  done | sort -u
+  return 0
+}
+
+profile_names() {
+  [[ -f "$GENERAL_JSON" ]] || return 0
+  sed -n 's/.*"name" *: *"\([^"]*\)".*/\1/p' "$GENERAL_JSON"
+}
+
+settings_categories() {
+  [[ -f "$GENERAL_JSON" ]] || return 0
+  sed -n '/"settingsCategoryOrder"/,/]/{ s/.*"\([a-z-]*\)".*/\1/p }' "$GENERAL_JSON"
+}
+
+popup_modules() {
+  local f id
+  for f in "$CONFIG_DIR"/modules/*/module.json; do
+    [[ -f "$f" ]] || continue
+    if grep -q '"popup"' "$f"; then
+      id="$(sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' "$f")"
+      [[ -n "$id" ]] && echo "$id"
+    fi
+  done
+  return 0
+}
+
+# -- theme -------------------------------------------------------------------
 
 # Read the active theme name from general.json (falls back to catppuccin-mocha)
 active_theme() {
@@ -29,11 +150,6 @@ active_theme() {
   echo "${name:-catppuccin-mocha}"
 }
 
-# Check if a theme exists in either directory
-theme_exists() {
-  [[ -f "$USER_THEMES_DIR/$1.json" ]] || [[ -f "$BUNDLED_THEMES_DIR/$1.json" ]]
-}
-
 # Resolve the full path to a theme JSON file (user overrides take precedence)
 resolve_theme_path() {
   if [[ -f "$USER_THEMES_DIR/$1.json" ]]; then
@@ -41,6 +157,10 @@ resolve_theme_path() {
   elif [[ -f "$BUNDLED_THEMES_DIR/$1.json" ]]; then
     echo "$BUNDLED_THEMES_DIR/$1.json"
   fi
+}
+
+theme_exists() {
+  [[ -n "$(resolve_theme_path "$1")" ]]
 }
 
 # Regenerate GTK 4 CSS from a theme JSON file
@@ -53,71 +173,82 @@ update_gtk_css() {
   "$script_dir/generate-gtk-css" "$theme_path"
 }
 
-# -- bar ---------------------------------------------------------------------
+theme_list() {
+  local -a names=()
+  mapfile -t names < <(themes_all)
+  if [[ ${#names[@]} -eq 0 ]]; then
+    echo "No themes found"
+    return 0
+  fi
 
-bar_usage() {
-  cat <<EOF
-Usage: dshell bar <subcommand>
+  local current
+  current="$(active_theme)"
 
-Subcommands:
-  focus     Toggle bar focus mode
-EOF
+  # Compute column widths
+  local name_width=5   # "Theme"
+  local source_width=6 # "Source"
+  local name src
+  for name in "${names[@]}"; do
+    if ((${#name} > name_width)); then name_width=${#name}; fi
+    src="$(dirname "$(resolve_theme_path "$name")")"
+    if ((${#src} > source_width)); then source_width=${#src}; fi
+  done
+
+  # Print table
+  printf "%-${name_width}s  %s\n" "Theme" "Source"
+  for name in "${names[@]}"; do
+    local suffix=""
+    [[ "$name" == "$current" ]] && suffix="  (active)"
+    printf "%-${name_width}s  %s%s\n" "$name" "$(dirname "$(resolve_theme_path "$name")")" "$suffix"
+  done
 }
 
-# -- idle --------------------------------------------------------------------
+theme_set() {
+  local name="$1"
 
-idle_usage() {
-  cat <<EOF
-Usage: dshell idle <subcommand>
+  if ! theme_exists "$name"; then
+    echo "error: theme '$name' not found" >&2
+    echo "" >&2
+    echo "Available themes:" >&2
+    themes_all | sed 's/^/  /' >&2
+    exit 1
+  fi
 
-Subcommands:
-  enable    Enable idle inhibitor
-  disable   Disable idle inhibitor
-  toggle    Toggle idle inhibitor
-  state     Show idle inhibitor state
-EOF
+  local current
+  current="$(active_theme)"
+  if [[ "$name" == "$current" ]]; then
+    echo "Already using theme '$name'"
+    return 0
+  fi
+
+  ipc theme set "$name"
+  update_gtk_css "$name"
 }
 
-# -- notifications -----------------------------------------------------------
+theme_refresh() {
+  local current
+  current="$(active_theme)"
 
-notifications_usage() {
-  cat <<EOF
-Usage: dshell notifications <subcommand>
+  if ! theme_exists "$current"; then
+    die "active theme '$current' not found"
+  fi
 
-Subcommands:
-  toggle      Toggle notification panel
-  clear-all   Clear notification history
-EOF
-}
-
-# -- power -------------------------------------------------------------------
-
-power_usage() {
-  cat <<EOF
-Usage: dshell power <subcommand>
-
-Subcommands:
-  toggle    Toggle power menu
-EOF
-}
-
-# -- popup -------------------------------------------------------------------
-
-popup_usage() {
-  cat <<EOF
-Usage: dshell popup <subcommand>
-
-Subcommands:
-  toggle <name>   Toggle a popup (e.g. volume, brightness, wireless)
-EOF
+  update_gtk_css "$current"
+  echo "GTK CSS regenerated for '$current'"
 }
 
 # -- profile -----------------------------------------------------------------
 
+profile_current() {
+  if [[ -f "$GENERAL_JSON" ]]; then
+    sed -n 's/.*"activeProfileName" *: *"\([^"]*\)".*/\1/p' "$GENERAL_JSON" | head -1
+  fi
+}
+
 profile_list() {
   if [[ ! -f "$GENERAL_JSON" ]]; then
     echo "No profiles found"
-    return
+    return 0
   fi
 
   local active_dir
@@ -166,16 +297,16 @@ profile_list() {
 
   if [[ ${#names[@]} -eq 0 ]]; then
     echo "No profiles found"
-    return
+    return 0
   fi
 
   # Compute column widths
   local name_width=7 # "Profile"
   local path_width=4 # "Path"
   for i in "${!names[@]}"; do
-    (( ${#names[$i]} > name_width )) && name_width=${#names[$i]}
+    if (( ${#names[$i]} > name_width )); then name_width=${#names[$i]}; fi
     local path="$DATA_DIR/${dirs[$i]}"
-    (( ${#path} > path_width )) && path_width=${#path}
+    if (( ${#path} > path_width )); then path_width=${#path}; fi
   done
 
   # Print table
@@ -187,153 +318,13 @@ profile_list() {
   done
 }
 
-profile_usage() {
-  cat <<EOF
-Usage: dshell profile <subcommand>
-
-Subcommands:
-  list              List all profiles
-  current           Show active profile name
-  enable <name>     Switch to a profile
-EOF
-}
-
-# -- settings ----------------------------------------------------------------
-
-settings_usage() {
-  cat <<EOF
-Usage: dshell settings <subcommand>
-
-Subcommands:
-  toggle                  Toggle settings panel
-  show-category <id>      Open settings panel to a category
-EOF
-}
-
-# -- theme -------------------------------------------------------------------
-
-theme_list() {
-  local -A themes # name -> source path
-  local -a order  # insertion order
-
-  # Bundled themes first
-  if [[ -d "$BUNDLED_THEMES_DIR" ]]; then
-    for f in "$BUNDLED_THEMES_DIR"/*.json; do
-      [[ -f "$f" ]] || continue
-      local name="${f##*/}"
-      name="${name%.json}"
-      themes["$name"]="$BUNDLED_THEMES_DIR"
-      order+=("$name")
-    done
-  fi
-
-  # User themes override bundled ones
-  if [[ -d "$USER_THEMES_DIR" ]]; then
-    for f in "$USER_THEMES_DIR"/*.json; do
-      [[ -f "$f" ]] || continue
-      local name="${f##*/}"
-      name="${name%.json}"
-      if [[ -z "${themes[$name]+x}" ]]; then
-        order+=("$name")
-      fi
-      themes["$name"]="$USER_THEMES_DIR"
-    done
-  fi
-
-  if [[ ${#order[@]} -eq 0 ]]; then
-    echo "No themes found"
-    return
-  fi
-
-  # Sort alphabetically
-  IFS=$'\n' sorted=($(printf '%s\n' "${order[@]}" | sort))
-  unset IFS
-
-  local current
-  current="$(active_theme)"
-
-  # Compute column widths
-  local name_width=5   # "Theme"
-  local source_width=6 # "Source"
-  for name in "${sorted[@]}"; do
-    ((${#name} > name_width)) && name_width=${#name}
-    local src="${themes[$name]}"
-    ((${#src} > source_width)) && source_width=${#src}
-  done
-
-  # Print table
-  printf "%-${name_width}s  %s\n" "Theme" "Source"
-  for name in "${sorted[@]}"; do
-    local suffix=""
-    [[ "$name" == "$current" ]] && suffix="  (active)"
-    printf "%-${name_width}s  %s%s\n" "$name" "${themes[$name]}" "$suffix"
-  done
-}
-
-theme_set() {
-  local name="${1:-}"
-  [[ -z "$name" ]] && die "usage: dshell theme set <name>"
-
-  if ! theme_exists "$name"; then
-    echo "error: theme '$name' not found" >&2
-    echo "" >&2
-    echo "Available themes:" >&2
-    for f in "$BUNDLED_THEMES_DIR"/*.json "$USER_THEMES_DIR"/*.json; do
-      [[ -f "$f" ]] || continue
-      local base="${f##*/}"
-      echo "  ${base%.json}" >&2
-    done | sort -u >&2
-    exit 1
-  fi
-
-  local current
-  current="$(active_theme)"
-  if [[ "$name" == "$current" ]]; then
-    echo "Already using theme '$name'"
-    return
-  fi
-
-  ipc theme set "$name"
-  update_gtk_css "$name"
-  echo "Switched theme to '$name'"
-}
-
-theme_refresh() {
-  local current
-  current="$(active_theme)"
-
-  if ! theme_exists "$current"; then
-    die "active theme '$current' not found"
-  fi
-
-  update_gtk_css "$current"
-  echo "GTK CSS regenerated for '$current'"
-}
-
-theme_usage() {
-  cat <<EOF
-Usage: dshell theme <subcommand>
-
-Subcommands:
-  list          List available themes
-  set <name>    Switch to a theme
-  current       Show active theme name
-  refresh       Regenerate GTK CSS for the active theme
-EOF
-}
-
-# -- screen-recording --------------------------------------------------------
-
-screen_recording_usage() {
-  cat <<EOF
-Usage: dshell screen-recording <subcommand>
-
-Subcommands:
-  files     Toggle the screen recording file browser panel
-EOF
-}
-
 # -- wallpaper ---------------------------------------------------------------
+
+wallpaper_set() {
+  local path="$1"
+  [[ -f "$path" ]] || die "wallpaper file not found: $path"
+  ipc wallpaper set "$path"
+}
 
 wallpaper_restore() {
   local fallback="${1:-}"
@@ -373,136 +364,219 @@ wallpaper_restore() {
   fi
 }
 
-wallpaper_usage() {
-  cat <<EOF
-Usage: dshell wallpaper <subcommand>
-
-Subcommands:
-  browse              Toggle the wallpaper browser panel
-  set <path>          Set a wallpaper by file path
-  restore [fallback]  Restore saved wallpaper (optional fallback image path)
-EOF
-}
-
-# -- dispatch ----------------------------------------------------------------
+# -- usage (generated from the registry) ---------------------------------------
 
 usage() {
-  cat <<EOF
-Usage: dshell <command> [subcommand]
+  echo "Usage: dshell <command> [subcommand]"
+  echo ""
+  echo "Commands:"
 
-Commands:
-  bar               Bar focus mode
-  idle              Idle inhibitor control
-  notifications     Notification panel and history
-  power             Power menu
-  popup             Popup windows
-  profile           Profile management
-  screen-recording  Screen recording file browser
-  settings          Settings panel
-  theme             Theme management
-  wallpaper         Wallpaper browser and setter
-EOF
+  local width=0 rec group desc
+  for rec in "${GROUP_DESCRIPTIONS[@]}"; do
+    group="${rec%%|*}"
+    if ((${#group} > width)); then width=${#group}; fi
+  done
+  for rec in "${GROUP_DESCRIPTIONS[@]}"; do
+    IFS='|' read -r group desc <<<"$rec"
+    printf "  %-${width}s  %s\n" "$group" "$desc"
+  done
 }
 
-case "${1:-}" in
-bar)
-  case "${2:-}" in
-  focus) ipc bar toggle ;;
-  -h | --help | "") bar_usage ;;
-  *) die "unknown subcommand: bar ${2:-}" ;;
-  esac
-  ;;
-idle)
-  case "${2:-}" in
-  enable) ipc idle enable ;;
-  disable) ipc idle disable ;;
-  toggle) ipc idle toggle ;;
-  state) ipc idle state ;;
-  -h | --help | "") idle_usage ;;
-  *) die "unknown subcommand: idle ${2:-}" ;;
-  esac
-  ;;
-notifications)
-  case "${2:-}" in
-  toggle) ipc notifications toggle ;;
-  clear-all) ipc notifications clearAll ;;
-  -h | --help | "") notifications_usage ;;
-  *) die "unknown subcommand: notifications ${2:-}" ;;
-  esac
-  ;;
-power)
-  case "${2:-}" in
-  toggle) ipc power toggle ;;
-  -h | --help | "") power_usage ;;
-  *) die "unknown subcommand: power ${2:-}" ;;
-  esac
-  ;;
-popup)
-  case "${2:-}" in
-  toggle)
-    [[ -z "${3:-}" ]] && die "usage: dshell popup toggle <name>"
-    ipc popup toggle "${3}"
-    ;;
-  -h | --help | "") popup_usage ;;
-  *) die "unknown subcommand: popup ${2:-}" ;;
-  esac
-  ;;
-profile)
-  case "${2:-}" in
-  list) profile_list ;;
-  current)
-    if [[ -f "$GENERAL_JSON" ]]; then
-      sed -n 's/.*"activeProfileName" *: *"\([^"]*\)".*/\1/p' "$GENERAL_JSON" | head -1
+# Usage for a command prefix (e.g. "bar" or "bar focus"), listing every
+# registry row underneath it.
+prefix_usage() {
+  local prefix="$*"
+  echo "Usage: dshell $prefix <subcommand>"
+  echo ""
+  echo "Subcommands:"
+
+  local -a lefts=() descs=()
+  local rec path handler spec desc left width=0
+  for rec in "${COMMANDS[@]}"; do
+    IFS='|' read -r path handler spec desc <<<"$rec"
+    [[ "$path" == "$prefix "* ]] || continue
+    left="${path#"$prefix" }"
+    if [[ -n "$spec" ]]; then
+      left="$left $(display_spec "$spec")"
     fi
+    lefts+=("$left")
+    descs+=("$desc")
+    if ((${#left} > width)); then width=${#left}; fi
+  done
+
+  local i
+  for i in "${!lefts[@]}"; do
+    printf "  %-${width}s  %s\n" "${lefts[$i]}" "${descs[$i]}"
+  done
+}
+
+# -- completion (`dshell --complete <words…>`) ---------------------------------
+#
+# Prints candidates for the word following the given ones. Emits the
+# sentinel "__files__" when the shell should fall back to filename
+# completion. Consumed by bin/dshell-completion.bash.
+
+complete_words() {
+  local -a argv=("$@")
+  local -A seen=()
+  local rec path handler spec desc
+
+  for rec in "${COMMANDS[@]}"; do
+    IFS='|' read -r path handler spec desc <<<"$rec"
+    local -a pwords=()
+    read -ra pwords <<<"$path"
+    local np=${#pwords[@]} na=${#argv[@]}
+    local ok=true i
+
+    if ((na < np)); then
+      # Completing a path word
+      for ((i = 0; i < na; i++)); do
+        if [[ "${argv[$i]}" != "${pwords[$i]}" ]]; then
+          ok=false
+          break
+        fi
+      done
+      if $ok; then
+        seen["${pwords[$na]}"]=1
+      fi
+    else
+      # Completing an argument: the path must match exactly
+      for ((i = 0; i < np; i++)); do
+        if [[ "${argv[$i]}" != "${pwords[$i]}" ]]; then
+          ok=false
+          break
+        fi
+      done
+      $ok || continue
+
+      local -a spec_tokens=()
+      if [[ -n "$spec" ]]; then
+        read -ra spec_tokens <<<"$spec"
+      fi
+      local idx=$((na - np))
+      ((idx < ${#spec_tokens[@]})) || continue
+
+      local src="${spec_tokens[$idx]}"
+      src="${src:1:${#src}-2}" # strip <> or []
+      src="${src##*:}"
+      case "$src" in
+      theme) themes_all ;;
+      profile) profile_names ;;
+      category) settings_categories ;;
+      popup) popup_modules ;;
+      file) echo "__files__" ;;
+      esac
+      return 0
+    fi
+  done
+
+  if ((${#seen[@]} > 0)); then
+    printf '%s\n' "${!seen[@]}" | sort
+  fi
+  return 0
+}
+
+# -- dispatch ------------------------------------------------------------------
+
+main() {
+  case "${1:-}" in
+  -h | --help | "")
+    usage
+    exit 0
     ;;
-  enable)
-    [[ -z "${3:-}" ]] && die "usage: dshell profile enable <name>"
-    ipc profile enable "${3}"
+  --complete)
+    shift
+    complete_words "$@"
+    exit 0
     ;;
-  -h | --help | "") profile_usage ;;
-  *) die "unknown subcommand: profile ${2:-}" ;;
   esac
-  ;;
-screen-recording)
-  case "${2:-}" in
-  files) ipc screen-recording files ;;
-  -h | --help | "") screen_recording_usage ;;
-  *) die "unknown subcommand: screen-recording ${2:-}" ;;
-  esac
-  ;;
-settings)
-  case "${2:-}" in
-  toggle) ipc settings toggle ;;
-  show-category)
-    [[ -z "${3:-}" ]] && die "usage: dshell settings show-category <id>"
-    ipc settings showCategory "${3}"
-    ;;
-  -h | --help | "") settings_usage ;;
-  *) die "unknown subcommand: settings ${2:-}" ;;
-  esac
-  ;;
-theme)
-  case "${2:-}" in
-  list) theme_list ;;
-  set) theme_set "${3:-}" ;;
-  current) ipc theme current ;;
-  refresh) theme_refresh ;;
-  -h | --help | "") theme_usage ;;
-  *) die "unknown subcommand: theme ${2:-}" ;;
-  esac
-  ;;
-wallpaper)
-  case "${2:-}" in
-  browse) ipc wallpaper browse ;;
-  set)
-    [[ -z "${3:-}" ]] && die "usage: dshell wallpaper set <path>"
-    ipc wallpaper set "${3}"
-    ;;
-  restore) wallpaper_restore "${3:-}" ;;
-  -h | --help | "") wallpaper_usage ;;
-  *) die "unknown subcommand: wallpaper ${2:-}" ;;
-  esac
-  ;;
--h | --help | "") usage ;;
-*) die "unknown command: $1" ;;
-esac
+
+  local -a argv=("$@")
+  local rec path handler spec desc
+
+  # Longest registry path that is a prefix of argv
+  local best_rec="" best_n=0
+  for rec in "${COMMANDS[@]}"; do
+    IFS='|' read -r path handler spec desc <<<"$rec"
+    local -a pwords=()
+    read -ra pwords <<<"$path"
+    local n=${#pwords[@]}
+    ((n <= ${#argv[@]})) || continue
+    local ok=true i
+    for ((i = 0; i < n; i++)); do
+      if [[ "${argv[$i]}" != "${pwords[$i]}" ]]; then
+        ok=false
+        break
+      fi
+    done
+    if $ok && ((n > best_n)); then
+      best_rec="$rec"
+      best_n=$n
+    fi
+  done
+
+  if [[ -n "$best_rec" ]]; then
+    IFS='|' read -r path handler spec desc <<<"$best_rec"
+    local -a args=("${argv[@]:$best_n}")
+
+    # Validate argument count against the spec
+    local -a spec_tokens=()
+    if [[ -n "$spec" ]]; then
+      read -ra spec_tokens <<<"$spec"
+    fi
+    local min=0 t
+    for t in "${spec_tokens[@]:-}"; do
+      [[ "$t" == \<* ]] && min=$((min + 1))
+    done
+    if ((${#args[@]} < min || ${#args[@]} > ${#spec_tokens[@]})); then
+      die "usage: dshell $path${spec:+ $(display_spec "$spec")}"
+    fi
+
+    local -a h=()
+    read -ra h <<<"$handler"
+    case "${h[0]}" in
+    ipc) ipc "${h[@]:1}" "${args[@]}" ;;
+    fn) "${h[1]}" "${args[@]}" ;;
+    esac
+    return
+  fi
+
+  # No full match: find the longest argv prefix that heads registry paths,
+  # then show its usage (bare/-h) or fail on the first unknown word.
+  local k=0
+  while :; do
+    local found=false
+    for rec in "${COMMANDS[@]}"; do
+      path="${rec%%|*}"
+      local -a pwords=()
+      read -ra pwords <<<"$path"
+      ((k < ${#pwords[@]} && k < ${#argv[@]})) || continue
+      local ok=true i
+      for ((i = 0; i <= k; i++)); do
+        if [[ "${argv[$i]}" != "${pwords[$i]}" ]]; then
+          ok=false
+          break
+        fi
+      done
+      if $ok; then
+        found=true
+        break
+      fi
+    done
+    $found || break
+    k=$((k + 1))
+  done
+
+  if ((k == 0)); then
+    die "unknown command: ${argv[0]}"
+  fi
+
+  local next="${argv[$k]:-}"
+  if [[ -z "$next" || "$next" == "-h" || "$next" == "--help" ]]; then
+    prefix_usage "${argv[@]:0:$k}"
+    exit 0
+  fi
+  die "unknown subcommand: ${argv[*]:0:$k} $next"
+}
+
+main "$@"

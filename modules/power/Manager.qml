@@ -138,8 +138,17 @@ Singleton {
   IpcHandler {
     target: "power"
 
-    function toggle(): void { powerManager.toggle() }
-    function open(): void { powerManager.open() }
-    function close(): void { powerManager.close() }
+    function toggle(): string {
+      powerManager.toggle()
+      return OverlayManager.isOpen("power") ? "Power menu opened" : "Power menu closed"
+    }
+    function open(): string {
+      powerManager.open()
+      return "Power menu opened"
+    }
+    function close(): string {
+      powerManager.close()
+      return "Power menu closed"
+    }
   }
 }

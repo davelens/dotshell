@@ -31,9 +31,17 @@ Singleton {
   IpcHandler {
     target: "idle"
 
-    function enable(): void { manager.enable() }
-    function disable(): void { manager.disable() }
-    function toggle(): void { manager.toggle() }
+    function enable(): string {
+      manager.enable()
+      return "Idle inhibitor is now enabled"
+    }
+    function disable(): string {
+      manager.disable()
+      return "Idle inhibitor is now disabled"
+    }
+    function toggle(): string {
+      return manager.inhibited ? disable() : enable()
+    }
     function state(): bool { return manager.inhibited }
   }
 

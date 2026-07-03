@@ -64,23 +64,24 @@ Singleton {
   IpcHandler {
     target: "popup"
 
-    function toggle(name: string): void {
+    function toggle(name: string): string {
       if (popupManager.activePopup === name) {
         popupManager.close()
-      } else {
-        OverlayManager.close("")
-        // Compute anchor from the registered button at toggle time
-        var anchor = popupManager.getButtonAnchor(name)
-        if (anchor) {
-          popupManager.activePopup = name
-          popupManager.activePopupScreen = anchor.screen
-          popupManager.anchorRight = anchor.right
-        } else if (ScreenManager.primaryScreen) {
-          popupManager.activePopup = name
-          popupManager.activePopupScreen = ScreenManager.primaryScreen
-          popupManager.anchorRight = ScreenManager.primaryScreen.width - 10
-        }
+        return "Popup '" + name + "' closed"
       }
+      OverlayManager.close("")
+      // Compute anchor from the registered button at toggle time
+      var anchor = popupManager.getButtonAnchor(name)
+      if (anchor) {
+        popupManager.activePopup = name
+        popupManager.activePopupScreen = anchor.screen
+        popupManager.anchorRight = anchor.right
+      } else if (ScreenManager.primaryScreen) {
+        popupManager.activePopup = name
+        popupManager.activePopupScreen = ScreenManager.primaryScreen
+        popupManager.anchorRight = ScreenManager.primaryScreen.width - 10
+      }
+      return "Popup '" + name + "' opened"
     }
   }
 }

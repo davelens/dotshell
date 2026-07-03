@@ -404,8 +404,18 @@ Singleton {
   IpcHandler {
     target: "screen-recording"
 
-    function files(): void {
+    function toggleFiles(): string {
       recordingManager.togglePanel()
+      return OverlayManager.isOpen("recording")
+        ? "Screen recording files panel opened" : "Screen recording files panel closed"
+    }
+    function openFiles(): string {
+      recordingManager.openPanel()
+      return "Screen recording files panel opened"
+    }
+    function closeFiles(): string {
+      recordingManager.closePanel()
+      return "Screen recording files panel closed"
     }
   }
 }
