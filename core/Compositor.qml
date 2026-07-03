@@ -91,10 +91,8 @@ Singleton {
       return
     }
     if (resolvedBackend === "niri") {
-      niriFetchProc.output = ""
       niriFetchProc.running = true
     } else {
-      swayFetchProc.output = ""
       swayFetchProc.running = true
     }
   }
@@ -120,18 +118,13 @@ Singleton {
 
   Process {
     id: swayFetchProc
-    property string output: ""
     command: ["swaymsg", "-t", "get_outputs"]
     running: false
-    stdout: SplitParser {
-      splitMarker: ""
-      onRead: data => { swayFetchProc.output += data }
-    }
+    stdout: StdioCollector {}
     onExited: (exitCode) => {
       if (exitCode === 0) {
-        compositor.outputsFetched(swayFetchProc.output)
+        compositor.outputsFetched(swayFetchProc.stdout.text)
       }
-      swayFetchProc.output = ""
     }
   }
 
@@ -156,18 +149,13 @@ Singleton {
 
   Process {
     id: niriFetchProc
-    property string output: ""
     command: ["niri", "msg", "-j", "outputs"]
     running: false
-    stdout: SplitParser {
-      splitMarker: ""
-      onRead: data => { niriFetchProc.output += data }
-    }
+    stdout: StdioCollector {}
     onExited: (exitCode) => {
       if (exitCode === 0) {
-        compositor.outputsFetched(niriFetchProc.output)
+        compositor.outputsFetched(niriFetchProc.stdout.text)
       }
-      niriFetchProc.output = ""
     }
   }
 }

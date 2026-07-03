@@ -35,14 +35,10 @@ Item {
 
   function reload() { file.reload() }
 
-  // Manual-mode save. Atomic: stage to .tmp then mv into place so a crash
-  // mid-write can never leave a half-written file on disk.
+  // Manual-mode save. FileView writes atomically by default (atomicWrites),
+  // so a crash mid-write can never leave a half-written file on disk.
   function save(config) {
-    var json = JSON.stringify(config, null, 2)
-    saveProc.command = ["sh", "-c",
-      "cat > '" + path + ".tmp' << 'MODULE_CONFIG_EOF'\n" + json + "\nMODULE_CONFIG_EOF\n" +
-      "mv -f '" + path + ".tmp' '" + path + "'"]
-    saveProc.running = true
+    file.setText(JSON.stringify(config, null, 2))
   }
 
   FileView {
@@ -58,12 +54,6 @@ Item {
       if (root.adapter) writeAdapter()
       else root.loaded("")
     }
-  }
-
-  Process {
-    id: saveProc
-    onExited: code => {
-      if (code !== 0) console.error("[ModuleConfig:" + root.moduleId + "] Failed to save config")
-    }
+    onSaveFailed: error => console.error("[ModuleConfig:" + root.moduleId + "] Failed to save config:", error)
   }
 }

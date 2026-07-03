@@ -61,7 +61,7 @@ Singleton {
   Process {
     id: _stopProc
     onExited: function(exitCode, exitStatus) {
-      _waitProc.command = ["bash", "-c", "while pidof " + recordingManager.processName + " > /dev/null 2>&1; do sleep 0.2; done"]
+      _waitProc.command = ["bash", "-c", 'while pidof "$1" > /dev/null 2>&1; do sleep 0.2; done', "wait-recording", recordingManager.processName]
       _waitProc.running = true
     }
   }
@@ -146,13 +146,9 @@ Singleton {
 
   Process {
     id: listScreenshotsProc
-    property string output: ""
-    onStarted: { output = "" }
-    stdout: SplitParser {
-      onRead: data => { listScreenshotsProc.output += data + "\n" }
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = listScreenshotsProc.output.trim().split("\n").filter(function(l) { return l.length > 0 })
+      var lines = listScreenshotsProc.stdout.text.trim().split("\n").filter(function(l) { return l.length > 0 })
       var dir = recordingManager.screenshotDir
       var result = []
       for (var i = 0; i < lines.length; i++) {
@@ -166,13 +162,9 @@ Singleton {
 
   Process {
     id: listScreencastsProc
-    property string output: ""
-    onStarted: { output = "" }
-    stdout: SplitParser {
-      onRead: data => { listScreencastsProc.output += data + "\n" }
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = listScreencastsProc.output.trim().split("\n").filter(function(l) { return l.length > 0 })
+      var lines = listScreencastsProc.stdout.text.trim().split("\n").filter(function(l) { return l.length > 0 })
       var dir = recordingManager.screencastDir
       var result = []
       for (var i = 0; i < lines.length; i++) {
@@ -281,7 +273,6 @@ Singleton {
   function requestDuration(videoPath) {
     if (!videoPath) return
     durationProc.videoPath = videoPath
-    durationProc.output = ""
     durationProc.command = ["ffprobe", "-v", "error",
       "-show_entries", "format=duration",
       "-of", "default=noprint_wrappers=1:nokey=1",
@@ -293,13 +284,10 @@ Singleton {
   Process {
     id: durationProc
     property string videoPath: ""
-    property string output: ""
-    stdout: SplitParser {
-      onRead: data => { durationProc.output += data }
-    }
+    stdout: StdioCollector {}
     onExited: function(exitCode) {
       if (exitCode !== 0) return
-      var secs = Math.floor(parseFloat(durationProc.output.trim()))
+      var secs = Math.floor(parseFloat(durationProc.stdout.text.trim()))
       if (isNaN(secs) || secs < 0) return
       var h = Math.floor(secs / 3600)
       var m = Math.floor((secs % 3600) / 60)
@@ -333,8 +321,7 @@ Singleton {
 
   function deleteFiles(paths) {
     if (!paths || paths.length === 0) return
-    var escaped = paths.map(function(p) { return "'" + p.replace(/'/g, "'\\''") + "'" })
-    deleteFilesProc.command = ["sh", "-c", "rm -f " + escaped.join(" ")]
+    deleteFilesProc.command = ["rm", "-f"].concat(paths)
     deleteFilesProc.running = true
   }
 
@@ -388,7 +375,7 @@ Singleton {
   }
 
   function copyPath(filePath) {
-    copyPathProc.command = ["sh", "-c", "echo -n '" + filePath + "' | wl-copy"]
+    copyPathProc.command = ["wl-copy", filePath]
     copyPathProc.running = true
   }
 

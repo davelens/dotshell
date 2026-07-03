@@ -51,14 +51,14 @@ Item {
 
   function startEventStream() {
     if (eventProc.running || backend.socket === "") return
-    eventProc.command = ["sh", "-c",
-      "NIRI_SOCKET='" + backend.socket + "' niri msg event-stream"]
     eventProc.running = true
   }
 
   // Persistent event stream process
   Process {
     id: eventProc
+    command: ["niri", "msg", "event-stream"]
+    environment: ({ NIRI_SOCKET: backend.socket })
 
     stdout: SplitParser {
       onRead: line => {
@@ -97,18 +97,14 @@ Item {
   // One-shot workspace fetch process
   Process {
     id: pollProc
-    command: ["sh", "-c", "NIRI_SOCKET='" + backend.socket + "' niri msg -j workspaces"]
-    property string buffer: ""
-
-    stdout: SplitParser {
-      onRead: line => { pollProc.buffer += line }
-    }
+    command: ["niri", "msg", "-j", "workspaces"]
+    environment: ({ NIRI_SOCKET: backend.socket })
+    stdout: StdioCollector {}
 
     onExited: (code) => {
-      if (code === 0 && pollProc.buffer) {
-        backend.parseWorkspaces(pollProc.buffer)
+      if (code === 0 && pollProc.stdout.text) {
+        backend.parseWorkspaces(pollProc.stdout.text)
       }
-      pollProc.buffer = ""
     }
   }
 

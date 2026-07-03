@@ -134,13 +134,9 @@ Singleton {
     id: statusProc
     command: ["bash", "-c", "echo 'show' | bluetoothctl"]
     running: true
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => statusProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var poweredMatch = statusProc.output.match(/Powered:\s*(yes|no)/)
+      var poweredMatch = statusProc.stdout.text.match(/Powered:\s*(yes|no)/)
       bluetoothManager.powered = poweredMatch && poweredMatch[1] === "yes"
 
       // If powered, check for connected devices
@@ -157,13 +153,9 @@ Singleton {
   Process {
     id: connectedCheckProc
     command: ["bash", "-c", "echo 'devices Connected' | bluetoothctl"]
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => connectedCheckProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = connectedCheckProc.output.trim().split("\n").filter(l => l.includes("Device"))
+      var lines = connectedCheckProc.stdout.text.trim().split("\n").filter(l => l.includes("Device"))
       var connected = []
       for (var i = 0; i < lines.length; i++) {
         var match = lines[i].match(/Device\s+([0-9A-Fa-f:]+)\s+(.+)/)
@@ -232,13 +224,9 @@ Singleton {
   Process {
     id: deviceListProc
     command: ["bash", "-c", "echo 'devices' | bluetoothctl"]
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => deviceListProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = deviceListProc.output.trim().split("\n").filter(l => l.includes("Device"))
+      var lines = deviceListProc.stdout.text.trim().split("\n").filter(l => l.includes("Device"))
       var connectedAddresses = bluetoothManager.connectedDevices.map(d => d.address)
       var newDevices = []
       for (var i = 0; i < lines.length; i++) {
@@ -263,14 +251,10 @@ Singleton {
   Process {
     id: pairedCheckProc
     command: ["bash", "-c", "echo 'devices Paired' | bluetoothctl"]
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => pairedCheckProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
       var pairedAddresses = []
-      var lines = pairedCheckProc.output.trim().split("\n").filter(l => l.includes("Device"))
+      var lines = pairedCheckProc.stdout.text.trim().split("\n").filter(l => l.includes("Device"))
       for (var i = 0; i < lines.length; i++) {
         var match = lines[i].match(/Device\s+([0-9A-Fa-f:]+)/)
         if (match) {
@@ -304,14 +288,12 @@ Singleton {
         }
       }
     }
-    stderr: SplitParser {
-      onRead: data => connectProc.errorOutput += data + "\n"
-    }
+    stderr: StdioCollector {}
     onExited: exitCode => {
       var failedAddress = bluetoothManager.connectingAddress
       bluetoothManager.busy = false
       bluetoothManager.connectingAddress = ""
-      var errMsg = connectProc.errorOutput.trim()
+      var errMsg = (connectProc.errorOutput + connectProc.stderr.text).trim()
       if (exitCode !== 0 || errMsg) {
         bluetoothManager.connectErrorAddress = failedAddress
         bluetoothManager.connectError = errMsg || "Connection failed."
@@ -324,7 +306,7 @@ Singleton {
   Process {
     id: disconnectProc
     property string address: ""
-    command: ["bash", "-c", "echo 'disconnect " + address + "' | bluetoothctl"]
+    command: ["bluetoothctl", "disconnect", address]
     onExited: {
       bluetoothManager.busy = false
       // Delay refresh to allow disconnect to complete

@@ -24,22 +24,17 @@ Singleton {
 
   Process {
     id: pollProc
-    property string output: ""
-
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => pollProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
 
     onExited: function(exitCode, exitStatus) {
-      if (exitCode !== 0 || pollProc.output.trim() === "") {
+      if (exitCode !== 0 || pollProc.stdout.text.trim() === "") {
         manager.runningTasks = []
         manager.totalCount = 0
         return
       }
 
       try {
-        var parsed = JSON.parse(pollProc.output.trim())
+        var parsed = JSON.parse(pollProc.stdout.text.trim())
         if (!Array.isArray(parsed)) throw new Error("Invalid task data")
 
         var normalized = []

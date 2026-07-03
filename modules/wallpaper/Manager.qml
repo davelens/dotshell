@@ -94,13 +94,9 @@ Singleton {
 
   Process {
     id: listLocalProc
-    property string output: ""
-    onStarted: { output = "" }
-    stdout: SplitParser {
-      onRead: data => { listLocalProc.output += data + "\n" }
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = listLocalProc.output.trim().split("\n").filter(function(l) { return l.length > 0 })
+      var lines = listLocalProc.stdout.text.trim().split("\n").filter(function(l) { return l.length > 0 })
       var dir = wallpaperManager.wallpaperDir
       var result = []
       for (var i = 0; i < lines.length; i++) {
@@ -143,8 +139,6 @@ Singleton {
     if (apiKey) params.push("apikey=" + apiKey)
 
     url += params.join("&")
-
-    searchProc.output = ""
     searchProc.command = ["curl", "-s", "-f", url]
     searchProc.running = true
   }
@@ -163,11 +157,7 @@ Singleton {
 
   Process {
     id: searchProc
-    property string output: ""
-    onStarted: { output = "" }
-    stdout: SplitParser {
-      onRead: data => { searchProc.output += data + "\n" }
-    }
+    stdout: StdioCollector {}
     onExited: function(exitCode) {
       wallpaperManager.searching = false
       if (exitCode !== 0) {
@@ -178,7 +168,7 @@ Singleton {
       }
 
       try {
-        var json = JSON.parse(searchProc.output)
+        var json = JSON.parse(searchProc.stdout.text)
         var results = []
         for (var i = 0; i < json.data.length; i++) {
           var item = json.data[i]

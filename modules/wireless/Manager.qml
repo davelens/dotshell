@@ -219,13 +219,9 @@ Singleton {
     id: statusProc
     command: ["nmcli", "-t", "radio", "wifi"]
     running: true
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => statusProc.output += data
-    }
+    stdout: StdioCollector {}
     onExited: {
-      wirelessManager.enabled = statusProc.output.trim() === "enabled"
+      wirelessManager.enabled = statusProc.stdout.text.trim() === "enabled"
       if (wirelessManager.enabled) {
         networkListProc.running = true
         savedConnectionsProc.running = true
@@ -269,14 +265,10 @@ Singleton {
   Process {
     id: scanProc
     command: ["nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL,SECURITY", "dev", "wifi", "list", "--rescan", "yes"]
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => scanProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
       wirelessManager.scanning = false
-      wirelessManager.parseNetworkList(scanProc.output)
+      wirelessManager.parseNetworkList(scanProc.stdout.text)
     }
   }
 
@@ -284,13 +276,9 @@ Singleton {
   Process {
     id: networkListProc
     command: ["nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL,SECURITY", "dev", "wifi", "list"]
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => networkListProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
-      wirelessManager.parseNetworkList(networkListProc.output)
+      wirelessManager.parseNetworkList(networkListProc.stdout.text)
       // Fetch connection timestamp if connected
       if (wirelessManager.connectedNetwork) {
         timestampProc.running = true
@@ -302,13 +290,9 @@ Singleton {
   Process {
     id: timestampProc
     command: ["nmcli", "-t", "-f", "NAME,TIMESTAMP", "connection", "show", "--active"]
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => timestampProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = timestampProc.output.trim().split("\n")
+      var lines = timestampProc.stdout.text.trim().split("\n")
       for (var i = 0; i < lines.length; i++) {
         var parts = lines[i].split(":")
         if (parts.length >= 2 && wirelessManager.connectedNetwork && parts[0] === wirelessManager.connectedNetwork.ssid) {
@@ -324,13 +308,9 @@ Singleton {
   Process {
     id: savedConnectionsProc
     command: ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show"]
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => savedConnectionsProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = savedConnectionsProc.output.trim().split("\n")
+      var lines = savedConnectionsProc.stdout.text.trim().split("\n")
       var saved = []
       var suffix = ":802-11-wireless"
       for (var i = 0; i < lines.length; i++) {
@@ -347,17 +327,13 @@ Singleton {
   Process {
     id: connectProc
     property string lastSSID: ""
-    property string errorOutput: ""
     command: []
-    onStarted: errorOutput = ""
-    stderr: SplitParser {
-      onRead: data => connectProc.errorOutput += data
-    }
+    stderr: StdioCollector {}
     onExited: exitCode => {
       wirelessManager.busy = false
       wirelessManager.connectingSSID = ""
       if (exitCode !== 0) {
-        var errMsg = connectProc.errorOutput.trim()
+        var errMsg = connectProc.stderr.text.trim()
         // Find the network to check if it's secured
         var network = null
         for (var i = 0; i < wirelessManager.networks.length; i++) {
@@ -477,13 +453,9 @@ Singleton {
   Process {
     id: networkStatsProc
     command: ["cat", "/sys/class/net/wlan0/statistics/rx_bytes", "/sys/class/net/wlan0/statistics/tx_bytes"]
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => networkStatsProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = networkStatsProc.output.trim().split("\n")
+      var lines = networkStatsProc.stdout.text.trim().split("\n")
       if (lines.length >= 2) {
         var rxBytes = parseInt(lines[0]) || 0
         var txBytes = parseInt(lines[1]) || 0

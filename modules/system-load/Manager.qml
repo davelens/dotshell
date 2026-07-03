@@ -28,13 +28,9 @@ Singleton {
 
   Process {
     id: pollProc
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => pollProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = pollProc.output.trim().split("\n")
+      var lines = pollProc.stdout.text.trim().split("\n")
       if (lines.length < 6) return
 
       // Parse CPU from /proc/stat (first line: cpu user nice system idle iowait irq softirq steal)

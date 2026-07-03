@@ -138,17 +138,9 @@ Singleton {
       activeProfileName: activeProfileName,
       profiles: profiles
     }
-    var json = JSON.stringify(config, null, 2)
-    // Atomic write: stage to .tmp then mv into place so a crash mid-write
-    // can never leave a half-written general.json on disk.
-    saveProc.command = ["sh", "-c",
-      "cat > '" + statePath + ".tmp' << 'JSONEOF'\n" + json + "\nJSONEOF\n" +
-      "mv -f '" + statePath + ".tmp' '" + statePath + "'"]
-    saveProc.running = true
-  }
-
-  Process {
-    id: saveProc
+    // FileView writes atomically by default (atomicWrites), so a crash
+    // mid-write can never leave a half-written general.json on disk.
+    configFile.setText(JSON.stringify(config, null, 2))
   }
 
   // Profile IPC: qs ipc call profile {list,current,enable}

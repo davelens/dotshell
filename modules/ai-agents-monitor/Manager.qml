@@ -134,13 +134,9 @@ Singleton {
   // Step 1: read OpenCode registry files and validate PIDs
   Process {
     id: discoverProc
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => discoverProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = discoverProc.output.trim().split("\n")
+      var lines = discoverProc.stdout.text.trim().split("\n")
       var discovered = []
 
       for (var i = 0; i < lines.length; i++) {
@@ -221,19 +217,15 @@ Singleton {
   // Step 2: query each OpenCode instance's session status via HTTP
   Process {
     id: statusProc
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => statusProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: function(exitCode, exitStatus) {
       var idx = manager._ocPendingIdx
       manager._ocPendingSessionId = ""
       if (idx < manager._ocPending.length) {
-        if (exitCode === 0 && statusProc.output.trim() !== "") {
+        if (exitCode === 0 && statusProc.stdout.text.trim() !== "") {
           try {
             // Response is { "sessionId": { "type": "idle"|"busy"|"retry", ... }, ... }
-            var statusMap = JSON.parse(statusProc.output.trim())
+            var statusMap = JSON.parse(statusProc.stdout.text.trim())
             var hasBusy = false
             var hasRetry = false
             var keys = Object.keys(statusMap)
@@ -272,16 +264,12 @@ Singleton {
   // Step 3: check for pending questions (only when busy)
   Process {
     id: questionProc
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => questionProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: function(exitCode, exitStatus) {
       var idx = manager._ocPendingIdx
-      if (idx < manager._ocPending.length && exitCode === 0 && questionProc.output.trim() !== "") {
+      if (idx < manager._ocPending.length && exitCode === 0 && questionProc.stdout.text.trim() !== "") {
         try {
-          var questions = JSON.parse(questionProc.output.trim())
+          var questions = JSON.parse(questionProc.stdout.text.trim())
           if (Array.isArray(questions) && questions.length > 0)
             manager._ocPending[idx].status = "input"
         } catch(e) {
@@ -304,16 +292,12 @@ Singleton {
   // Step 3b: check for pending permissions (only when busy + no questions)
   Process {
     id: permissionProc
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => permissionProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: function(exitCode, exitStatus) {
       var idx = manager._ocPendingIdx
-      if (idx < manager._ocPending.length && exitCode === 0 && permissionProc.output.trim() !== "") {
+      if (idx < manager._ocPending.length && exitCode === 0 && permissionProc.stdout.text.trim() !== "") {
         try {
-          var permissions = JSON.parse(permissionProc.output.trim())
+          var permissions = JSON.parse(permissionProc.stdout.text.trim())
           if (Array.isArray(permissions) && permissions.length > 0)
             manager._ocPending[idx].status = "input"
         } catch(e) {
@@ -328,16 +312,12 @@ Singleton {
   // Step 4: fetch session title for the active OpenCode session
   Process {
     id: sessionProc
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => sessionProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: function(exitCode, exitStatus) {
       var idx = manager._ocPendingIdx
-      if (idx < manager._ocPending.length && exitCode === 0 && sessionProc.output.trim() !== "") {
+      if (idx < manager._ocPending.length && exitCode === 0 && sessionProc.stdout.text.trim() !== "") {
         try {
-          var session = JSON.parse(sessionProc.output.trim())
+          var session = JSON.parse(sessionProc.stdout.text.trim())
           if (session.title) manager._ocPending[idx].sessionTitle = session.title
         } catch(e) {
           // Title unavailable — leave empty
@@ -372,13 +352,9 @@ Singleton {
   // Read Claude session files and validate PIDs
   Process {
     id: ccDiscoverProc
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => ccDiscoverProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = ccDiscoverProc.output.trim().split("\n")
+      var lines = ccDiscoverProc.stdout.text.trim().split("\n")
       var discovered = []
 
       for (var i = 0; i < lines.length; i++) {
@@ -452,15 +428,11 @@ Singleton {
   // Read task JSON files for the current Claude session
   Process {
     id: ccStatusProc
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => ccStatusProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: function(exitCode, exitStatus) {
       var idx = manager._ccPendingIdx
       if (idx < manager._ccPending.length) {
-        var raw = ccStatusProc.output.trim()
+        var raw = ccStatusProc.stdout.text.trim()
         var hasInProgress = false
         var hasError = false
 
@@ -515,13 +487,9 @@ Singleton {
 
   Process {
     id: piDiscoverProc
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => piDiscoverProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: {
-      var lines = piDiscoverProc.output.trim().split("\n")
+      var lines = piDiscoverProc.stdout.text.trim().split("\n")
       var discovered = []
 
       for (var i = 0; i < lines.length; i++) {

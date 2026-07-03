@@ -58,16 +58,13 @@ Item {
   Process {
     id: refreshProc
     command: ["swaymsg", "-t", "get_workspaces"]
-    property string buffer: ""
 
-    stdout: SplitParser {
-      onRead: line => { refreshProc.buffer += line }
-    }
+    stdout: StdioCollector {}
 
     onExited: code => {
-      if (code === 0 && refreshProc.buffer) {
+      if (code === 0 && refreshProc.stdout.text) {
         try {
-          var data = JSON.parse(refreshProc.buffer)
+          var data = JSON.parse(refreshProc.stdout.text)
           var nextState = ({})
           for (var i = 0; i < data.length; i++) {
             var ipc = data[i]
@@ -80,7 +77,6 @@ Item {
           console.error("[I3Backend] Failed to parse sway workspaces:", e)
         }
       }
-      refreshProc.buffer = ""
     }
   }
 

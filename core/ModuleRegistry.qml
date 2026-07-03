@@ -42,17 +42,10 @@ Singleton {
     ]
     running: true
 
-    property string output: ""
-
-    stdout: SplitParser {
-      splitMarker: ""
-      onRead: data => {
-        discoveryProc.output += data
-      }
-    }
+    stdout: StdioCollector {}
 
     onExited: (code, status) => {
-      registry.parseOutput(discoveryProc.output)
+      registry.parseOutput(discoveryProc.stdout.text)
     }
   }
 

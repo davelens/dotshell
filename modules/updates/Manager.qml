@@ -119,7 +119,7 @@ Singleton {
     } else if (source === "aur") {
       singleUpdateHelper.start(["paru", "-S", "--needed", "--noconfirm", "--skipreview", "--sudoloop", name], name, source, from, to)
     } else {
-      singleUpdateHelper.start(["bash", "-c", "sudo pacman -Sy && sudo pacman -S --needed --noconfirm " + name], name, source, from, to)
+      singleUpdateHelper.start(["bash", "-c", 'sudo pacman -Sy && sudo pacman -S --needed --noconfirm "$@"', "pacman-update", name], name, source, from, to)
     }
   }
 
@@ -130,8 +130,8 @@ Singleton {
     if (source === "pacman") {
       if (pacmanUpdates.length === 0) return
       sourceUpdateProc.source = source
-      var names = pacmanUpdates.map(function(p) { return p.name }).join(" ")
-      sourceUpdateProc.command = ["bash", "-c", "sudo pacman -Sy && sudo pacman -S --needed --noconfirm " + names]
+      var names = pacmanUpdates.map(function(p) { return p.name })
+      sourceUpdateProc.command = ["bash", "-c", 'sudo pacman -Sy && sudo pacman -S --needed --noconfirm "$@"', "pacman-update"].concat(names)
       // Mark all pacman packages as updating
       var pkgs = Object.assign({}, updatingPackages)
       for (var i = 0; i < pacmanUpdates.length; i++) pkgs[pacmanUpdates[i].name] = true
@@ -177,7 +177,7 @@ Singleton {
       notifyProc.command = ["notify-send", "-a", "General", "System Updates", "System update completed successfully", "-i", "package-install"]
     } else {
       var body = "System update failed (exit " + exitCode + ")"
-      var tail = tailLines(systemUpdateProc.stderrBuf, 8)
+      var tail = tailLines(systemUpdateProc.stderr.text, 8)
       if (tail) body += "\n" + tail
       notifyProc.command = ["notify-send", "-a", "General", "-u", "critical", "System Updates", body, "-i", "dialog-error"]
     }
@@ -231,7 +231,7 @@ Singleton {
         manager.removePackage(pkgName, source)
       } else {
         var errBody = "Failed to update " + pkgName + " (exit " + exitCode + ")"
-        var tail = manager.tailLines(singleProc.stderrBuf, 6)
+        var tail = manager.tailLines(singleProc.stderr.text, 6)
         if (tail) errBody += "\n" + tail
         notifyProc.command = ["notify-send", "-a", "General", "-u", "critical", "System Updates", errBody, "-i", "dialog-error"]
       }
@@ -248,14 +248,10 @@ Singleton {
   Process {
     id: checkPacmanProc
     command: ["bash", "-c", "checkupdates | grep -Fw -f <(pacman -Qqe)"]
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => checkPacmanProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: exitCode => {
       if (exitCode === 0) {
-        var lines = checkPacmanProc.output.trim().split("\n").filter(l => l.length > 0)
+        var lines = checkPacmanProc.stdout.text.trim().split("\n").filter(l => l.length > 0)
         var updates = []
         for (var i = 0; i < lines.length; i++) {
           var parts = lines[i].split(" ")
@@ -282,14 +278,10 @@ Singleton {
   Process {
     id: checkAurProc
     command: ["bash", "-c", "paru -Qua | grep -Fw -f <(pacman -Qqem)"]
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => checkAurProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: exitCode => {
       if (exitCode === 0) {
-        var lines = checkAurProc.output.trim().split("\n").filter(l => l.length > 0)
+        var lines = checkAurProc.stdout.text.trim().split("\n").filter(l => l.length > 0)
         var updates = []
         for (var i = 0; i < lines.length; i++) {
           var parts = lines[i].split(" ")
@@ -316,14 +308,10 @@ Singleton {
   Process {
     id: checkFlatpakProc
     command: ["flatpak", "remote-ls", "--updates", "--app", "--columns=name,application,version"]
-    property string output: ""
-    onStarted: output = ""
-    stdout: SplitParser {
-      onRead: data => checkFlatpakProc.output += data + "\n"
-    }
+    stdout: StdioCollector {}
     onExited: exitCode => {
       if (exitCode === 0) {
-        var lines = checkFlatpakProc.output.trim().split("\n").filter(l => l.length > 0)
+        var lines = checkFlatpakProc.stdout.text.trim().split("\n").filter(l => l.length > 0)
         var updates = []
         for (var i = 0; i < lines.length; i++) {
           var parts = lines[i].split("\t")
@@ -354,11 +342,7 @@ Singleton {
     property string source: ""
     property string fromVersion: ""
     property string toVersion: ""
-    property string stderrBuf: ""
-    onStarted: stderrBuf = ""
-    stderr: SplitParser {
-      onRead: data => singleProc.stderrBuf += data + "\n"
-    }
+    stderr: StdioCollector {}
     onExited: exitCode => singleUpdateHelper.onFinished(pkgName, source, fromVersion, toVersion, exitCode)
   }
 
@@ -366,11 +350,7 @@ Singleton {
   Process {
     id: sourceUpdateProc
     property string source: ""
-    property string stderrBuf: ""
-    onStarted: stderrBuf = ""
-    stderr: SplitParser {
-      onRead: data => sourceUpdateProc.stderrBuf += data + "\n"
-    }
+    stderr: StdioCollector {}
     onExited: exitCode => {
       // Clear all updating flags for this source
       var pkgs = Object.assign({}, manager.updatingPackages)
@@ -387,7 +367,7 @@ Singleton {
         notifyProc.command = ["notify-send", "-a", "General", "System Updates", "Updated all " + source + " packages", "-i", "package-install"]
       } else {
         var srcErrBody = "Failed to update " + source + " packages (exit " + exitCode + ")"
-        var srcTail = manager.tailLines(sourceUpdateProc.stderrBuf, 6)
+        var srcTail = manager.tailLines(sourceUpdateProc.stderr.text, 6)
         if (srcTail) srcErrBody += "\n" + srcTail
         notifyProc.command = ["notify-send", "-a", "General", "-u", "critical", "System Updates", srcErrBody, "-i", "dialog-error"]
       }
@@ -399,11 +379,7 @@ Singleton {
   // System update process (paru -Syu)
   Process {
     id: systemUpdateProc
-    property string stderrBuf: ""
-    onStarted: stderrBuf = ""
-    stderr: SplitParser {
-      onRead: data => systemUpdateProc.stderrBuf += data + "\n"
-    }
+    stderr: StdioCollector {}
     onExited: exitCode => manager.onSystemUpdateComplete(exitCode === 0, exitCode)
   }
 
