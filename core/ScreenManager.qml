@@ -8,8 +8,10 @@ import qs
 Singleton {
   id: screenManager
 
+  // Core-owned state: primary-screen selection drives popup/overlay
+  // placement, not the display module (its UI merely calls setPrimary).
   ModuleConfig {
-    moduleId: "display"
+    moduleId: "screens"
     adapter: JsonAdapter {
       id: adapter
       // Stable display identifier: "model:serialNumber"
