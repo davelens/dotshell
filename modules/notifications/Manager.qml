@@ -24,35 +24,14 @@ Singleton {
   property alias criticalBypassDnd: settingsAdapter.criticalBypassDnd
 
   // File-based persistence
-  readonly property string statePath: DataManager.getStatePath("notifications")
-  readonly property string defaultsPath: DataManager.getDefaultsPath("notifications")
-  property bool fileReady: false
-
-  // Copy defaults if state file doesn't exist
-  Process {
-    id: ensureDefaults
-    command: ["sh", "-c", "test -f '" + notificationManager.statePath + "' || cp '" + notificationManager.defaultsPath + "' '" + notificationManager.statePath + "'"]
-    running: DataManager.ready
-    onExited: { notificationManager.fileReady = true }
-  }
-
-  FileView {
-    id: settingsFile
-    path: notificationManager.fileReady ? notificationManager.statePath : ""
-
-    // Reload file when it changes on disk
-    watchChanges: true
-    onFileChanged: reload()
-
-    // Save when adapter properties change
-    onAdapterUpdated: writeAdapter()
-
-    JsonAdapter {
+  ModuleConfig {
+    moduleId: "notifications"
+    adapter: JsonAdapter {
       id: settingsAdapter
-      property int popupTimeout: 5000              // ms before auto-dismiss
-      property int maxHistorySize: 50              // max notifications in history
+      property int popupTimeout: 6000              // ms before auto-dismiss
+      property int maxHistorySize: 100             // max notifications in history
       property bool dndScheduleEnabled: false      // enable time-based DND
-      property int dndStartHour: 22                // schedule start hour (0-23)
+      property int dndStartHour: 21                // schedule start hour (0-23)
       property int dndStartMinute: 0               // schedule start minute (0, 15, 30, 45)
       property int dndEndHour: 8                   // schedule end hour (0-23)
       property int dndEndMinute: 0                 // schedule end minute (0, 15, 30, 45)

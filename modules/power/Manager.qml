@@ -10,24 +10,16 @@ Singleton {
 
   // -- Persisted settings (command strings, profile-independent) -----------
 
-  readonly property string generalStatePath: DataManager.getGeneralStatePath("power")
-
   property alias lockCommand: generalAdapter.lockCommand
   property alias suspendCommand: generalAdapter.suspendCommand
   property alias logoutCommand: generalAdapter.logoutCommand
   property alias rebootCommand: generalAdapter.rebootCommand
   property alias shutdownCommand: generalAdapter.shutdownCommand
 
-  FileView {
-    id: generalSettingsFile
-    path: DataManager.dataDirReady ? powerManager.generalStatePath : ""
-    printErrors: false
-    watchChanges: true
-    onFileChanged: reload()
-    onLoadFailed: writeAdapter()
-    onAdapterUpdated: writeAdapter()
-
-    JsonAdapter {
+  ModuleConfig {
+    moduleId: "power"
+    scope: "general"
+    adapter: JsonAdapter {
       id: generalAdapter
       property string lockCommand: "loginctl lock-session"
       property string suspendCommand: "systemctl suspend"

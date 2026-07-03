@@ -10,23 +10,16 @@ Singleton {
 
   // -- General settings (profile-independent) -------------------------------
 
-  readonly property string generalStatePath: DataManager.getGeneralStatePath("wallpaper")
   property alias wallpaperDir: generalAdapter.wallpaperDir
   property alias apiKey: generalAdapter.apiKey
   property alias defaultCategories: generalAdapter.defaultCategories
   property alias defaultPurity: generalAdapter.defaultPurity
   property alias minResolution: generalAdapter.minResolution
 
-  FileView {
-    id: generalSettingsFile
-    path: DataManager.dataDirReady ? wallpaperManager.generalStatePath : ""
-    printErrors: false
-    watchChanges: true
-    onFileChanged: reload()
-    onLoadFailed: writeAdapter()
-    onAdapterUpdated: writeAdapter()
-
-    JsonAdapter {
+  ModuleConfig {
+    moduleId: "wallpaper"
+    scope: "general"
+    adapter: JsonAdapter {
       id: generalAdapter
       property string wallpaperDir: (Quickshell.env("HOME") || "") + "/Pictures/wallpapers"
       property string apiKey: ""
@@ -38,28 +31,19 @@ Singleton {
 
   // -- Profile-scoped state (current wallpaper per profile) -----------------
 
-  readonly property string statePath: DataManager.getStatePath("wallpaper")
   property string currentWallpaper: ""
 
-  FileView {
-    id: stateFile
-    path: DataManager.ready ? wallpaperManager.statePath : ""
-    printErrors: false
-    watchChanges: true
-    onFileChanged: reload()
-    onLoadFailed: writeAdapter()
-    onAdapterUpdated: writeAdapter()
-
+  ModuleConfig {
+    moduleId: "wallpaper"
+    adapter: JsonAdapter {
+      id: stateAdapter
+      property string currentWallpaper: ""
+    }
     // Restore wallpaper once the state file has actually been loaded
     onLoaded: {
       if (stateAdapter.currentWallpaper) {
         wallpaperManager.applyWallpaper(stateAdapter.currentWallpaper)
       }
-    }
-
-    JsonAdapter {
-      id: stateAdapter
-      property string currentWallpaper: ""
     }
   }
 
@@ -276,7 +260,6 @@ Singleton {
     if (!path) return
     currentWallpaper = path
     stateAdapter.currentWallpaper = path
-    stateFile.writeAdapter()
 
     if (Compositor.resolvedBackend === "sway") {
       // Sway manages swaybg internally via its own IPC

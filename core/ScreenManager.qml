@@ -8,28 +8,9 @@ import qs
 Singleton {
   id: screenManager
 
-  readonly property string statePath: DataManager.getStatePath("display")
-  readonly property string defaultsPath: DataManager.getDefaultsPath("display")
-  property bool fileReady: false
-
-  // Copy defaults if state file doesn't exist
-  EnsureFile {
-    source: screenManager.defaultsPath
-    target: screenManager.statePath
-    active: DataManager.ready
-    onDone: screenManager.fileReady = true
-  }
-
-  FileView {
-    id: configFile
-    path: screenManager.fileReady ? screenManager.statePath : ""
-
-    watchChanges: true
-    onFileChanged: reload()
-
-    onAdapterUpdated: writeAdapter()
-
-    JsonAdapter {
+  ModuleConfig {
+    moduleId: "display"
+    adapter: JsonAdapter {
       id: adapter
       // Stable display identifier: "model:serialNumber"
       // Empty string means "no preference" -> use first available screen

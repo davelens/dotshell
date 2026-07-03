@@ -1,7 +1,6 @@
 pragma Singleton
 
 import Quickshell
-import Quickshell.Io
 import QtQuick
 import qs
 
@@ -25,18 +24,37 @@ Singleton {
   property var centerItems: []
   property var rightItems: []
 
-  // Path to config file
-  readonly property string statePath: DataManager.getStatePath("statusbar")
-  readonly property string defaultsPath: DataManager.getDefaultsPath("statusbar")
-  property bool fileReady: false
-
-  // Copy defaults if state file doesn't exist
-  EnsureFile {
-    source: manager.defaultsPath
-    target: manager.statePath
-    active: DataManager.ready
-    onDone: manager.fileReady = true
-  }
+  // Built-in default bar layout. Single source of truth for statusbar
+  // defaults; used when no state file exists and by resetToDefaults().
+  readonly property var defaultConfig: ({
+    barMargins: { left: 8, right: 8 },
+    sectionSpacing: { left: 0, center: 0, right: 0 },
+    popupStem: true,
+    left: [
+      { id: "power", enabled: true, marginLeft: 0, marginRight: 10 },
+      { id: "idle-inhibitor", enabled: true, marginLeft: 0, marginRight: 20 },
+      { id: "workspaces", enabled: true, marginLeft: 0, marginRight: 20 }
+    ],
+    center: [
+      { id: "media", enabled: true, marginLeft: 0, marginRight: 0 }
+    ],
+    right: [
+      { id: "ai-agents-monitor", enabled: true, marginLeft: 0, marginRight: 20 },
+      { id: "active-collab", enabled: true, marginLeft: 0, marginRight: 20 },
+      { id: "wallpaper", enabled: true, marginLeft: 0, marginRight: 20 },
+      { id: "system-load", enabled: true, marginLeft: 0, marginRight: 20 },
+      { id: "recording", enabled: true, marginLeft: 0, marginRight: 10 },
+      { id: "wireless", enabled: true, marginLeft: 0, marginRight: 10 },
+      { id: "bluetooth", enabled: true, marginLeft: 0, marginRight: 10 },
+      { id: "display", enabled: true, marginLeft: 0, marginRight: 10 },
+      { id: "brightness", enabled: true, marginLeft: 0, marginRight: 10 },
+      { id: "volume", enabled: true, marginLeft: 0, marginRight: 16 },
+      { id: "battery", enabled: true, marginLeft: 0, marginRight: 16 },
+      { id: "clock", enabled: true, marginLeft: 0, marginRight: 16 },
+      { id: "updates", enabled: true, marginLeft: 0, marginRight: 10 },
+      { id: "notifications", enabled: true, marginLeft: 0, marginRight: 0 }
+    ]
+  })
 
   // Track if we should reload when ModuleRegistry becomes ready
   property bool pendingReload: false
@@ -54,15 +72,10 @@ Singleton {
     }
   }
 
-  // Config file watcher
-  FileView {
-    id: configFile
-    path: manager.fileReady ? manager.statePath : ""
-    watchChanges: true
-    onFileChanged: reload()
-
-    onLoaded: {
-      var text = configFile.text()
+  ModuleConfig {
+    id: moduleConfig
+    moduleId: "statusbar"
+    onLoaded: text => {
       if (ModuleRegistry.ready) {
         manager.parseConfig(text)
       } else {
@@ -71,18 +84,12 @@ Singleton {
         manager.pendingReload = true
       }
     }
-
-    onLoadFailed: error => {
-      console.error("[StatusbarManager] Failed to load config:", error)
-    }
   }
 
   // Parse JSON config
   function parseConfig(text) {
-    if (!text || text.trim() === "") {
-      console.log("[StatusbarManager] Empty config text, skipping parse")
-      return
-    }
+    // Missing/empty state file: fall back to the built-in defaults
+    if (!text || text.trim() === "") text = JSON.stringify(defaultConfig)
 
     try {
       var config = JSON.parse(text)
@@ -334,16 +341,8 @@ Singleton {
 
   // Reset to defaults
   function resetToDefaults() {
-    resetProc.running = true
-  }
-
-  Process {
-    id: resetProc
-    command: ["cp", manager.defaultsPath, manager.statePath]
-    onExited: {
-      // Reload config
-      configFile.reload()
-    }
+    parseConfig(JSON.stringify(defaultConfig))
+    saveConfig()
   }
 
   // Save current config to file
@@ -357,8 +356,7 @@ Singleton {
       right: rightItems.map(stripMeta)
     }
 
-    saveProc.configJson = JSON.stringify(config, null, 2)
-    saveProc.running = true
+    moduleConfig.save(config)
   }
 
   // Strip metadata added by getAllItems
@@ -371,18 +369,4 @@ Singleton {
     }
   }
 
-  Process {
-    id: saveProc
-    property string configJson: ""
-    // Atomic write: stage to .tmp then mv into place so a crash mid-write
-    // can never leave a half-written statusbar.json on disk.
-    command: ["sh", "-c",
-      "cat > '" + manager.statePath + ".tmp' << 'STATUSBAR_EOF'\n" + configJson + "\nSTATUSBAR_EOF\n" +
-      "mv -f '" + manager.statePath + ".tmp' '" + manager.statePath + "'"]
-    onExited: (code) => {
-      if (code !== 0) {
-        console.error("[StatusbarManager] Failed to save config")
-      }
-    }
-  }
 }

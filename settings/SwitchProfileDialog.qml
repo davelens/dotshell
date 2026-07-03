@@ -227,22 +227,14 @@ DialogOverlay {
     onTriggered: switcher.confirmReset = false
   }
 
-  // Process to copy repo defaults into active profile
+  // Reset the active profile: delete its state files, then cycle the
+  // profile so every ModuleConfig re-creates its file from QML defaults.
   Process {
     id: resetProc
-    command: {
-      var cmds = []
-      var modules = ModuleRegistry.modules
-      for (var i = 0; i < modules.length; i++) {
-        var m = modules[i]
-        var repoDefaults = m.path + "/defaults.json"
-        var stateFile = DataManager.getStatePath(m.id)
-        cmds.push("[ -f '" + repoDefaults + "' ] && cp '" + repoDefaults + "' '" + stateFile + "'")
-      }
-      return ["sh", "-c", cmds.join(" ; ") + " ; true"]
-    }
+    command: ["sh", "-c", "rm -f '" + DataManager.profileDir + "'/*.json"]
     onExited: {
       switcher.confirmReset = false
+      DataManager.setActiveProfile(GeneralSettings.activeProfile)
     }
   }
 }

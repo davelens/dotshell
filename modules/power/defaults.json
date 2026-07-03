@@ -1,7 +1,0 @@
-{
-  "lockCommand": "loginctl lock-session",
-  "suspendCommand": "systemctl suspend",
-  "logoutCommand": "swaymsg exit",
-  "rebootCommand": "systemctl reboot",
-  "shutdownCommand": "systemctl poweroff"
-}

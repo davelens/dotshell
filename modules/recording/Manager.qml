@@ -9,23 +9,16 @@ Singleton {
   id: recordingManager
 
   // General (profile-independent) settings
-  readonly property string generalStatePath: DataManager.getGeneralStatePath("recording")
   property alias processName: generalAdapter.processName
   property alias screenshotDir: generalAdapter.screenshotDir
   property alias screencastDir: generalAdapter.screencastDir
   property alias imagePreviewer: generalAdapter.imagePreviewer
   property alias videoPreviewer: generalAdapter.videoPreviewer
 
-  FileView {
-    id: generalSettingsFile
-    path: DataManager.dataDirReady ? recordingManager.generalStatePath : ""
-    printErrors: false
-    watchChanges: true
-    onFileChanged: reload()
-    onLoadFailed: writeAdapter()
-    onAdapterUpdated: writeAdapter()
-
-    JsonAdapter {
+  ModuleConfig {
+    moduleId: "recording"
+    scope: "general"
+    adapter: JsonAdapter {
       id: generalAdapter
       property string processName: "gpu-screen-recorder"
       property string screenshotDir: (Quickshell.env("HOME") || "") + "/Pictures/screenshots"
