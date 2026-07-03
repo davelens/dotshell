@@ -4,10 +4,8 @@ import QtQuick.Controls
 import qs
 import qs.core.components
 
-Variants {
+ModulePopup {
   id: wirelessPopup
-
-  property bool isOpen: PopupManager.isOpen("wireless")
 
   // Start scan when popup opens, clear pending state when it closes
   onIsOpenChanged: {
@@ -18,9 +16,6 @@ Variants {
       WirelessManager.cancelPending()
     }
   }
-
-  model: isOpen && ScreenManager.primaryScreen
-         ? [ScreenManager.primaryScreen] : []
 
   PopupBase {
     popupWidth: 380

@@ -6,7 +6,6 @@ import qs.core.components
 BarButton {
   id: button
 
-  popupId: "brightness"
   icon: BrightnessManager.getIcon(BrightnessManager.averageLevel)
 
   onWheel: event => {

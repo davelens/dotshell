@@ -6,8 +6,6 @@ import qs.core.components
 BarButton {
   id: button
 
-  popupId: "wireless"
-
   // Force reactive update by depending on the properties that affect the icon
   icon: {
     var _ = WirelessManager.enabled
@@ -19,7 +17,7 @@ BarButton {
   // Bar icon tooltip
   TooltipBase {
     anchorItem: button
-    visible: button.hovered && WirelessManager.connectedNetwork && !button.popupManager.isOpen("wireless")
+    visible: button.hovered && WirelessManager.connectedNetwork && !button.popupManager.isOpen(button.popupId)
     fixedWidth: 260
 
     Column {

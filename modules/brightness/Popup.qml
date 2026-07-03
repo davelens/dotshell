@@ -4,10 +4,7 @@ import QtQuick.Controls
 import qs
 import qs.core.components
 
-Variants {
-  model: PopupManager.isOpen("brightness") && ScreenManager.primaryScreen
-         ? [ScreenManager.primaryScreen] : []
-
+ModulePopup {
   PopupBase {
     popupWidth: 320
 

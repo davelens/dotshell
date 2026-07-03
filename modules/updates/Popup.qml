@@ -4,13 +4,8 @@ import QtQuick.Controls
 import qs
 import qs.core.components
 
-Variants {
+ModulePopup {
   id: updatesPopup
-
-  property bool isOpen: PopupManager.isOpen("updates")
-
-  model: isOpen && ScreenManager.primaryScreen
-         ? [ScreenManager.primaryScreen] : []
 
   PopupBase {
     id: popup

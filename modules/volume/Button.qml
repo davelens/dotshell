@@ -15,7 +15,6 @@ BarButton {
   property real volume: sink && sink.audio ? sink.audio.volume : 0
   property bool muted: sink && sink.audio ? sink.audio.muted : false
 
-  popupId: "volume"
   icon: getVolumeIcon(volume, muted)
   iconSize: 24
   iconColor: muted ? Theme.textMuted : Theme.textPrimary

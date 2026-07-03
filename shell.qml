@@ -29,7 +29,8 @@ ShellRoot {
         var popupPath = ModuleRegistry.getPopupRelPath(popups[i].id)
         var popupComp = Qt.createComponent(popupPath)
         if (popupComp.status === Component.Ready) {
-          popupComp.createObject(root)
+          // Inject the manifest id so popups never restate it
+          popupComp.createObject(root, { moduleId: popups[i].id })
         } else {
           console.error("[shell] Failed to load popup:", popupPath, popupComp.errorString())
         }
@@ -272,6 +273,8 @@ ShellRoot {
         var props = { "screen": panel.modelData }
         if (popupModules.indexOf(moduleId) !== -1) {
           props.popupManager = PopupManager
+          // Inject the manifest id so buttons never restate it
+          props.popupId = moduleId
         }
         return props
       }

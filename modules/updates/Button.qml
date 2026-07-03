@@ -9,15 +9,13 @@ BarButton {
   // Whether this button should be shown in the bar (checked by shell.qml delegate)
   property bool showInBar: UpdatesManager.totalCount > 0
 
-  popupId: "updates"
-
   icon: UpdatesManager.getIcon()
   iconColor: Theme.success
 
   // Hover tooltip showing update count breakdown
   TooltipBase {
     anchorItem: button
-    visible: button.hovered && !button.popupManager.isOpen("updates") && button.visible
+    visible: button.hovered && !button.popupManager.isOpen(button.popupId) && button.visible
 
     Column {
       spacing: 2

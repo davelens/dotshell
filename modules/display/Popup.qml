@@ -3,10 +3,7 @@ import QtQuick
 import qs
 import qs.core.components
 
-Variants {
-  model: PopupManager.isOpen("display") && ScreenManager.primaryScreen
-         ? [ScreenManager.primaryScreen] : []
-
+ModulePopup {
   PopupBase {
     popupWidth: 320
     contentSpacing: 12

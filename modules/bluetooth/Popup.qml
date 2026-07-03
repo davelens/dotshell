@@ -4,10 +4,8 @@ import QtQuick.Controls
 import qs
 import qs.core.components
 
-Variants {
+ModulePopup {
   id: bluetoothPopup
-
-  property bool isOpen: PopupManager.isOpen("bluetooth")
 
   // Start/stop scan when popup opens/closes
   onIsOpenChanged: {
@@ -18,9 +16,6 @@ Variants {
       BluetoothManager.stopScan()
     }
   }
-
-  model: isOpen && ScreenManager.primaryScreen
-         ? [ScreenManager.primaryScreen] : []
 
   PopupBase {
     popupWidth: 380
