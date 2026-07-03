@@ -69,6 +69,7 @@ Though I dare say most of them are common, and widely used.
 | Audio stack | `pipewire`, `wireplumber` | Volume/audio integration |
 | Fonts | `otf-commit-mono-nerd`, `ttf-dejavu` | Font + nerd icons used in panels |
 | Notifications CLI | `libnotify` | Catch and display notifications |
+| JSON tooling | `jq` | `dshell` state reads and completion |
 
 ## Installation
 
