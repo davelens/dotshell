@@ -337,21 +337,13 @@ Scope {
   property string activeOverlay: ""
 
   // IPC handler to toggle visibility
+  Component.onCompleted: OverlayManager.register("settings", "Settings panel")
+
+  // IPC handler for module-specific verbs; panel open/close/toggle goes
+  // through the "overlay" target on OverlayManager
   IpcHandler {
     target: "settings"
 
-    function toggle(): string {
-      OverlayManager.toggle("settings")
-      return OverlayManager.isOpen("settings") ? "Settings panel opened" : "Settings panel closed"
-    }
-    function open(): string {
-      OverlayManager.open("settings", undefined)
-      return "Settings panel opened"
-    }
-    function close(): string {
-      OverlayManager.close("settings")
-      return "Settings panel closed"
-    }
     function showCategory(categoryId: string): string {
       OverlayManager.open("settings", { category: categoryId })
       return "Settings panel opened on '" + categoryId + "'"

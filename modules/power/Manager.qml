@@ -133,22 +133,5 @@ Singleton {
     running: false
   }
 
-  // -- IPC -----------------------------------------------------------------
-
-  IpcHandler {
-    target: "power"
-
-    function toggle(): string {
-      powerManager.toggle()
-      return OverlayManager.isOpen("power") ? "Power menu opened" : "Power menu closed"
-    }
-    function open(): string {
-      powerManager.open()
-      return "Power menu opened"
-    }
-    function close(): string {
-      powerManager.close()
-      return "Power menu closed"
-    }
-  }
+  Component.onCompleted: OverlayManager.register("power", "Power menu")
 }

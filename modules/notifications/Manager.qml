@@ -511,23 +511,13 @@ Singleton {
     OverlayManager.open("settings", { category: "notifications" })
   }
 
-  // IPC handler for external control (e.g. qs ipc call notifications toggle)
+  Component.onCompleted: OverlayManager.register("notifications", "Notifications panel")
+
+  // IPC handler for module-specific verbs; panel open/close/toggle goes
+  // through the "overlay" target on OverlayManager
   IpcHandler {
     target: "notifications"
 
-    function toggle(): string {
-      notificationManager.togglePanel()
-      return OverlayManager.isOpen("notifications")
-        ? "Notifications panel opened" : "Notifications panel closed"
-    }
-    function open(): string {
-      OverlayManager.open("notifications")
-      return "Notifications panel opened"
-    }
-    function close(): string {
-      notificationManager.closePanel()
-      return "Notifications panel closed"
-    }
     function dismiss(id: string): string {
       notificationManager.dismissById(parseInt(id))
       return "Notification " + id + " dismissed"

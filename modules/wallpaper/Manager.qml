@@ -73,10 +73,6 @@ Singleton {
     OverlayManager.toggle("wallpaper")
   }
 
-  function openPanel() {
-    OverlayManager.open("wallpaper")
-  }
-
   function closePanel() {
     OverlayManager.close("wallpaper")
   }
@@ -309,22 +305,13 @@ Singleton {
 
   // -- IPC handler ----------------------------------------------------------
 
+  Component.onCompleted: OverlayManager.register("wallpaper", "Wallpaper browser")
+
+  // IPC handler for module-specific verbs; browser open/close/toggle goes
+  // through the "overlay" target on OverlayManager
   IpcHandler {
     target: "wallpaper"
 
-    function toggleBrowser(): string {
-      wallpaperManager.togglePanel()
-      return OverlayManager.isOpen("wallpaper")
-        ? "Wallpaper browser opened" : "Wallpaper browser closed"
-    }
-    function openBrowser(): string {
-      wallpaperManager.openPanel()
-      return "Wallpaper browser opened"
-    }
-    function closeBrowser(): string {
-      wallpaperManager.closePanel()
-      return "Wallpaper browser closed"
-    }
     function set(path: string): string {
       wallpaperManager.applyWallpaper(path)
       return "Wallpaper set to '" + path + "'"

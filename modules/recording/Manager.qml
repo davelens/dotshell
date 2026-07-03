@@ -116,10 +116,6 @@ Singleton {
     OverlayManager.toggle("recording")
   }
 
-  function openPanel() {
-    OverlayManager.open("recording")
-  }
-
   function closePanel() {
     OverlayManager.close("recording")
   }
@@ -401,21 +397,5 @@ Singleton {
   }
 
   // IPC handler
-  IpcHandler {
-    target: "screen-recording"
-
-    function toggleFiles(): string {
-      recordingManager.togglePanel()
-      return OverlayManager.isOpen("recording")
-        ? "Screen recording files panel opened" : "Screen recording files panel closed"
-    }
-    function openFiles(): string {
-      recordingManager.openPanel()
-      return "Screen recording files panel opened"
-    }
-    function closeFiles(): string {
-      recordingManager.closePanel()
-      return "Screen recording files panel closed"
-    }
-  }
+  Component.onCompleted: OverlayManager.register("recording", "Screen recording files panel")
 }

@@ -33,6 +33,10 @@ Terms used consistently across code and docs. Keep this list short and exact.
   open state to `OverlayManager.isOpen(id)` and route open/close/toggle
   through it. `open(id, context)` carries payloads (e.g. a settings
   category); `opened(id)` fires on every open, including re-opens.
+  Overlay managers call `register(id, label)` at startup; the label feeds
+  IPC feedback strings and the id list validates the one id-addressed
+  `overlay` IPC target (`toggle|open|close(id)`) — modules stay pluggable,
+  core holds no module knowledge.
 - **PanelBase** — the full-screen overlay window scaffold
   (`core/components/PanelBase.qml`): covers the screen, ignores exclusion
   zones, exclusive keyboard focus, compositor namespace via

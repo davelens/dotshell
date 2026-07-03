@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs
 
 // Identity model for full-screen overlays (slide-in panels, power menu,
@@ -17,6 +18,17 @@ Singleton {
 
   // Optional payload passed by open() (e.g. { category: "notifications" })
   property var overlayContext: ({})
+
+  // id → human label, filled by register() from each overlay's manager at
+  // startup. Doubles as the known-id list for IPC validation; core holds
+  // no module knowledge.
+  property var registeredOverlays: ({})
+
+  function register(id: string, label: string): void {
+    var next = Object.assign({}, registeredOverlays)
+    next[id] = label
+    registeredOverlays = next
+  }
 
   readonly property bool overlayOpen: activeOverlay !== ""
 
@@ -42,5 +54,32 @@ Singleton {
   function toggle(id: string): void {
     if (isOpen(id)) close(id)
     else open(id, undefined)
+  }
+
+  // One id-addressed IPC seam for every overlay; module-specific verbs
+  // (dismiss, set, showCategory…) stay on their own targets.
+  IpcHandler {
+    target: "overlay"
+
+    function toggle(id: string): string {
+      var label = overlayManager.registeredOverlays[id]
+      if (!label) return "error: unknown overlay '" + id + "'"
+      overlayManager.toggle(id)
+      return label + (overlayManager.isOpen(id) ? " opened" : " closed")
+    }
+
+    function open(id: string): string {
+      var label = overlayManager.registeredOverlays[id]
+      if (!label) return "error: unknown overlay '" + id + "'"
+      overlayManager.open(id, undefined)
+      return label + " opened"
+    }
+
+    function close(id: string): string {
+      var label = overlayManager.registeredOverlays[id]
+      if (!label) return "error: unknown overlay '" + id + "'"
+      overlayManager.close(id)
+      return label + " closed"
+    }
   }
 }
