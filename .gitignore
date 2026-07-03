@@ -2,3 +2,6 @@
 AGENTS.md
 docs/*
 !docs/adr
+!docs/memory
+!docs/plans
+!docs/wiki
