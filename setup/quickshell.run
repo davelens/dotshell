@@ -1,0 +1,11 @@
+#!/bin/sh
+# Turnstile-managed runit user service for Void Linux.
+exec 2>&1
+
+# The service tree starts before the compositor publishes its session
+# environment. Let runsv retry until Wayland and the session bus are ready.
+[ -n "${TURNSTILE_ENV_DIR:-}" ] || { sleep 2; exit 1; }
+[ -r "$TURNSTILE_ENV_DIR/WAYLAND_DISPLAY" ] || { sleep 2; exit 1; }
+[ -r "$TURNSTILE_ENV_DIR/DBUS_SESSION_BUS_ADDRESS" ] || { sleep 2; exit 1; }
+
+exec chpst -e "$TURNSTILE_ENV_DIR" /usr/bin/quickshell -p "$HOME/.config/dotshell"

@@ -3,7 +3,7 @@
 A custom, keyboard-driven shell featuring a modular status bar and settings panel, built on [Quickshell](https://quickshell.outfoxxed.me)
 
 > [!NOTE]
-> This was made to support my own simple needs as a backend dev on Arch Linux.
+> This was made to support my own simple needs as a backend dev on Arch and Void Linux.
 > I chose to open source this for the few interested souls looking for something similar.
 
 ## Screenshots
@@ -78,10 +78,12 @@ Install the dependencies above, then clone the repo to `~/.config/dotshell`:
 git clone https://github.com/davelens/dotshell.git ~/.config/dotshell
 ```
 
-### If you're on Arch Linux
+### Arch Linux and Void Linux
 
-The script I use to install this is included in `setup/init.sh`.
-It installs dependencies via `pacman` and `paru`, and configures systemd.
+The setup script detects either distribution. On Arch it installs packages via
+`pacman`/`paru` and configures a systemd user service. On Void it installs
+packages via XBPS and configures a turnstile-managed runit user service, matching
+the session setup in [dotsys](https://github.com/davelens/dotsys).
 
 Clone the repository wherever and run the setup script:
 
@@ -92,13 +94,16 @@ bash setup/init.sh
 ```
 
 The setup script will:
-1. Install Quickshell and all dependencies via `pacman`/`paru`
+1. Install Quickshell and dependencies via `pacman`/`paru` or XBPS
 2. Configure `i2c-dev` for external monitor brightness control (ddcutil)
 3. Symlink the repo to `~/.config/dotshell`
-4. Enable and start a systemd user service for Quickshell
+4. Install a systemd (Arch) or turnstile/runit (Void) user service
 5. Install a desktop entry for the settings panel
 
-If you need external monitor brightness control you will need a reboot to refresh the i2c group membership.
+The Void path expects turnstile's runit backend and user service tree at
+`~/.config/service`, as configured by this author's dotsys setup. If you need
+external monitor brightness control, log out and back in to refresh group
+membership.
 
 ## CLI
 

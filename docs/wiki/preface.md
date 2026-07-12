@@ -9,7 +9,8 @@ popups, full-screen overlay panels (settings, notifications, wallpaper
 browser, screen recording files, power menu), a notification daemon,
 theming with GTK 4 sync, and profile-scoped state.
 
-The repo is symlinked to `~/.config/dotshell` and runs as the
-`quickshell.service` user unit (`setup/quickshell.service`). Features
-live as self-contained, pluggable modules under `modules/`; the
-`dshell` CLI (`bin/dshell`) is the scripted/keybound entry point.
+The repo is symlinked to `~/.config/dotshell`. It runs through the
+`quickshell.service` systemd user unit on Arch or the turnstile-managed
+`quickshell` runit user service on Void. Features live as self-contained,
+pluggable modules under `modules/`; the `dshell` CLI (`bin/dshell`) is the
+scripted/keybound entry point.
