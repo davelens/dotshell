@@ -27,12 +27,12 @@ Singleton {
       property string displayMode: "numbers"
       property int count: 6
       property var icons: ({
-        "1": "",
+        "1": "",
         "2": "󰈹",
-        "3": "",
+        "3": "",
         "4": "󰙯",
         "5": "󰎇",
-        "6": ""
+        "6": ""
       })
     }
   }
