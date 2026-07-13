@@ -109,7 +109,7 @@ brightness control, log out and back in to refresh group membership.
 
 ## CLI
 
-dotshell ships a `dshell` CLI for controlling the shell from the command line or window manager keybinds. It is symlinked to `~/.local/bin/dshell` on startup, so make sure to add that to your `$PATH`.
+dotshell ships a `dshell` CLI for controlling the shell from the command line or window manager keybinds. It is symlinked into `$XDG_BIN_HOME`, falling back to `~/.local/bin`; make sure that directory is in your `$PATH`.
 
 ```sh
 dshell <command> <subcommand> [args]

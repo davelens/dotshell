@@ -6,9 +6,9 @@ sessions.
 
 ## Feature parity
 
-- Poll `bin/list-sessions` (bash, stays as-is, symlinked to
-  `~/.local/bin` by the registry) every 30s, triggered immediately on
-  start.
+- Poll `bin/list-sessions` (bash, stays as-is, symlinked into
+  `$XDG_BIN_HOME` by the registry, with a `~/.local/bin` fallback) every 30s,
+  triggered immediately on start.
 - Parse JSON array `[{ project, sessionDescription, duration, start }]`;
   non-zero exit or empty output resets to zero tasks.
 - Segment renders total count + running task info exactly as today;

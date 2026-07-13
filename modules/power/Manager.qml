@@ -112,6 +112,7 @@ Singleton {
   function confirmAction() {
     var cmd = getCommand(pendingAction)
     if (cmd) {
+      actionProc.requestedCommand = cmd
       actionProc.command = ["sh", "-c", cmd]
       actionProc.running = true
     }
@@ -147,7 +148,17 @@ Singleton {
   // Execute the selected power action
   Process {
     id: actionProc
+    property string requestedCommand: ""
     running: false
+    environment: ({
+      PATH: ModuleRegistry.binDir + ":" + Quickshell.env("PATH")
+    })
+    stderr: StdioCollector {}
+    onExited: exitCode => {
+      if (exitCode !== 0) {
+        console.error("[PowerManager] Command failed (" + requestedCommand + "):", stderr.text.trim())
+      }
+    }
   }
 
   Component.onCompleted: OverlayManager.register("power", "Power menu")

@@ -17,6 +17,7 @@ Singleton {
   // Paths to scan for module.json manifests
   readonly property string configRoot: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/dotshell"
   readonly property string modulesPath: configRoot + "/modules"
+  readonly property string binDir: Quickshell.env("XDG_BIN_HOME") || (Quickshell.env("HOME") + "/.local/bin")
 
   // Top-level directories (relative to configRoot) that ship a module.json but
   // are not removable user modules. The statusbar lives outside modules/ so it
@@ -101,23 +102,27 @@ Singleton {
     // First prune any dangling symlinks whose target lives under modulesPath
     // (e.g. binaries from a module folder the user has since removed).
     symlinkProc.command = ["sh", "-c",
-      "mkdir -p \"$HOME/.local/bin\" && " +
-      "for l in \"$HOME/.local/bin\"/*; do " +
+      "mkdir -p \"$DOTSHELL_BIN_DIR\" && " +
+      "for l in \"$DOTSHELL_BIN_DIR\"/*; do " +
       "  if [ -L \"$l\" ]; then " +
       "    t=$(readlink \"$l\"); " +
-      "    case \"$t\" in " + registry.modulesPath + "/*) [ ! -e \"$l\" ] && rm \"$l\" ;; esac; " +
+      "    case \"$t\" in \"$DOTSHELL_MODULES_PATH\"/*) [ ! -e \"$l\" ] && rm \"$l\" ;; esac; " +
       "  fi; " +
       "done; " +
-      "for f in " + registry.modulesPath + "/*/bin/*; do " +
-      "  [ -x \"$f\" ] && ln -sfn \"$f\" \"$HOME/.local/bin/$(basename \"$f\")\"; " +
+      "for f in \"$DOTSHELL_MODULES_PATH\"/*/bin/*; do " +
+      "  [ -x \"$f\" ] && ln -sfn \"$f\" \"$DOTSHELL_BIN_DIR/$(basename \"$f\")\"; " +
       "done"
     ]
     symlinkProc.running = true
   }
 
-  // Symlinks executables from modules/*/bin/ into ~/.local/bin
+  // Symlinks executables from modules/*/bin/ into the user binary directory.
   Process {
     id: symlinkProc
+    environment: ({
+      DOTSHELL_BIN_DIR: registry.binDir,
+      DOTSHELL_MODULES_PATH: registry.modulesPath
+    })
   }
 
   // Get modules that have a settings component

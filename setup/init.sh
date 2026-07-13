@@ -4,6 +4,7 @@ set -e
 DOTSHELL_REPO_HOME="$(cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")" && pwd)"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+XDG_BIN_HOME="${XDG_BIN_HOME:-$HOME/.local/bin}"
 DESKTOP_USER="$(id -un)"
 
 if [[ "$(id -u)" -eq 0 ]]; then
@@ -38,8 +39,8 @@ mkdir -p "$XDG_CONFIG_HOME"
 ln -sfn "$DOTSHELL_REPO_HOME" "$XDG_CONFIG_HOME/dotshell"
 
 echo "==> Installing \`dshell\`..."
-mkdir -p "$HOME/.local/bin"
-ln -sfn "$DOTSHELL_REPO_HOME/bin/dshell" "$HOME/.local/bin/dshell"
+mkdir -p "$XDG_BIN_HOME"
+ln -sfn "$DOTSHELL_REPO_HOME/bin/dshell" "$XDG_BIN_HOME/dshell"
 mkdir -p "$XDG_DATA_HOME/bash-completion/completions"
 ln -sfn "$DOTSHELL_REPO_HOME/bin/dshell-completion.bash" \
   "$XDG_DATA_HOME/bash-completion/completions/dshell"

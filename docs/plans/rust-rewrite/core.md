@@ -163,8 +163,8 @@ Hard constraint preserved: core never names module ids. Mechanisms:
    generic segment — recompile-free extension point for scripts,
    waybar-custom-module style. Not used by any bundled module.
 
-`modules/*/bin/` symlinking into `~/.local/bin` (with dangling-link
-pruning) ports as-is into `ModuleRegistry` startup.
+`modules/*/bin/` symlinking into `$XDG_BIN_HOME`, with a `~/.local/bin`
+fallback and dangling-link pruning, ports as-is into `ModuleRegistry` startup.
 
 ## State, profiles, theming
 

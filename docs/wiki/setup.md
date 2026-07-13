@@ -20,12 +20,12 @@ and service:
   while same-session polkit requests can reach the graphical agent.
 - External-monitor brightness setup adds the user to `i2c` when that group
   exists, loads `i2c-dev`, and persists it under `/etc/modules-load.d/`.
-- Symlinks: repo → `~/.config/dotshell`, `bin/dshell` →
-  `~/.local/bin/dshell`, completion →
+- Symlinks: repo → `~/.config/dotshell`, `bin/dshell` → the
+  `$XDG_BIN_HOME` directory (falling back to `~/.local/bin`), completion →
   `$XDG_DATA_HOME/bash-completion/completions/dshell`.
 - A `dotshell-settings.desktop` entry opens the settings panel through IPC.
-- Module binaries in `modules/*/bin/` are symlinked separately by
-  `ModuleRegistry` at shell startup, not by init.sh.
+- Module binaries in `modules/*/bin/` are symlinked separately into the same
+  `$XDG_BIN_HOME` directory by `ModuleRegistry` at shell startup, not by init.sh.
 
 Mako must not run — the notifications module is its own daemon.
 
