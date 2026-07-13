@@ -107,6 +107,24 @@ launches the process into the active graphical session, allowing background
 polkit requests to reach its graphical agent. If you need external monitor
 brightness control, log out and back in to refresh group membership.
 
+## Tests
+
+Run the safe, distribution-independent test harness from the repository root:
+
+```sh
+bash tests/run.sh
+```
+
+The harness replaces privileged and host-changing commands with recording
+fakes, then runs the real setup and uninstall entry points against temporary
+homes. It covers the Arch (`pacman`/`paru` and systemd) and Void (XBPS and
+turnstile/runit) branches, reruns, paths containing spaces, and rejected
+invocations without changing the host. CI also runs the suite inside both Arch
+and Void Linux containers.
+
+`shellcheck` is used automatically when installed; `jq` is required for JSON
+validation.
+
 ## CLI
 
 dotshell ships a `dshell` CLI for controlling the shell from the command line or window manager keybinds. It is symlinked into `$XDG_BIN_HOME`, falling back to `~/.local/bin`; make sure that directory is in your `$PATH`.

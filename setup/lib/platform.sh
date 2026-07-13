@@ -3,14 +3,15 @@
 load_platform() {
   local setup_dir="$1"
   local adapter
+  local os_release_file="${DOTSHELL_OS_RELEASE:-/etc/os-release}"
 
-  if [[ ! -r /etc/os-release ]]; then
-    echo "error: cannot detect the Linux distribution (/etc/os-release is missing)" >&2
+  if [[ ! -r "$os_release_file" ]]; then
+    echo "error: cannot detect the Linux distribution ($os_release_file is missing)" >&2
     return 1
   fi
 
   # shellcheck source=/dev/null
-  . /etc/os-release
+  . "$os_release_file"
   DISTRO="${ID:-unknown}"
   adapter="$setup_dir/platforms/$DISTRO.sh"
 

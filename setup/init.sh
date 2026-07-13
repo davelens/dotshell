@@ -54,7 +54,7 @@ cat >"$XDG_DATA_HOME/applications/dotshell-settings.desktop" <<EOF
 [Desktop Entry]
 Name=Settings
 Comment=Open our shell settings panel
-Exec=qs -p $XDG_CONFIG_HOME/dotshell ipc call settings toggle
+Exec=qs -p "$XDG_CONFIG_HOME/dotshell" ipc call settings toggle
 Icon=preferences-system
 Type=Application
 Categories=Settings;
