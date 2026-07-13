@@ -28,7 +28,7 @@ update_package() {
     echo "error: unknown Void package source '$source'" >&2
     return 2
   fi
-  sudo xbps-install -Suy "$name"
+  pkexec /usr/bin/xbps-install -Suy "$name"
 }
 
 update_source() {
@@ -38,15 +38,16 @@ update_source() {
     echo "error: unknown Void package source '$source'" >&2
     return 2
   fi
-  sudo xbps-install -Suy "$@"
+  pkexec /usr/bin/xbps-install -Suy "$@"
 }
 
 system_update() {
   local include_flatpak="${1:-0}"
 
   # XBPS must update itself in a separate transaction when an update exists.
-  sudo xbps-install -Suy xbps
-  sudo xbps-install -uy
+  # Run both transactions under one polkit authorization prompt.
+  pkexec /bin/sh -c \
+    '/usr/bin/xbps-install -Suy xbps && /usr/bin/xbps-install -uy'
   if [[ "$include_flatpak" == "1" ]]; then
     flatpak update -y
   fi

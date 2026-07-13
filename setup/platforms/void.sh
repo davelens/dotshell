@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 platform_service_description() {
-  echo "Quickshell turnstile/runit user service"
+  echo "dotshell turnstile/runit user services"
 }
 
 platform_install_packages() {
@@ -19,7 +19,8 @@ platform_install_packages() {
     libnotify \
     ffmpeg \
     jq \
-    desktop-file-utils
+    desktop-file-utils \
+    lxqt-policykit
 
   if [[ -d /etc/sv/bluetoothd ]]; then
     echo "==> Enabling the Void bluetoothd service..."
@@ -36,38 +37,47 @@ platform_install_packages() {
   done
 }
 
-platform_setup_service() {
-  local service_dir="$HOME/.config/service/quickshell"
+platform_setup_user_service() {
+  local name="$1" run_script="$2"
+  local service_dir="$HOME/.config/service/$name"
 
+  mkdir -p "$service_dir"
+  ln -sfn "$run_script" "$service_dir/run"
+
+  if command -v sv >/dev/null 2>&1 && sv status "$service_dir" >/dev/null 2>&1; then
+    sv restart "$service_dir"
+  else
+    echo "    $name installed; turnstile will start it shortly or on the next login."
+  fi
+}
+
+platform_setup_service() {
   if ! command -v chpst >/dev/null 2>&1; then
     echo "error: chpst is required for the Void runit service" >&2
     exit 1
   fi
 
-  echo "==> Setting up Quickshell turnstile/runit user service..."
-  mkdir -p "$service_dir"
-  ln -sfn "$DOTSHELL_REPO_HOME/setup/quickshell.run" "$service_dir/run"
-
-  if command -v sv >/dev/null 2>&1 && sv status "$service_dir" >/dev/null 2>&1; then
-    sv restart "$service_dir"
-  else
-    echo "    Service installed; turnstile will start it shortly or on the next login."
-  fi
+  echo "==> Setting up turnstile/runit user services..."
+  platform_setup_user_service quickshell "$DOTSHELL_REPO_HOME/setup/quickshell.run"
+  platform_setup_user_service lxqt-policykit "$DOTSHELL_REPO_HOME/setup/lxqt-policykit.run"
 }
 
 platform_stop_service() {
-  local service_dir="$HOME/.config/service/quickshell"
+  local name service_dir
 
-  echo "==> Stopping Quickshell runit service..."
-  if command -v sv >/dev/null 2>&1; then
-    sv down "$service_dir" 2>/dev/null || true
-  fi
-  if [[ -L "$service_dir/run" ]]; then
-    rm "$service_dir/run"
-  fi
-  if [[ -d "$service_dir" ]]; then
-    rmdir "$service_dir" 2>/dev/null || true
-  fi
+  echo "==> Stopping dotshell runit user services..."
+  for name in quickshell lxqt-policykit; do
+    service_dir="$HOME/.config/service/$name"
+    if command -v sv >/dev/null 2>&1; then
+      sv down "$service_dir" 2>/dev/null || true
+    fi
+    if [[ -L "$service_dir/run" ]]; then
+      rm "$service_dir/run"
+    fi
+    if [[ -d "$service_dir" ]]; then
+      rmdir "$service_dir" 2>/dev/null || true
+    fi
+  done
 }
 
 platform_uninstall_package() {
