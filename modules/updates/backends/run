@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ ! -r /etc/os-release ]]; then
+  echo "error: cannot detect distribution (/etc/os-release is missing)" >&2
+  exit 1
+fi
+
+# shellcheck source=/dev/null
+. /etc/os-release
+backend="$BACKEND_DIR/${ID:-unknown}.sh"
+action="${1:-}"
+shift || true
+
+if [[ ! -r "$backend" ]]; then
+  if [[ "$action" == "describe" ]]; then
+    printf '%s\n' '{"supported":false,"name":"Unsupported Linux","repoLabel":"System","communityLabel":"","hasCommunity":false,"systemDescription":"System upgrade","runningDescription":"Running system upgrade"}'
+    exit 0
+  fi
+  echo "error: no updates backend for distribution '${ID:-unknown}'" >&2
+  exit 1
+fi
+
+# shellcheck source=/dev/null
+. "$backend"
+
+case "$action" in
+  describe) describe ;;
+  check) check_updates ;;
+  update-package) update_package "$@" ;;
+  update-source) update_source "$@" ;;
+  system-update) system_update "$@" ;;
+  *)
+    echo "error: usage: $0 {describe|check|update-package|update-source|system-update}" >&2
+    exit 2
+    ;;
+esac

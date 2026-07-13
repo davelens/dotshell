@@ -4,6 +4,7 @@
   "icon": "󰈈",
   "order": 210,
   "keywords": "idle inhibit caffeine sleep prevent",
+  "requiresHostWindow": true,
   "components": {
     "manager": "Manager.qml",
     "button": "Button.qml"

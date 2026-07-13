@@ -191,6 +191,12 @@ Singleton {
     return !!(module && module.components && module.components.button)
   }
 
+  // Check whether a bar component needs its containing PanelWindow injected.
+  function requiresHostWindow(id) {
+    var module = getModule(id)
+    return !!(module && module.requiresHostWindow === true)
+  }
+
   // Check if a module has a popup component
   function hasPopup(id) {
     var module = getModule(id)

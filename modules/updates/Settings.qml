@@ -47,7 +47,8 @@ SettingsPage {
 
       HelpText {
         width: parent.width
-        text: "When enabled, the \"System Update\" action will also run <b>flatpak update</b> after the pacman and AUR upgrade."
+        text: "When enabled, the \"System Update\" action also runs <b>flatpak update</b> after the "
+          + UpdatesManager.backendName + " system upgrade."
         textFormat: Text.RichText
         wrapMode: Text.WordWrap
       }

@@ -10,17 +10,11 @@ Singleton {
   property bool inhibited: false
 
   function enable() {
-    if (inhibited) return
     inhibited = true
-    inhibitProc.running = true
   }
 
   function disable() {
-    if (!inhibited) return
     inhibited = false
-    if (inhibitProc.running) {
-      inhibitProc.signal(15)
-    }
   }
 
   function toggle() {
@@ -45,12 +39,4 @@ Singleton {
     function state(): bool { return manager.inhibited }
   }
 
-  Process {
-    id: inhibitProc
-    command: ["systemd-inhibit", "--what=idle", "--who=quickshell", "--why=User requested", "sleep", "infinity"]
-    running: false
-    onExited: {
-      manager.inhibited = false
-    }
-  }
 }

@@ -46,6 +46,10 @@ Singleton {
   // Error message from last failed connection attempt
   property string connectError: ""
 
+  // Active NetworkManager Wi-Fi device (predictable names vary by system).
+  property string activeDevice: ""
+  property bool disconnectPending: false
+
   // Network speeds (bytes per second)
   property real downloadSpeed: 0
   property real uploadSpeed: 0
@@ -114,8 +118,15 @@ Singleton {
   }
 
   function disconnect() {
+    if (!activeDevice) {
+      disconnectPending = true
+      activeDeviceProc.running = true
+      return
+    }
+    disconnectPending = false
     busy = true
     suppressRefresh = true
+    disconnectProc.command = ["nmcli", "dev", "disconnect", activeDevice]
     // Optimistic update
     connectedNetwork = null
     var updatedNetworks = networks.slice()
@@ -223,9 +234,11 @@ Singleton {
     onExited: {
       wirelessManager.enabled = statusProc.stdout.text.trim() === "enabled"
       if (wirelessManager.enabled) {
+        activeDeviceProc.running = true
         networkListProc.running = true
         savedConnectionsProc.running = true
       } else {
+        wirelessManager.activeDevice = ""
         wirelessManager.connectedNetwork = null
         wirelessManager.networks = []
       }
@@ -365,10 +378,31 @@ Singleton {
     }
   }
 
+  // Resolve the active Wi-Fi interface rather than assuming wlan0.
+  Process {
+    id: activeDeviceProc
+    command: ["nmcli", "-t", "-f", "DEVICE,TYPE", "device", "status"]
+    stdout: StdioCollector {}
+    onExited: {
+      var lines = stdout.text.trim().split("\n")
+      wirelessManager.activeDevice = ""
+      for (var i = 0; i < lines.length; i++) {
+        var fields = lines[i].split(":")
+        if (fields.length >= 2 && fields[1] === "wifi") {
+          wirelessManager.activeDevice = fields[0]
+          break
+        }
+      }
+      if (wirelessManager.disconnectPending && wirelessManager.activeDevice) {
+        wirelessManager.disconnect()
+      }
+    }
+  }
+
   // Disconnect
   Process {
     id: disconnectProc
-    command: ["nmcli", "dev", "disconnect", "wlan0"]
+    command: []
     onExited: {
       wirelessManager.busy = false
       disconnectRefreshTimer.restart()
@@ -452,7 +486,11 @@ Singleton {
 
   Process {
     id: networkStatsProc
-    command: ["cat", "/sys/class/net/wlan0/statistics/rx_bytes", "/sys/class/net/wlan0/statistics/tx_bytes"]
+    command: wirelessManager.activeDevice ? [
+      "cat",
+      "/sys/class/net/" + wirelessManager.activeDevice + "/statistics/rx_bytes",
+      "/sys/class/net/" + wirelessManager.activeDevice + "/statistics/tx_bytes"
+    ] : []
     stdout: StdioCollector {}
     onExited: {
       var lines = networkStatsProc.stdout.text.trim().split("\n")
@@ -473,7 +511,7 @@ Singleton {
 
   Timer {
     interval: 1000
-    running: wirelessManager.enabled && wirelessManager.connectedNetwork
+    running: wirelessManager.enabled && wirelessManager.connectedNetwork && wirelessManager.activeDevice
     repeat: true
     onTriggered: networkStatsProc.running = true
   }

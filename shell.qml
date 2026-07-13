@@ -281,6 +281,9 @@ ShellRoot {
           // Inject the manifest id so buttons never restate it
           props.popupId = moduleId
         }
+        if (ModuleRegistry.requiresHostWindow(moduleId)) {
+          props.hostWindow = panel
+        }
         return props
       }
 

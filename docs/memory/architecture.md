@@ -30,6 +30,22 @@ device-provided values never concatenated into `sh -c` strings — use argv
 elements, `Process.environment`, or `"$@"`. `FileView.setText()` writes
 atomically.
 
+## Distribution portability
+
+Distro-specific behavior lives behind narrow adapter seams rather than in QML
+callers or setup entry points:
+
+- `setup/platforms/<id>.sh` implements the setup/uninstall adapter interface;
+  `setup/init.sh` and `setup/uninstall.sh` never branch on distro ids.
+- `modules/updates/backends/<id>.sh` implements package checks and update
+  actions; `UpdatesManager` exposes generic repository/community/Flatpak
+  sources and contains no package-manager commands.
+- Prefer removing distro coupling over adapting it when a native protocol
+  exists (for example, Wayland `IdleInhibitor` instead of `systemd-inhibit`).
+- Do not adapter-wrap portable Linux tools merely because package names differ;
+  packaging belongs in setup adapters, runtime variation gets a seam only when
+  two real implementations exist.
+
 ## dshell CLI invariants
 
 - `COMMANDS` registry in `bin/dshell` is the single source of truth:

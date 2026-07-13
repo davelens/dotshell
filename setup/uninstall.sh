@@ -1,23 +1,25 @@
 #!/usr/bin/env bash
 set -e
 
+DOTSHELL_REPO_HOME="$(cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")" && pwd)"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 
-if [[ -r /etc/os-release ]]; then
-  # shellcheck source=/dev/null
-  . /etc/os-release
+# Platform adapters share setup and uninstall behavior.
+# shellcheck source=/dev/null
+. "$DOTSHELL_REPO_HOME/setup/lib/platform.sh"
+platform_loaded=false
+if load_platform "$DOTSHELL_REPO_HOME/setup"; then
+  platform_loaded=true
 fi
-DISTRO="${ID:-unknown}"
-VOID_SERVICE_DIR="$HOME/.config/service/quickshell"
 
 echo "This will remove:"
-case "$DISTRO" in
-  arch) echo "  - Quickshell systemd user service" ;;
-  void) echo "  - Quickshell turnstile/runit user service" ;;
-  *) echo "  - Quickshell user service (when recognized)" ;;
-esac
+if [[ "$platform_loaded" == true ]]; then
+  echo "  - $(platform_service_description)"
+else
+  echo "  - Quickshell user service (manual cleanup may be required)"
+fi
 echo "  - $XDG_CONFIG_HOME/dotshell (symlink)"
 echo "  - $XDG_DATA_HOME/dotshell (profile data)"
 echo "  - $XDG_DATA_HOME/applications/quickshell-settings.desktop"
@@ -30,26 +32,9 @@ read -rp "Continue? [y/N] " confirm
   exit 0
 }
 
-case "$DISTRO" in
-  arch)
-    echo "==> Stopping Quickshell systemd service..."
-    systemctl --user stop quickshell.service 2>/dev/null || true
-    systemctl --user disable quickshell.service 2>/dev/null || true
-    systemctl --user daemon-reload
-    ;;
-  void)
-    echo "==> Stopping Quickshell runit service..."
-    if command -v sv >/dev/null 2>&1; then
-      sv down "$VOID_SERVICE_DIR" 2>/dev/null || true
-    fi
-    if [[ -L "$VOID_SERVICE_DIR/run" ]]; then
-      rm "$VOID_SERVICE_DIR/run"
-    fi
-    if [[ -d "$VOID_SERVICE_DIR" ]]; then
-      rmdir "$VOID_SERVICE_DIR" 2>/dev/null || true
-    fi
-    ;;
-esac
+if [[ "$platform_loaded" == true ]]; then
+  platform_stop_service
+fi
 
 if [[ -L "$XDG_CONFIG_HOME/dotshell" ]]; then
   echo "==> Removing config symlink: $XDG_CONFIG_HOME/dotshell"
@@ -74,30 +59,11 @@ if [[ -d "$XDG_RUNTIME_DIR/quickshell" ]]; then
   rm -rf "$XDG_RUNTIME_DIR/quickshell"
 fi
 
-case "$DISTRO" in
-  arch)
-    if pacman -Qi quickshell-git &>/dev/null; then
-      echo "==> Uninstalling quickshell-git..."
-      sudo pacman -Rns --noconfirm quickshell-git
-    elif pacman -Qi quickshell &>/dev/null; then
-      echo "==> Uninstalling quickshell..."
-      sudo pacman -Rns --noconfirm quickshell
-    else
-      echo "==> Quickshell package not found, skipping"
-    fi
-    ;;
-  void)
-    if xbps-query quickshell >/dev/null 2>&1; then
-      echo "==> Uninstalling quickshell..."
-      sudo xbps-remove -y quickshell
-    else
-      echo "==> Quickshell package not found, skipping"
-    fi
-    ;;
-  *)
-    echo "==> Unknown distribution; leaving the Quickshell package installed"
-    ;;
-esac
+if [[ "$platform_loaded" == true ]]; then
+  platform_uninstall_package
+else
+  echo "==> Unknown distribution; leaving the Quickshell package installed"
+fi
 
 echo "==> Uninstall complete."
 echo
