@@ -36,6 +36,7 @@ first, so removing a module cleans up its binaries).
 | `components.settings` | settings panel page |
 | `rootComponents` | files instantiated once at shell root (panels, popup windows) |
 | `skipBarFocus` | exclude from bar keyboard navigation |
+| `requiresHostWindow` | inject the containing bar window into a bar component as `hostWindow` |
 
 ## Loading (`shell.qml`)
 

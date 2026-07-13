@@ -12,7 +12,7 @@ PanelWindow {
   required property var modelData
 
   // Compositor-visible layer-shell namespace
-  property string namespaceName: "quickshell-panel"
+  property string namespaceName: "dotshell-panel"
 
   screen: modelData
   visible: true

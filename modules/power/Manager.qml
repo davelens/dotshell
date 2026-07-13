@@ -22,10 +22,30 @@ Singleton {
     adapter: JsonAdapter {
       id: generalAdapter
       property string lockCommand: "loginctl lock-session"
-      property string suspendCommand: "systemctl suspend"
+      property string suspendCommand: "loginctl suspend"
       property string logoutCommand: "swaymsg exit"
-      property string rebootCommand: "systemctl reboot"
-      property string shutdownCommand: "systemctl poweroff"
+      property string rebootCommand: "loginctl reboot"
+      property string shutdownCommand: "loginctl poweroff"
+    }
+    onLoaded: text => powerManager.migrateSystemdDefaults(text)
+  }
+
+  // Migrate only the former built-in defaults; never replace user commands.
+  function migrateSystemdDefaults(text) {
+    if (!text || text.trim() === "") return
+    try {
+      var config = JSON.parse(text)
+      if (config.suspendCommand === "systemctl suspend") {
+        generalAdapter.suspendCommand = "loginctl suspend"
+      }
+      if (config.rebootCommand === "systemctl reboot") {
+        generalAdapter.rebootCommand = "loginctl reboot"
+      }
+      if (config.shutdownCommand === "systemctl poweroff") {
+        generalAdapter.shutdownCommand = "loginctl poweroff"
+      }
+    } catch (error) {
+      console.error("[PowerManager] Failed to migrate command defaults:", error)
     }
   }
 

@@ -69,7 +69,7 @@ ShellRoot {
       implicitHeight: 32
       color: Theme.bgDeep
 
-      WlrLayershell.namespace: "quickshell-bar"
+      WlrLayershell.namespace: "dotshell-bar"
       WlrLayershell.layer: WlrLayer.Top
       WlrLayershell.keyboardFocus: barFocusActive
         ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None

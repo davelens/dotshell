@@ -40,7 +40,7 @@ A custom, keyboard-driven shell featuring a modular status bar and settings pane
   - power - Lock, suspend, logout, reboot, and shutdown actions
   - recording - Screenshot and screencast capture with file browsing
   - system-load - Live CPU and memory usage display
-  - updates - Package update checker for pacman, AUR, and Flatpak
+  - updates - Package update checker for native repositories, community packages, and Flatpak
   - volume - Audio output and input level control
   - wallpaper - Browse, download, and apply wallpapers via Wallhaven
   - wireless - Wi-Fi network scanning and connection management
@@ -94,16 +94,18 @@ bash setup/init.sh
 ```
 
 The setup script will:
-1. Install Quickshell and dependencies via `pacman`/`paru` or XBPS
+1. Install dotshell's Quickshell runtime and dependencies via `pacman`/`paru` or XBPS
 2. Configure `i2c-dev` for external monitor brightness control (ddcutil)
 3. Symlink the repo to `~/.config/dotshell`
-4. Install a systemd (Arch) or turnstile/runit (Void) user service
+4. Install the `dotshell` systemd (Arch) or turnstile/runit (Void) user service
 5. Install a desktop entry for the settings panel
 
-The Void path expects turnstile's runit backend and user service tree at
-`~/.config/service`, as configured by this author's dotsys setup. If you need
-external monitor brightness control, log out and back in to refresh group
-membership.
+The Void path expects elogind for session/seat/polkit integration and
+turnstile's runit backend for the user service tree at `~/.config/service`, as
+configured by this author's dotsys setup. Runit supervises dotshell while Sway
+launches the process into the active graphical session, allowing background
+polkit requests to reach its graphical agent. If you need external monitor
+brightness control, log out and back in to refresh group membership.
 
 ## CLI
 

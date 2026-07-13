@@ -46,9 +46,10 @@ ln -sfn "$DOTSHELL_REPO_HOME/bin/dshell-completion.bash" \
 
 platform_setup_service
 
-echo "==> Installing settings panel desktop entry..."
+echo "==> Installing dotshell settings desktop entry..."
 mkdir -p "$XDG_DATA_HOME/applications"
-cat >"$XDG_DATA_HOME/applications/quickshell-settings.desktop" <<EOF
+rm -f "$XDG_DATA_HOME/applications/quickshell-settings.desktop"
+cat >"$XDG_DATA_HOME/applications/dotshell-settings.desktop" <<EOF
 [Desktop Entry]
 Name=Settings
 Comment=Open our shell settings panel
@@ -61,9 +62,9 @@ EOF
 update-desktop-database "$XDG_DATA_HOME/applications"
 
 if pgrep -x mako >/dev/null; then
-  echo "==> Mako is running; stop it before using Quickshell notifications"
+  echo "==> Mako is running; stop it before using dotshell notifications"
 fi
 
-echo "==> Quickshell installation complete!"
+echo "==> dotshell installation complete!"
 echo
 echo "NOTE: If using external monitors with brightness control, log out/in for i2c group changes to take effect"

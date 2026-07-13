@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 platform_service_description() {
-  echo "Quickshell systemd user service"
+  echo "dotshell systemd user service"
 }
 
 platform_install_packages() {
-  echo "==> Installing Quickshell and dependencies with pacman..."
+  echo "==> Installing dotshell runtime and dependencies with pacman..."
   sudo pacman -S --needed --noconfirm \
     bluez bluez-utils \
     brightnessctl \
@@ -22,23 +22,26 @@ platform_install_packages() {
     desktop-file-utils
 
   if ! command -v paru >/dev/null 2>&1; then
-    echo "error: paru is required to install Quickshell on Arch" >&2
+    echo "error: paru is required to install the Quickshell runtime on Arch" >&2
     exit 1
   fi
   paru -S --needed --noconfirm quickshell
 }
 
 platform_setup_service() {
-  echo "==> Setting up Quickshell systemd user service..."
+  echo "==> Setting up dotshell systemd user service..."
+  systemctl --user disable --now quickshell.service 2>/dev/null || true
   systemctl --user daemon-reload
-  systemctl --user enable "$DOTSHELL_REPO_HOME/setup/quickshell.service"
-  systemctl --user restart quickshell.service
+  systemctl --user enable "$DOTSHELL_REPO_HOME/setup/dotshell.service"
+  systemctl --user restart dotshell.service
 }
 
 platform_stop_service() {
-  echo "==> Stopping Quickshell systemd service..."
-  systemctl --user stop quickshell.service 2>/dev/null || true
-  systemctl --user disable quickshell.service 2>/dev/null || true
+  echo "==> Stopping dotshell systemd service..."
+  for service in dotshell.service quickshell.service; do
+    systemctl --user stop "$service" 2>/dev/null || true
+    systemctl --user disable "$service" 2>/dev/null || true
+  done
   systemctl --user daemon-reload
 }
 
@@ -50,6 +53,6 @@ platform_uninstall_package() {
     echo "==> Uninstalling quickshell..."
     sudo pacman -Rns --noconfirm quickshell
   else
-    echo "==> Quickshell package not found, skipping"
+    echo "==> Quickshell runtime package not found, skipping"
   fi
 }

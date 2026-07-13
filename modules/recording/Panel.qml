@@ -15,7 +15,7 @@ Scope {
 
     PanelBase {
       id: panel
-      namespaceName: "quickshell-screen-recording"
+      namespaceName: "dotshell-screen-recording"
 
       // -- State ------------------------------------------------------------
 

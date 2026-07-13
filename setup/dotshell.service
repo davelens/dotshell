@@ -1,5 +1,5 @@
 [Unit]
-Description=Quickshell status bar
+Description=dotshell desktop shell
 Documentation=https://quickshell.outfoxxed.me
 PartOf=graphical-session.target
 After=graphical-session.target

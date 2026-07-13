@@ -49,7 +49,7 @@ SettingsPage {
 
       Process {
         id: testNotifyProc
-        command: ["notify-send", "-a", "Quickshell", "Test Notification", "This is a test notification from the settings panel."]
+        command: ["notify-send", "-a", "dotshell", "Test Notification", "This is a test notification from the dotshell settings panel."]
       }
     }
   }

@@ -18,13 +18,13 @@ echo "This will remove:"
 if [[ "$platform_loaded" == true ]]; then
   echo "  - $(platform_service_description)"
 else
-  echo "  - Quickshell user service (manual cleanup may be required)"
+  echo "  - dotshell user service (manual cleanup may be required)"
 fi
 echo "  - $XDG_CONFIG_HOME/dotshell (symlink)"
 echo "  - $XDG_DATA_HOME/dotshell (profile data)"
-echo "  - $XDG_DATA_HOME/applications/quickshell-settings.desktop"
-echo "  - $XDG_RUNTIME_DIR/quickshell (runtime logs)"
-echo "  - Quickshell package"
+echo "  - $XDG_DATA_HOME/applications/dotshell-settings.desktop"
+echo "  - $XDG_RUNTIME_DIR/quickshell (Quickshell runtime logs)"
+echo "  - Quickshell runtime package"
 echo
 read -rp "Continue? [y/N] " confirm
 [[ "$confirm" =~ ^[Yy]$ ]] || {
@@ -49,10 +49,12 @@ if [[ -d "$XDG_DATA_HOME/dotshell" ]]; then
   rm -rf "$XDG_DATA_HOME/dotshell"
 fi
 
-if [[ -f "$XDG_DATA_HOME/applications/quickshell-settings.desktop" ]]; then
-  echo "==> Removing desktop entry"
-  rm "$XDG_DATA_HOME/applications/quickshell-settings.desktop"
-fi
+for desktop_entry in dotshell-settings.desktop quickshell-settings.desktop; do
+  if [[ -f "$XDG_DATA_HOME/applications/$desktop_entry" ]]; then
+    echo "==> Removing desktop entry: $desktop_entry"
+    rm "$XDG_DATA_HOME/applications/$desktop_entry"
+  fi
+done
 
 if [[ -d "$XDG_RUNTIME_DIR/quickshell" ]]; then
   echo "==> Removing runtime directory: $XDG_RUNTIME_DIR/quickshell"
@@ -62,7 +64,7 @@ fi
 if [[ "$platform_loaded" == true ]]; then
   platform_uninstall_package
 else
-  echo "==> Unknown distribution; leaving the Quickshell package installed"
+  echo "==> Unknown distribution; leaving the Quickshell runtime package installed"
 fi
 
 echo "==> Uninstall complete."

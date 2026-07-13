@@ -10,7 +10,7 @@ Scope {
 
     PanelBase {
       id: overlay
-      namespaceName: "quickshell-power-menu"
+      namespaceName: "dotshell-power-menu"
       color: "transparent"
 
     // Keyboard focus cycling state
