@@ -12,9 +12,11 @@ Ports `modules/power/` (Manager + Button + Overlay + Settings,
   the subprocesses (trivial, and `uptime -p` formatting is the
   contract).
 - Commands are user-configurable via the Settings page, general scope
-  (profile-independent), defaults identical:
-  `loginctl lock-session`, `systemctl suspend`, `swaymsg exit`,
-  `systemctl reboot`, `systemctl poweroff`.
+  (profile-independent). Lock and logout default to `loginctl lock-session`
+  and `swaymsg exit`. Suspend, reboot, and shutdown call the stable
+  `power-action` interface; its module-local Arch and Void adapters hide the
+  systemd/elogind commands. Known former defaults migrate to this interface,
+  while custom commands remain untouched.
 - Bar button opens the overlay.
 
 ## Stack

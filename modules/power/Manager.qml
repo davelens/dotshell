@@ -22,30 +22,27 @@ Singleton {
     adapter: JsonAdapter {
       id: generalAdapter
       property string lockCommand: "loginctl lock-session"
-      property string suspendCommand: "loginctl suspend"
+      property string suspendCommand: "power-action suspend"
       property string logoutCommand: "swaymsg exit"
-      property string rebootCommand: "loginctl reboot"
-      property string shutdownCommand: "loginctl poweroff"
+      property string rebootCommand: "power-action reboot"
+      property string shutdownCommand: "power-action shutdown"
     }
-    onLoaded: text => powerManager.migrateSystemdDefaults(text)
+    onLoaded: powerManager.migrateLegacyDefaults()
   }
 
-  // Migrate only the former built-in defaults; never replace user commands.
-  function migrateSystemdDefaults(text) {
-    if (!text || text.trim() === "") return
-    try {
-      var config = JSON.parse(text)
-      if (config.suspendCommand === "systemctl suspend") {
-        generalAdapter.suspendCommand = "loginctl suspend"
-      }
-      if (config.rebootCommand === "systemctl reboot") {
-        generalAdapter.rebootCommand = "loginctl reboot"
-      }
-      if (config.shutdownCommand === "systemctl poweroff") {
-        generalAdapter.shutdownCommand = "loginctl poweroff"
-      }
-    } catch (error) {
-      console.error("[PowerManager] Failed to migrate command defaults:", error)
+  // Migrate former built-in commands to the platform-independent adapter.
+  function migrateLegacyDefaults() {
+    if (generalAdapter.suspendCommand === "systemctl suspend"
+        || generalAdapter.suspendCommand === "loginctl suspend") {
+      generalAdapter.suspendCommand = "power-action suspend"
+    }
+    if (generalAdapter.rebootCommand === "systemctl reboot"
+        || generalAdapter.rebootCommand === "loginctl reboot") {
+      generalAdapter.rebootCommand = "power-action reboot"
+    }
+    if (generalAdapter.shutdownCommand === "systemctl poweroff"
+        || generalAdapter.shutdownCommand === "loginctl poweroff") {
+      generalAdapter.shutdownCommand = "power-action shutdown"
     }
   }
 
