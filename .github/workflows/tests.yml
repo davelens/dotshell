@@ -34,15 +34,30 @@ jobs:
           - name: Arch Linux
             image: archlinux:base
           - name: Void Linux
-            image: voidlinux/voidlinux:latest
+            image: ghcr.io/void-linux/void-glibc:latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Run hermetic setup and uninstall tests
+      - name: Run hermetic setup and uninstall tests on Arch
+        if: matrix.name == 'Arch Linux'
         run: |
           docker run --rm \
             --volume "$GITHUB_WORKSPACE:/workspace:ro" \
             --workdir /workspace \
             "${{ matrix.image }}" \
             bash tests/setup_test.sh
+
+      - name: Provision Bash and run hermetic setup and uninstall tests on Void
+        if: matrix.name == 'Void Linux'
+        run: |
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE:/workspace:ro" \
+            --workdir /workspace \
+            "${{ matrix.image }}" \
+            sh -ec '
+              mirror=https://repo-fastly.voidlinux.org/current
+              xbps-install -Syi -R "$mirror" xbps
+              xbps-install -yi -R "$mirror" bash
+              exec bash tests/setup_test.sh
+            '
