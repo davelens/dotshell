@@ -355,7 +355,7 @@ Scope {
     model: root.visible && ScreenManager.primaryScreen ? [ScreenManager.primaryScreen] : []
 
     PanelBase {
-      namespaceName: "quickshell-settings"
+      namespaceName: "dotshell-settings"
 
       // Handle keyboard input
       contentItem {

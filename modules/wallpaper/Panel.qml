@@ -14,7 +14,7 @@ Scope {
 
     PanelBase {
       id: panel
-      namespaceName: "quickshell-wallpaper"
+      namespaceName: "dotshell-wallpaper"
 
       // -- State ------------------------------------------------------------
 

@@ -33,7 +33,7 @@ Variants {
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
 
-    WlrLayershell.namespace: "quickshell-notifications"
+    WlrLayershell.namespace: "dotshell-notifications"
     WlrLayershell.layer: WlrLayer.Overlay
 
     ListView {

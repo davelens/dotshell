@@ -18,8 +18,8 @@ Parsed modules are sorted by `order` (default 100) and exposed on
 `ModuleRegistry.modules`; `ready` flips true once.
 
 After discovery, executables in `modules/*/bin/` are symlinked into
-`~/.local/bin` (dangling symlinks pointing into `modules/` are pruned
-first, so removing a module cleans up its binaries).
+`$XDG_BIN_HOME`, falling back to `~/.local/bin`. Dangling symlinks pointing
+into `modules/` are pruned first, so removing a module cleans up its binaries.
 
 ## Manifest schema (`module.json`)
 
@@ -36,6 +36,7 @@ first, so removing a module cleans up its binaries).
 | `components.settings` | settings panel page |
 | `rootComponents` | files instantiated once at shell root (panels, popup windows) |
 | `skipBarFocus` | exclude from bar keyboard navigation |
+| `requiresHostWindow` | inject the containing bar window into a bar component as `hostWindow` |
 
 ## Loading (`shell.qml`)
 

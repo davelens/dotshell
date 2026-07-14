@@ -3,7 +3,7 @@
   "name": "System Updates",
   "icon": "󰄠",
   "order": 15,
-  "keywords": "packages pacman paru aur flatpak upgrade system settings",
+  "keywords": "packages updates package manager pacman paru aur xbps flatpak upgrade system settings",
   "components": {
     "manager": "Manager.qml",
     "button": "Button.qml",

@@ -3,8 +3,8 @@
 # The dshell CLI
 
 Autocompleted command-line companion to the shell: every user-facing
-operation goes through `dshell` instead of raw `qs ipc call`. Symlinked
-to `~/.local/bin/dshell` by `setup/init.sh`.
+operation goes through `dshell` instead of raw `qs ipc call`. Symlinked into
+`$XDG_BIN_HOME` (or `~/.local/bin` when unset) by `setup/init.sh`.
 
 `bin/dshell`
 

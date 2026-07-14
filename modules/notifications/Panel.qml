@@ -47,7 +47,7 @@ Scope {
       color: "transparent"
       exclusionMode: ExclusionMode.Ignore
 
-      WlrLayershell.namespace: "quickshell-notification-panel"
+      WlrLayershell.namespace: "dotshell-notification-panel"
       // Stay on Overlay while open or while the slide-out animation is
       // running, then drop to Background so the surface doesn't intercept
       // clicks.

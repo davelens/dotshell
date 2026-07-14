@@ -8,7 +8,8 @@ import qs
 Singleton {
   id: manager
 
-  // Settings (persisted via JsonAdapter)
+  readonly property string backendPath: Quickshell.shellDir + "/modules/updates/backends/run"
+
   property alias includeFlatpak: settingsAdapter.includeFlatpak
 
   ModuleConfig {
@@ -19,153 +20,148 @@ Singleton {
     }
   }
 
-  // Package update lists
-  // Each item: { name: string, currentVersion: string, newVersion: string, source: string }
-  property var pacmanUpdates: []
-  property var aurUpdates: []
-  // Flatpak items also have appId
+  // Distribution backend description.
+  property bool backendReady: false
+  property bool backendSupported: false
+  property string backendName: "Linux"
+  property string repoLabel: "System"
+  property string communityLabel: ""
+  property bool hasCommunity: false
+  property string systemUpdateDescription: "System upgrade"
+  property string systemUpdateRunningDescription: "Running system upgrade"
+
+  // Each update is { name, currentVersion, newVersion, source }.
+  // Flatpak updates additionally expose appId.
+  property var repoUpdates: []
+  property var communityUpdates: []
   property var flatpakUpdates: []
 
-  // Total count across all sources
-  readonly property int totalCount: pacmanCount + aurCount + flatpakCount
-  property int pacmanCount: 0
-  property int aurCount: 0
+  property int repoCount: 0
+  property int communityCount: 0
   property int flatpakCount: 0
+  readonly property int totalCount: repoCount + communityCount + flatpakCount
 
-  // Whether a check is currently running
+  readonly property var sourceModels: {
+    var sources = [{ id: "repo", label: repoLabel, updates: repoUpdates }]
+    if (hasCommunity) {
+      sources.push({ id: "community", label: communityLabel, updates: communityUpdates })
+    }
+    sources.push({ id: "flatpak", label: "Flatpak", updates: flatpakUpdates })
+    return sources
+  }
+
   property bool checking: false
-
-  // System update in progress (paru -Syu). Blocks all other update actions.
   property bool systemUpdating: false
-
-  // Set of package names currently being updated individually
   property var updatingPackages: ({})
-
-  // Whether any blocking operation is running
   readonly property bool blocked: systemUpdating
 
-  // Icons
   readonly property string iconError: "󰒑"
   readonly property string iconUpToDate: "󰸟"
   readonly property string iconHasUpdates: "󰄠"
   readonly property string iconDownload: "󰇚"
 
   function getIcon() {
-    if (checking) return iconHasUpdates
-    if (totalCount > 0) return iconHasUpdates
+    if (checking || totalCount > 0) return iconHasUpdates
     return iconUpToDate
   }
 
-  // Check if a specific package is currently being updated
   function isUpdating(name) {
     return updatingPackages[name] === true
   }
 
-  // Start checking all sources
-  function checkUpdates() {
-    if (checking) return
-    checking = true
-    checkPacmanProc.running = true
+  function sourceUpdates(source) {
+    if (source === "repo") return repoUpdates
+    if (source === "community") return communityUpdates
+    return flatpakUpdates
   }
 
-  // Look up version info for a package
+  function packageKey(pkg, source) {
+    return source === "flatpak" ? pkg.appId : pkg.name
+  }
+
+  function checkUpdates() {
+    if (checking || !backendReady) return
+    checking = true
+    if (backendSupported) checkNativeProc.running = true
+    else checkFlatpakProc.running = true
+  }
+
   function findPackage(name, source) {
-    var list = source === "pacman" ? pacmanUpdates
-              : source === "aur" ? aurUpdates
-              : flatpakUpdates
+    var list = sourceUpdates(source)
     for (var i = 0; i < list.length; i++) {
-      var key = source === "flatpak" ? list[i].appId : list[i].name
-      if (key === name) return list[i]
+      if (packageKey(list[i], source) === name) return list[i]
     }
     return null
   }
 
-  // Remove an updated package from its source list without re-checking all sources.
-  function removePackage(name, source) {
-    var list = source === "pacman" ? pacmanUpdates
-              : source === "aur" ? aurUpdates
-              : flatpakUpdates
-    var newList = list.filter(function(p) {
-      var key = source === "flatpak" ? p.appId : p.name
-      return key !== name
-    })
-
-    if (source === "pacman") {
-      pacmanUpdates = newList
-      pacmanCount = newList.length
-    } else if (source === "aur") {
-      aurUpdates = newList
-      aurCount = newList.length
+  function setSourceUpdates(source, updates) {
+    if (source === "repo") {
+      repoUpdates = updates
+      repoCount = updates.length
+    } else if (source === "community") {
+      communityUpdates = updates
+      communityCount = updates.length
     } else {
-      flatpakUpdates = newList
-      flatpakCount = newList.length
+      flatpakUpdates = updates
+      flatpakCount = updates.length
     }
   }
 
-  // Update a single package
+  function removePackage(name, source) {
+    var filtered = sourceUpdates(source).filter(function(pkg) {
+      return packageKey(pkg, source) !== name
+    })
+    setSourceUpdates(source, filtered)
+  }
+
+  function markUpdating(source, updates) {
+    var marked = Object.assign({}, updatingPackages)
+    for (var i = 0; i < updates.length; i++) {
+      marked[packageKey(updates[i], source)] = true
+    }
+    updatingPackages = marked
+  }
+
   function updatePackage(name, source) {
     if (systemUpdating || isUpdating(name)) return
 
-    var pkgs = Object.assign({}, updatingPackages)
-    pkgs[name] = true
-    updatingPackages = pkgs
-
     var pkg = findPackage(name, source)
-    var from = pkg ? pkg.currentVersion : ""
-    var to = pkg ? pkg.newVersion : ""
+    var marked = Object.assign({}, updatingPackages)
+    marked[name] = true
+    updatingPackages = marked
 
-    if (source === "flatpak") {
-      singleUpdateHelper.start(["flatpak", "update", "-y", name], name, source, from, to)
-    } else if (source === "aur") {
-      singleUpdateHelper.start(["paru", "-S", "--needed", "--noconfirm", "--skipreview", "--sudoloop", name], name, source, from, to)
-    } else {
-      singleUpdateHelper.start(["bash", "-c", 'sudo pacman -Sy && sudo pacman -S --needed --noconfirm "$@"', "pacman-update", name], name, source, from, to)
-    }
+    var command = source === "flatpak"
+      ? ["flatpak", "update", "-y", name]
+      : [backendPath, "update-package", source, name]
+    singleUpdateHelper.start(command, name, source,
+      pkg ? pkg.currentVersion : "", pkg ? pkg.newVersion : "")
   }
 
-  // Update all packages in a specific source
   function updateSource(source) {
     if (systemUpdating) return
+    var updates = sourceUpdates(source)
+    if (updates.length === 0) return
 
-    if (source === "pacman") {
-      if (pacmanUpdates.length === 0) return
-      sourceUpdateProc.source = source
-      var names = pacmanUpdates.map(function(p) { return p.name })
-      sourceUpdateProc.command = ["bash", "-c", 'sudo pacman -Sy && sudo pacman -S --needed --noconfirm "$@"', "pacman-update"].concat(names)
-      // Mark all pacman packages as updating
-      var pkgs = Object.assign({}, updatingPackages)
-      for (var i = 0; i < pacmanUpdates.length; i++) pkgs[pacmanUpdates[i].name] = true
-      updatingPackages = pkgs
-      sourceUpdateProc.running = true
-    } else if (source === "aur") {
-      if (aurUpdates.length === 0) return
-      sourceUpdateProc.source = source
-      sourceUpdateProc.command = ["paru", "-S", "--needed", "--noconfirm", "--skipreview", "--sudoloop"].concat(
-        aurUpdates.map(function(p) { return p.name })
-      )
-      var aurPkgs = Object.assign({}, updatingPackages)
-      for (var j = 0; j < aurUpdates.length; j++) aurPkgs[aurUpdates[j].name] = true
-      updatingPackages = aurPkgs
-      sourceUpdateProc.running = true
-    } else if (source === "flatpak") {
-      if (flatpakUpdates.length === 0) return
-      sourceUpdateProc.source = source
-      sourceUpdateProc.command = ["flatpak", "update", "-y"]
-      var fpPkgs = Object.assign({}, updatingPackages)
-      for (var k = 0; k < flatpakUpdates.length; k++) fpPkgs[flatpakUpdates[k].appId] = true
-      updatingPackages = fpPkgs
-      sourceUpdateProc.running = true
-    }
+    sourceUpdateProc.source = source
+    sourceUpdateProc.command = source === "flatpak"
+      ? ["flatpak", "update", "-y"]
+      : [backendPath, "update-source", source].concat(
+          updates.map(function(pkg) { return pkg.name }))
+    markUpdating(source, updates)
+    sourceUpdateProc.running = true
   }
 
-  // Full system update (paru -Syu, optionally flatpak). Blocks everything.
   function systemUpdate() {
     if (systemUpdating) return
     systemUpdating = true
-    if (includeFlatpak) {
-      systemUpdateProc.command = ["bash", "-c", "paru -Syu --noconfirm --skipreview --sudoloop && flatpak update -y"]
+
+    if (backendSupported) {
+      systemUpdateProc.command = [backendPath, "system-update", includeFlatpak ? "1" : "0"]
+    } else if (includeFlatpak) {
+      systemUpdateProc.command = ["flatpak", "update", "-y"]
     } else {
-      systemUpdateProc.command = ["paru", "-Syu", "--noconfirm", "--skipreview", "--sudoloop"]
+      systemUpdating = false
+      return
     }
     systemUpdateProc.running = true
   }
@@ -185,23 +181,28 @@ Singleton {
     recheckTimer.restart()
   }
 
-  // Return the last `n` non-empty lines of a buffer, joined by newlines.
-  function tailLines(buf, n) {
-    if (!buf) return ""
-    var lines = String(buf).split("\n").filter(function(l) { return l.trim().length > 0 })
+  function tailLines(buffer, count) {
+    if (!buffer) return ""
+    var lines = String(buffer).split("\n").filter(function(line) {
+      return line.trim().length > 0
+    })
     if (lines.length === 0) return ""
-    return lines.slice(Math.max(0, lines.length - n)).join("\n")
+    return lines.slice(Math.max(0, lines.length - count)).join("\n")
   }
 
-  // Helper object to manage concurrent single-package updates.
-  // Uses a queue since Process can only run one command at a time.
   QtObject {
     id: singleUpdateHelper
     property var queue: []
     property bool busy: false
 
-    function start(cmd, pkgName, source, fromVersion, toVersion) {
-      queue.push({ command: cmd, name: pkgName, source: source, from: fromVersion || "", to: toVersion || "" })
+    function start(command, packageName, source, fromVersion, toVersion) {
+      queue.push({
+        command: command,
+        name: packageName,
+        source: source,
+        from: fromVersion || "",
+        to: toVersion || ""
+      })
       processNext()
     }
 
@@ -217,125 +218,105 @@ Singleton {
       singleProc.running = true
     }
 
-    function onFinished(pkgName, source, fromVersion, toVersion, exitCode) {
+    function onFinished(packageName, source, fromVersion, toVersion, exitCode) {
       busy = false
-      // Remove from updatingPackages
-      var pkgs = Object.assign({}, manager.updatingPackages)
-      delete pkgs[pkgName]
-      manager.updatingPackages = pkgs
+      var marked = Object.assign({}, manager.updatingPackages)
+      delete marked[packageName]
+      manager.updatingPackages = marked
 
       if (exitCode === 0) {
-        var body = "Updated " + pkgName
+        var body = "Updated " + packageName
         if (fromVersion && toVersion) body += "\n" + fromVersion + " → " + toVersion
         notifyProc.command = ["notify-send", "-a", "General", "System Updates", body, "-i", "package-install"]
-        manager.removePackage(pkgName, source)
+        manager.removePackage(packageName, source)
       } else {
-        var errBody = "Failed to update " + pkgName + " (exit " + exitCode + ")"
+        var errorBody = "Failed to update " + packageName + " (exit " + exitCode + ")"
         var tail = manager.tailLines(singleProc.stderr.text, 6)
-        if (tail) errBody += "\n" + tail
-        notifyProc.command = ["notify-send", "-a", "General", "-u", "critical", "System Updates", errBody, "-i", "dialog-error"]
+        if (tail) errorBody += "\n" + tail
+        notifyProc.command = ["notify-send", "-a", "General", "-u", "critical", "System Updates", errorBody, "-i", "dialog-error"]
       }
       notifyProc.running = true
-
-      // Process next in queue
-      if (queue.length > 0) {
-        processNext()
-      }
+      if (queue.length > 0) processNext()
     }
   }
 
-  // Check for pacman updates
   Process {
-    id: checkPacmanProc
-    command: ["bash", "-c", "checkupdates | grep -Fw -f <(pacman -Qqe)"]
+    id: describeBackendProc
+    command: [manager.backendPath, "describe"]
+    running: true
     stdout: StdioCollector {}
     onExited: exitCode => {
       if (exitCode === 0) {
-        var lines = checkPacmanProc.stdout.text.trim().split("\n").filter(l => l.length > 0)
-        var updates = []
-        for (var i = 0; i < lines.length; i++) {
-          var parts = lines[i].split(" ")
-          if (parts.length >= 4) {
-            updates.push({
-              name: parts[0],
-              currentVersion: parts[1],
-              newVersion: parts[3],
-              source: "pacman"
-            })
-          }
+        try {
+          var description = JSON.parse(stdout.text)
+          manager.backendSupported = description.supported === true
+          manager.backendName = description.name || "Linux"
+          manager.repoLabel = description.repoLabel || "System"
+          manager.communityLabel = description.communityLabel || ""
+          manager.hasCommunity = description.hasCommunity === true
+          manager.systemUpdateDescription = description.systemDescription || "System upgrade"
+          manager.systemUpdateRunningDescription = description.runningDescription || "Running system upgrade"
+        } catch (error) {
+          console.error("[UpdatesManager] Invalid backend description:", error)
         }
-        manager.pacmanUpdates = updates
-        manager.pacmanCount = updates.length
-      } else {
-        manager.pacmanUpdates = []
-        manager.pacmanCount = 0
       }
-      checkAurProc.running = true
+      manager.backendReady = true
     }
   }
 
-  // Check for AUR updates
   Process {
-    id: checkAurProc
-    command: ["bash", "-c", "paru -Qua | grep -Fw -f <(pacman -Qqem)"]
+    id: checkNativeProc
+    command: [manager.backendPath, "check"]
     stdout: StdioCollector {}
     onExited: exitCode => {
+      var repo = []
+      var community = []
       if (exitCode === 0) {
-        var lines = checkAurProc.stdout.text.trim().split("\n").filter(l => l.length > 0)
-        var updates = []
+        var lines = stdout.text.trim().split("\n").filter(function(line) { return line.length > 0 })
         for (var i = 0; i < lines.length; i++) {
-          var parts = lines[i].split(" ")
-          if (parts.length >= 4) {
-            updates.push({
-              name: parts[0],
-              currentVersion: parts[1],
-              newVersion: parts[3],
-              source: "aur"
-            })
+          var fields = lines[i].split("\t")
+          if (fields.length < 4) continue
+          var update = {
+            source: fields[0],
+            name: fields[1],
+            currentVersion: fields[2],
+            newVersion: fields[3]
           }
+          if (update.source === "repo") repo.push(update)
+          else if (update.source === "community") community.push(update)
         }
-        manager.aurUpdates = updates
-        manager.aurCount = updates.length
-      } else {
-        manager.aurUpdates = []
-        manager.aurCount = 0
       }
+      manager.setSourceUpdates("repo", repo)
+      manager.setSourceUpdates("community", community)
       checkFlatpakProc.running = true
     }
   }
 
-  // Check for flatpak updates
   Process {
     id: checkFlatpakProc
     command: ["flatpak", "remote-ls", "--updates", "--app", "--columns=name,application,version"]
     stdout: StdioCollector {}
     onExited: exitCode => {
+      var updates = []
       if (exitCode === 0) {
-        var lines = checkFlatpakProc.stdout.text.trim().split("\n").filter(l => l.length > 0)
-        var updates = []
+        var lines = stdout.text.trim().split("\n").filter(function(line) { return line.length > 0 })
         for (var i = 0; i < lines.length; i++) {
-          var parts = lines[i].split("\t")
-          if (parts.length >= 2) {
-            updates.push({
-              name: parts[0].trim(),
-              appId: parts.length >= 2 ? parts[1].trim() : parts[0].trim(),
-              currentVersion: "",
-              newVersion: parts.length >= 3 ? parts[2].trim() : "",
-              source: "flatpak"
-            })
-          }
+          var fields = lines[i].split("\t")
+          if (fields.length < 2) continue
+          updates.push({
+            source: "flatpak",
+            name: fields[0].trim(),
+            appId: fields[1].trim(),
+            currentVersion: "",
+            newVersion: fields.length >= 3 ? fields[2].trim() : ""
+          })
         }
-        manager.flatpakUpdates = updates
-        manager.flatpakCount = updates.length
-      } else {
-        manager.flatpakUpdates = []
-        manager.flatpakCount = 0
       }
+      manager.setSourceUpdates("flatpak", updates)
       manager.checking = false
     }
   }
 
-  // Single package update process (sequential queue)
   Process {
     id: singleProc
     property string pkgName: ""
@@ -346,63 +327,51 @@ Singleton {
     onExited: exitCode => singleUpdateHelper.onFinished(pkgName, source, fromVersion, toVersion, exitCode)
   }
 
-  // Source-level update process (update all in one source)
   Process {
     id: sourceUpdateProc
     property string source: ""
     stderr: StdioCollector {}
     onExited: exitCode => {
-      // Clear all updating flags for this source
-      var pkgs = Object.assign({}, manager.updatingPackages)
-      var list = source === "pacman" ? manager.pacmanUpdates
-                : source === "aur" ? manager.aurUpdates
-                : manager.flatpakUpdates
-      for (var i = 0; i < list.length; i++) {
-        var key = source === "flatpak" ? list[i].appId : list[i].name
-        delete pkgs[key]
+      var marked = Object.assign({}, manager.updatingPackages)
+      var updates = manager.sourceUpdates(source)
+      for (var i = 0; i < updates.length; i++) {
+        delete marked[manager.packageKey(updates[i], source)]
       }
-      manager.updatingPackages = pkgs
+      manager.updatingPackages = marked
 
       if (exitCode === 0) {
         notifyProc.command = ["notify-send", "-a", "General", "System Updates", "Updated all " + source + " packages", "-i", "package-install"]
       } else {
-        var srcErrBody = "Failed to update " + source + " packages (exit " + exitCode + ")"
-        var srcTail = manager.tailLines(sourceUpdateProc.stderr.text, 6)
-        if (srcTail) srcErrBody += "\n" + srcTail
-        notifyProc.command = ["notify-send", "-a", "General", "-u", "critical", "System Updates", srcErrBody, "-i", "dialog-error"]
+        var body = "Failed to update " + source + " packages (exit " + exitCode + ")"
+        var tail = manager.tailLines(stderr.text, 6)
+        if (tail) body += "\n" + tail
+        notifyProc.command = ["notify-send", "-a", "General", "-u", "critical", "System Updates", body, "-i", "dialog-error"]
       }
       notifyProc.running = true
       recheckTimer.restart()
     }
   }
 
-  // System update process (paru -Syu)
   Process {
     id: systemUpdateProc
     stderr: StdioCollector {}
     onExited: exitCode => manager.onSystemUpdateComplete(exitCode === 0, exitCode)
   }
 
-  // Notification process
-  Process {
-    id: notifyProc
-  }
+  Process { id: notifyProc }
 
-  // Re-check after updates complete
   Timer {
     id: recheckTimer
     interval: 3000
     onTriggered: manager.checkUpdates()
   }
 
-  // Check on startup (small delay)
   Timer {
     interval: 5000
     running: true
     onTriggered: manager.checkUpdates()
   }
 
-  // Periodic check every hour
   Timer {
     interval: 3600000
     running: true

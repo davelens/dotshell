@@ -69,7 +69,7 @@ ShellRoot {
       implicitHeight: 32
       color: Theme.bgDeep
 
-      WlrLayershell.namespace: "quickshell-bar"
+      WlrLayershell.namespace: "dotshell-bar"
       WlrLayershell.layer: WlrLayer.Top
       WlrLayershell.keyboardFocus: barFocusActive
         ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -280,6 +280,9 @@ ShellRoot {
           props.popupManager = PopupManager
           // Inject the manifest id so buttons never restate it
           props.popupId = moduleId
+        }
+        if (ModuleRegistry.requiresHostWindow(moduleId)) {
+          props.hostWindow = panel
         }
         return props
       }

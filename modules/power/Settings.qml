@@ -67,7 +67,7 @@ SettingsPage {
 
         FocusTextInput {
           text: PowerManager.suspendCommand
-          placeholderText: "systemctl suspend"
+          placeholderText: "power-action suspend"
           onEditingFinished: function(value) {
             if (value) PowerManager.suspendCommand = value
           }
@@ -107,7 +107,7 @@ SettingsPage {
 
         FocusTextInput {
           text: PowerManager.rebootCommand
-          placeholderText: "systemctl reboot"
+          placeholderText: "power-action reboot"
           onEditingFinished: function(value) {
             if (value) PowerManager.rebootCommand = value
           }
@@ -127,7 +127,7 @@ SettingsPage {
 
         FocusTextInput {
           text: PowerManager.shutdownCommand
-          placeholderText: "systemctl poweroff"
+          placeholderText: "power-action shutdown"
           onEditingFinished: function(value) {
             if (value) PowerManager.shutdownCommand = value
           }

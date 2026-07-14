@@ -22,10 +22,27 @@ Singleton {
     adapter: JsonAdapter {
       id: generalAdapter
       property string lockCommand: "loginctl lock-session"
-      property string suspendCommand: "systemctl suspend"
+      property string suspendCommand: "power-action suspend"
       property string logoutCommand: "swaymsg exit"
-      property string rebootCommand: "systemctl reboot"
-      property string shutdownCommand: "systemctl poweroff"
+      property string rebootCommand: "power-action reboot"
+      property string shutdownCommand: "power-action shutdown"
+    }
+    onLoaded: powerManager.migrateLegacyDefaults()
+  }
+
+  // Migrate former built-in commands to the platform-independent adapter.
+  function migrateLegacyDefaults() {
+    if (generalAdapter.suspendCommand === "systemctl suspend"
+        || generalAdapter.suspendCommand === "loginctl suspend") {
+      generalAdapter.suspendCommand = "power-action suspend"
+    }
+    if (generalAdapter.rebootCommand === "systemctl reboot"
+        || generalAdapter.rebootCommand === "loginctl reboot") {
+      generalAdapter.rebootCommand = "power-action reboot"
+    }
+    if (generalAdapter.shutdownCommand === "systemctl poweroff"
+        || generalAdapter.shutdownCommand === "loginctl poweroff") {
+      generalAdapter.shutdownCommand = "power-action shutdown"
     }
   }
 
@@ -95,6 +112,7 @@ Singleton {
   function confirmAction() {
     var cmd = getCommand(pendingAction)
     if (cmd) {
+      actionProc.requestedCommand = cmd
       actionProc.command = ["sh", "-c", cmd]
       actionProc.running = true
     }
@@ -130,7 +148,17 @@ Singleton {
   // Execute the selected power action
   Process {
     id: actionProc
+    property string requestedCommand: ""
     running: false
+    environment: ({
+      PATH: ModuleRegistry.binDir + ":" + Quickshell.env("PATH")
+    })
+    stderr: StdioCollector {}
+    onExited: exitCode => {
+      if (exitCode !== 0) {
+        console.error("[PowerManager] Command failed (" + requestedCommand + "):", stderr.text.trim())
+      }
+    }
   }
 
   Component.onCompleted: OverlayManager.register("power", "Power menu")

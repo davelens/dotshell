@@ -1,1 +1,2 @@
 singleton UpdatesManager 1.0 Manager.qml
+SourceColumn 1.0 SourceColumn.qml

@@ -20,7 +20,7 @@ busy/idle/error/question counts.
   `errorCount`, `questionCount`; segment presentation (glyph 󰚩 +
   per-state counts/colors) unchanged.
 - `bin/oc`, `bin/claude-discover`, `bin/pi-discover` stay bash and
-  keep being symlinked into `~/.local/bin`.
+  keep being symlinked into `$XDG_BIN_HOME` (or `~/.local/bin` when unset).
 
 ## Stack
 

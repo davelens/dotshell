@@ -14,35 +14,29 @@ ModulePopup {
     contentSpacing: 12
     stemEnabled: UpdatesManager.totalCount > 0
 
-    // Column height for the scrollable lists
     property int maxVisibleItems: 12
     property int rowHeight: 28
     property int rowSpacing: 4
+    readonly property int sourceCount: UpdatesManager.sourceModels.length
 
     popupHeight: {
-      // Header (28) + spacing (12) + system update row (32) + spacing (12) + separator (1) + spacing (12)
-      var h = 28 + 12 + 32 + 12 + 1 + 12
-
+      var height = 28 + 12 + 32 + 12 + 1 + 12
       if (UpdatesManager.checking) {
-        h += 40
+        height += 40
       } else if (UpdatesManager.totalCount === 0) {
-        h += 50
+        height += 50
       } else {
-        // Column headers (20) + spacing (8) + update-all button (26) + spacing (8) + list
-        h += 20 + 8 + 26 + 8
-        var maxItems = Math.max(
-          Math.min(UpdatesManager.pacmanUpdates.length, popup.maxVisibleItems),
-          Math.min(UpdatesManager.aurUpdates.length, popup.maxVisibleItems),
-          Math.min(UpdatesManager.flatpakUpdates.length, popup.maxVisibleItems),
-          1
-        )
-        h += maxItems * popup.rowHeight + (maxItems - 1) * popup.rowSpacing
+        height += 20 + 8 + 26 + 8
+        var maxItems = 1
+        var sources = UpdatesManager.sourceModels
+        for (var i = 0; i < sources.length; i++) {
+          maxItems = Math.max(maxItems, Math.min(sources[i].updates.length, maxVisibleItems))
+        }
+        height += maxItems * rowHeight + (maxItems - 1) * rowSpacing
       }
-
-      return h + 48
+      return height + 48
     }
 
-    // Header row
     Item {
       width: parent.width
       height: 28
@@ -73,7 +67,6 @@ ModulePopup {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 8
 
-        // Refresh button
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: "󰑐"
@@ -91,7 +84,6 @@ ModulePopup {
           }
         }
 
-        // Spinner while checking
         Text {
           anchors.verticalCenter: parent.verticalCenter
           text: "󰔿"
@@ -111,7 +103,6 @@ ModulePopup {
       }
     }
 
-    // System update button row
     Item {
       width: parent.width
       height: 32
@@ -134,9 +125,8 @@ ModulePopup {
         anchors.left: parent.left
         anchors.leftMargin: 170
         anchors.verticalCenter: parent.verticalCenter
-        text: UpdatesManager.includeFlatpak
-          ? "Full system upgrade (pacman + AUR + Flatpak)"
-          : "Full system upgrade (pacman + AUR)"
+        text: UpdatesManager.systemUpdateDescription
+          + (UpdatesManager.includeFlatpak ? " + Flatpak" : "")
         color: Theme.textMuted
         font.pixelSize: 12
         visible: !UpdatesManager.systemUpdating
@@ -146,23 +136,21 @@ ModulePopup {
         anchors.left: parent.left
         anchors.leftMargin: 170
         anchors.verticalCenter: parent.verticalCenter
-        text: UpdatesManager.includeFlatpak
-          ? "Running paru -Syu + flatpak update... All other updates are blocked."
-          : "Running paru -Syu... All other updates are blocked."
+        text: UpdatesManager.systemUpdateRunningDescription
+          + (UpdatesManager.includeFlatpak ? " followed by Flatpak" : "")
+          + "... All other updates are blocked."
         color: Theme.warning
         font.pixelSize: 12
         visible: UpdatesManager.systemUpdating
       }
     }
 
-    // Separator
     Rectangle {
       width: parent.width
       height: 1
       color: Theme.bgCardHover
     }
 
-    // Checking state
     Item {
       width: parent.width
       height: 40
@@ -176,7 +164,6 @@ ModulePopup {
       }
     }
 
-    // Up to date state
     Column {
       width: parent.width
       spacing: 8
@@ -184,7 +171,7 @@ ModulePopup {
 
       Text {
         width: parent.width
-        text: "System is up to date"
+        text: UpdatesManager.backendSupported ? "System is up to date" : "No supported system package backend"
         color: Theme.textMuted
         font.pixelSize: 15
         horizontalAlignment: Text.AlignHCenter
@@ -193,7 +180,9 @@ ModulePopup {
 
       Text {
         width: parent.width
-        text: "No pending updates"
+        text: UpdatesManager.backendSupported
+          ? "No pending updates"
+          : "Flatpak updates remain available when Flatpak is installed"
         color: Theme.textSubtle
         font.pixelSize: 13
         horizontalAlignment: Text.AlignHCenter
@@ -201,384 +190,37 @@ ModulePopup {
       }
     }
 
-    // Three-column layout
     Row {
+      id: sourceRow
       width: parent.width
       spacing: 12
       visible: !UpdatesManager.checking && UpdatesManager.totalCount > 0
+      // Each additional source adds outer spacing, a 1px separator, and inner spacing.
+      readonly property real sourceColumnWidth: (width - Math.max(0, popup.sourceCount - 1) * 25) / popup.sourceCount
 
-      // Official column
-      Column {
-        width: (parent.width - 50) / 3
-        spacing: 8
+      Repeater {
+        model: UpdatesManager.sourceModels
 
-        // Header
-        TitleText {
-          text: "Official (" + UpdatesManager.pacmanUpdates.length + ")"
-        }
+        Row {
+          required property var modelData
+          required property int index
+          spacing: 12
 
-        // Update all button
-        FocusButton {
-          width: parent.width
-          height: 26
-          text: "Update all"
-          fontSize: 12
-          backgroundColor: UpdatesManager.pacmanUpdates.length > 0 && !UpdatesManager.blocked ? Theme.bgCardHover : Theme.bgBaseAlt
-          textColor: UpdatesManager.pacmanUpdates.length > 0 && !UpdatesManager.blocked ? Theme.textPrimary : Theme.textMuted
-          hoverColor: Theme.bgBorder
-          enabled: UpdatesManager.pacmanUpdates.length > 0 && !UpdatesManager.blocked
-          opacity: enabled ? 1.0 : 0.4
-          onClicked: UpdatesManager.updateSource("pacman")
-        }
-
-        // Package list
-        ScrollView {
-          width: parent.width
-          clip: true
-          contentWidth: availableWidth
-          height: {
-            var count = Math.min(UpdatesManager.pacmanUpdates.length, popup.maxVisibleItems)
-            if (count === 0) return 28
-            return count * popup.rowHeight + (count - 1) * popup.rowSpacing
+          Rectangle {
+            visible: index > 0
+            width: visible ? 1 : 0
+            height: parent.height
+            color: Theme.bgCardHover
           }
 
-          Column {
-            width: parent.width
-            spacing: popup.rowSpacing
-
-            Repeater {
-              model: UpdatesManager.pacmanUpdates
-
-              Rectangle {
-                id: pacPkgRow
-                required property var modelData
-                required property int index
-                readonly property bool updating: UpdatesManager.isUpdating(modelData.name)
-                width: parent.width
-                height: popup.rowHeight
-                radius: 4
-                color: updating ? Theme.bgBaseAlt : (pacPkgMouse.containsMouse ? Theme.bgCard : "transparent")
-
-                Column {
-                  anchors.left: parent.left
-                  anchors.leftMargin: 6
-                  anchors.right: pacDlBtn.left
-                  anchors.rightMargin: 4
-                  anchors.verticalCenter: parent.verticalCenter
-                  spacing: 1
-
-                  Text {
-                    width: parent.width
-                    text: modelData.name
-                    color: pacPkgRow.updating ? Theme.textMuted : Theme.textPrimary
-                    font.pixelSize: 13
-                    elide: Text.ElideRight
-                  }
-
-                  Text {
-                    width: parent.width
-                    text: modelData.currentVersion + " \u2192 " + modelData.newVersion
-                    color: pacPkgRow.updating ? Theme.textSubtle : Theme.textMuted
-                    font.pixelSize: 10
-                    elide: Text.ElideMiddle
-                  }
-                }
-
-                Text {
-                  id: pacDlBtn
-                  anchors.right: parent.right
-                  anchors.rightMargin: 14
-                  anchors.verticalCenter: parent.verticalCenter
-                  text: pacPkgRow.updating ? "󰔿" : "󰇚"
-                  color: {
-                    if (UpdatesManager.blocked) return Theme.bgBorder
-                    if (pacPkgRow.updating) return Theme.textMuted
-                    return pacPkgMouse.containsMouse ? Theme.success : Theme.textMuted
-                  }
-                  font.pixelSize: 13
-                  font.family: "Symbols Nerd Font"
-
-                  RotationAnimation on rotation {
-                    running: pacPkgRow.updating
-                    from: 0
-                    to: 360
-                    duration: 1000
-                    loops: Animation.Infinite
-                  }
-                }
-
-                MouseArea {
-                  id: pacPkgMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: UpdatesManager.blocked || pacPkgRow.updating ? Qt.ForbiddenCursor : Qt.PointingHandCursor
-                  onClicked: {
-                    if (!UpdatesManager.blocked && !pacPkgRow.updating) {
-                      UpdatesManager.updatePackage(modelData.name, "pacman")
-                    }
-                  }
-                }
-              }
-            }
-
-            // Empty state
-            Text {
-              visible: UpdatesManager.pacmanUpdates.length === 0
-              text: "No updates"
-              color: Theme.textMuted
-              font.pixelSize: 12
-              topPadding: 4
-            }
-          }
-        }
-      }
-
-      // Separator
-      Rectangle { width: 1; height: parent.height; color: Theme.bgCardHover }
-
-      // AUR column
-      Column {
-        width: (parent.width - 50) / 3
-        spacing: 8
-
-        TitleText {
-          text: "AUR (" + UpdatesManager.aurUpdates.length + ")"
-        }
-
-        FocusButton {
-          width: parent.width
-          height: 26
-          text: "Update all"
-          fontSize: 12
-          backgroundColor: UpdatesManager.aurUpdates.length > 0 && !UpdatesManager.blocked ? Theme.bgCardHover : Theme.bgBaseAlt
-          textColor: UpdatesManager.aurUpdates.length > 0 && !UpdatesManager.blocked ? Theme.textPrimary : Theme.textMuted
-          hoverColor: Theme.bgBorder
-          enabled: UpdatesManager.aurUpdates.length > 0 && !UpdatesManager.blocked
-          opacity: enabled ? 1.0 : 0.4
-          onClicked: UpdatesManager.updateSource("aur")
-        }
-
-        ScrollView {
-          width: parent.width
-          clip: true
-          contentWidth: availableWidth
-          height: {
-            var count = Math.min(UpdatesManager.aurUpdates.length, popup.maxVisibleItems)
-            if (count === 0) return 28
-            return count * popup.rowHeight + (count - 1) * popup.rowSpacing
-          }
-
-          Column {
-            width: parent.width
-            spacing: popup.rowSpacing
-
-            Repeater {
-              model: UpdatesManager.aurUpdates
-
-              Rectangle {
-                id: aurPkgRow
-                required property var modelData
-                required property int index
-                readonly property bool updating: UpdatesManager.isUpdating(modelData.name)
-                width: parent.width
-                height: popup.rowHeight
-                radius: 4
-                color: updating ? Theme.bgBaseAlt : (aurPkgMouse.containsMouse ? Theme.bgCard : "transparent")
-
-                Column {
-                  anchors.left: parent.left
-                  anchors.leftMargin: 6
-                  anchors.right: aurDlBtn.left
-                  anchors.rightMargin: 4
-                  anchors.verticalCenter: parent.verticalCenter
-                  spacing: 1
-
-                  Text {
-                    width: parent.width
-                    text: modelData.name
-                    color: aurPkgRow.updating ? Theme.textMuted : Theme.textPrimary
-                    font.pixelSize: 13
-                    elide: Text.ElideRight
-                  }
-
-                  Text {
-                    width: parent.width
-                    text: modelData.currentVersion + " \u2192 " + modelData.newVersion
-                    color: aurPkgRow.updating ? Theme.textSubtle : Theme.textMuted
-                    font.pixelSize: 10
-                    elide: Text.ElideMiddle
-                  }
-                }
-
-                Text {
-                  id: aurDlBtn
-                  anchors.right: parent.right
-                  anchors.rightMargin: 14
-                  anchors.verticalCenter: parent.verticalCenter
-                  text: aurPkgRow.updating ? "󰔿" : "󰇚"
-                  color: {
-                    if (UpdatesManager.blocked) return Theme.bgBorder
-                    if (aurPkgRow.updating) return Theme.textMuted
-                    return aurPkgMouse.containsMouse ? Theme.success : Theme.textMuted
-                  }
-                  font.pixelSize: 13
-                  font.family: "Symbols Nerd Font"
-
-                  RotationAnimation on rotation {
-                    running: aurPkgRow.updating
-                    from: 0
-                    to: 360
-                    duration: 1000
-                    loops: Animation.Infinite
-                  }
-                }
-
-                MouseArea {
-                  id: aurPkgMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: UpdatesManager.blocked || aurPkgRow.updating ? Qt.ForbiddenCursor : Qt.PointingHandCursor
-                  onClicked: {
-                    if (!UpdatesManager.blocked && !aurPkgRow.updating) {
-                      UpdatesManager.updatePackage(modelData.name, "aur")
-                    }
-                  }
-                }
-              }
-            }
-
-            Text {
-              visible: UpdatesManager.aurUpdates.length === 0
-              text: "No updates"
-              color: Theme.textMuted
-              font.pixelSize: 12
-              topPadding: 4
-            }
-          }
-        }
-      }
-
-      // Separator
-      Rectangle { width: 1; height: parent.height; color: Theme.bgCardHover }
-
-      // Flatpak column
-      Column {
-        width: (parent.width - 50) / 3
-        spacing: 8
-
-        TitleText {
-          text: "Flatpak (" + UpdatesManager.flatpakUpdates.length + ")"
-        }
-
-        FocusButton {
-          width: parent.width
-          height: 26
-          text: "Update all"
-          fontSize: 12
-          backgroundColor: UpdatesManager.flatpakUpdates.length > 0 && !UpdatesManager.blocked ? Theme.bgCardHover : Theme.bgBaseAlt
-          textColor: UpdatesManager.flatpakUpdates.length > 0 && !UpdatesManager.blocked ? Theme.textPrimary : Theme.textMuted
-          hoverColor: Theme.bgBorder
-          enabled: UpdatesManager.flatpakUpdates.length > 0 && !UpdatesManager.blocked
-          opacity: enabled ? 1.0 : 0.4
-          onClicked: UpdatesManager.updateSource("flatpak")
-        }
-
-        ScrollView {
-          width: parent.width
-          clip: true
-          contentWidth: availableWidth
-          height: {
-            var count = Math.min(UpdatesManager.flatpakUpdates.length, popup.maxVisibleItems)
-            if (count === 0) return 28
-            return count * popup.rowHeight + (count - 1) * popup.rowSpacing
-          }
-
-          Column {
-            width: parent.width
-            spacing: popup.rowSpacing
-
-            Repeater {
-              model: UpdatesManager.flatpakUpdates
-
-              Rectangle {
-                id: fpPkgRow
-                required property var modelData
-                required property int index
-                readonly property bool updating: UpdatesManager.isUpdating(modelData.appId)
-                width: parent.width
-                height: popup.rowHeight
-                radius: 4
-                color: updating ? Theme.bgBaseAlt : (fpPkgMouse.containsMouse ? Theme.bgCard : "transparent")
-
-                Column {
-                  anchors.left: parent.left
-                  anchors.leftMargin: 6
-                  anchors.right: fpDlBtn.left
-                  anchors.rightMargin: 4
-                  anchors.verticalCenter: parent.verticalCenter
-                  spacing: 1
-
-                  Text {
-                    width: parent.width
-                    text: modelData.name
-                    color: fpPkgRow.updating ? Theme.textMuted : Theme.textPrimary
-                    font.pixelSize: 13
-                    elide: Text.ElideRight
-                  }
-
-                  Text {
-                    width: parent.width
-                    text: modelData.newVersion ? modelData.newVersion : modelData.appId
-                    color: fpPkgRow.updating ? Theme.textSubtle : Theme.textMuted
-                    font.pixelSize: 10
-                    elide: Text.ElideMiddle
-                  }
-                }
-
-                Text {
-                  id: fpDlBtn
-                  anchors.right: parent.right
-                  anchors.rightMargin: 14
-                  anchors.verticalCenter: parent.verticalCenter
-                  text: fpPkgRow.updating ? "󰔿" : "󰇚"
-                  color: {
-                    if (UpdatesManager.blocked) return Theme.bgBorder
-                    if (fpPkgRow.updating) return Theme.textMuted
-                    return fpPkgMouse.containsMouse ? Theme.success : Theme.textMuted
-                  }
-                  font.pixelSize: 13
-                  font.family: "Symbols Nerd Font"
-
-                  RotationAnimation on rotation {
-                    running: fpPkgRow.updating
-                    from: 0
-                    to: 360
-                    duration: 1000
-                    loops: Animation.Infinite
-                  }
-                }
-
-                MouseArea {
-                  id: fpPkgMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: UpdatesManager.blocked || fpPkgRow.updating ? Qt.ForbiddenCursor : Qt.PointingHandCursor
-                  onClicked: {
-                    if (!UpdatesManager.blocked && !fpPkgRow.updating) {
-                      UpdatesManager.updatePackage(modelData.appId, "flatpak")
-                    }
-                  }
-                }
-              }
-            }
-
-            Text {
-              visible: UpdatesManager.flatpakUpdates.length === 0
-              text: "No updates"
-              color: Theme.textMuted
-              font.pixelSize: 12
-              topPadding: 4
-            }
+          SourceColumn {
+            sourceId: parent.modelData.id
+            label: parent.modelData.label
+            updates: parent.modelData.updates
+            columnWidth: sourceRow.sourceColumnWidth
+            maxVisibleItems: popup.maxVisibleItems
+            rowHeight: popup.rowHeight
+            rowSpacing: popup.rowSpacing
           }
         }
       }
