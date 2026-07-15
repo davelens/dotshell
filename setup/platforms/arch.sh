@@ -6,7 +6,7 @@ platform_service_description() {
 
 platform_install_packages() {
   echo "==> Installing dotshell runtime and dependencies with pacman..."
-  sudo pacman -S --needed --noconfirm \
+  if ! sudo pacman -S --needed --noconfirm \
     bluez bluez-utils \
     brightnessctl \
     ddcutil \
@@ -19,7 +19,18 @@ platform_install_packages() {
     libnotify \
     ffmpeg \
     jq \
-    desktop-file-utils
+    desktop-file-utils; then
+    cat >&2 <<'EOF'
+error: unable to install dotshell's Arch packages.
+If pacman reported dependency version conflicts, the installed system and
+repository packages are out of sync. Arch does not support partial upgrades.
+Run a full upgrade when convenient, then retry setup:
+
+  sudo pacman -Syu
+  ./setup/init.sh
+EOF
+    return 1
+  fi
 
   if ! command -v paru >/dev/null 2>&1; then
     echo "error: paru is required to install the Quickshell runtime on Arch" >&2

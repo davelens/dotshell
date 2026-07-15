@@ -76,6 +76,7 @@ new_sandbox() {
   TEST_LOG="$SANDBOX/commands.log"
   OS_RELEASE="$SANDBOX/os-release"
   TEST_GETENT_STATUS=2
+  TEST_SUDO_STATUS=0
   mkdir -p "$TEST_HOME" "$TEST_BIN"
   : >"$TEST_LOG"
 
@@ -97,6 +98,7 @@ case "$name" in
     esac
     ;;
   getent) exit "${TEST_GETENT_STATUS:-2}" ;;
+  sudo) exit "${TEST_SUDO_STATUS:-0}" ;;
   lsmod) printf '%s\n' 'i2c_dev 16384 0' ;;
   pgrep) exit 1 ;;
   sv)
@@ -131,6 +133,7 @@ run_setup() {
     DOTSHELL_OS_RELEASE="$OS_RELEASE" \
     TEST_LOG="$TEST_LOG" \
     TEST_GETENT_STATUS="$TEST_GETENT_STATUS" \
+    TEST_SUDO_STATUS="$TEST_SUDO_STATUS" \
     PATH="$TEST_BIN:$ORIGINAL_PATH" \
     bash "$REPO_ROOT/setup/init.sh" 2>&1)"
   RUN_STATUS=$?
@@ -159,7 +162,7 @@ new_sandbox
 set_distro arch
 run_setup
 assert_status 0 'Arch setup succeeds with isolated commands'
-assert_contains "$(cat "$TEST_LOG")" 'sudo <pacman> <-S> <--needed> <--noconfirm>' 'Arch installs dependencies through pacman'
+assert_contains "$(cat "$TEST_LOG")" 'sudo <pacman> <-S> <--needed> <--noconfirm>' 'Arch installs dependencies without upgrading the system'
 assert_contains "$(cat "$TEST_LOG")" '<pacman-contrib>' 'Arch package list includes update support'
 assert_contains "$(cat "$TEST_LOG")" 'paru <-S> <--needed> <--noconfirm> <quickshell>' 'Arch installs Quickshell through paru'
 assert_contains "$(cat "$TEST_LOG")" 'systemctl <--user> <disable> <--now> <quickshell.service>' 'Arch disables the legacy systemd user service'
@@ -171,6 +174,16 @@ assert_symlink "$TEST_DATA/bash-completion/completions/dshell" "$REPO_ROOT/bin/d
 assert_contains "$(cat "$TEST_DATA/applications/dotshell-settings.desktop")" "Exec=qs -p \"$TEST_CONFIG/dotshell\" ipc call settings toggle" 'desktop entry quotes a config path containing spaces'
 run_setup
 assert_status 0 'Arch setup is idempotent'
+
+# Arch setup: package failures explain the safe recovery without forcing an upgrade.
+new_sandbox
+set_distro arch
+TEST_SUDO_STATUS=1
+run_setup
+assert_status 1 'Arch setup stops when pacman fails'
+assert_contains "$RUN_OUTPUT" 'Arch does not support partial upgrades.' 'Arch package failure explains the dependency conflict'
+assert_contains "$RUN_OUTPUT" 'sudo pacman -Syu' 'Arch package failure suggests an explicit full upgrade'
+assert_not_contains "$(cat "$TEST_LOG")" 'paru <-S>' 'Arch setup stops before installing Quickshell after pacman fails'
 
 # Void setup: verify XBPS, group setup, and turnstile/runit service wiring.
 new_sandbox
