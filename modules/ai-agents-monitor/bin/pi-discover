@@ -12,8 +12,8 @@
 #            non-empty errorMessage, with no later user/toolResult message.
 #   - busy:  last user/toolResult message is newer than the last assistant
 #            message with stopReason == "stop".
-#   - input: last assistant stop message is newer than the last user/toolResult
-#            and appears to ask for user input.
+#   - input: a pi-guardrails dangerous-command tool call is awaiting a result,
+#            or the last assistant stop asks for user input.
 #   - idle:  otherwise (last assistant has stopReason == "stop", or session
 #            has no messages yet).
 #
@@ -31,6 +31,90 @@ sessions_dir="${PI_SESSIONS_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/pi/sessions}"
 
 if ! command -v jq >/dev/null 2>&1; then
   exit 0
+fi
+
+session_status() {
+  tail -n 50 "$1" | jq -rs '
+    def text_content:
+      [(.message.content // [])[]? | select(.type == "text") | .text] | join("\n");
+
+    def asks_for_input:
+      gsub("[[:space:]]+$"; "")
+      | test("\\?$|(?im)(^|\\n)\\s*(pick|choose|select|run|proceed|continue|which|want me to|should i|shall i|ok to|okay to|approve|confirm)\\b.*\\?\\s*$");
+
+    # Mirrors pi-guardrails built-in dangerous command families. A matching
+    # unresolved bash call means its confirmation prompt is still open.
+    # ponytail: Add an event/state bridge if custom guardrail patterns need tracking.
+    def needs_confirmation:
+      test(
+        "(^|[;&|][[:space:]]*)("
+        + "rm[[:space:]]+(?=[^;&|\\n]*(-[^[:space:]]*[rR]|--recursive|--dir))(?=[^;&|\\n]*(-[^[:space:]]*f|--force))[^;&|\\n]*"
+        + "|(?:sudo|doas|pkexec|shred|wipefs|blkdiscard|fdisk|sfdisk|cfdisk|parted|sgdisk|mkfs(?:\\.[^[:space:];|&]+)?)(?:[[:space:]]|$)"
+        + "|dd[[:space:]]+(?:[^[:space:];&|]+[[:space:]]+)*of=[^;&|\\n]*"
+        + "|chmod[[:space:]]+(?=[^;&|\\n]*(-R|--recursive))(?=[^;&|\\n]*(0?777|a\\+rwx|ugo\\+rwx|7777|1777))[^;&|\\n]*"
+        + "|chown[[:space:]]+(?=[^;&|\\n]*(-R|--recursive))[^;&|\\n]*"
+        + "|(?:docker|podman)[[:space:]]+(?:run|create)[[:space:]]+(?=[^;&|\\n]*(--privileged|--pid=host|--network=host|--userns=host|--uts=host|--ipc=host|-v/:|--volume=/:|--mount=type=bind,source=/,|docker\\.sock|podman\\.sock))[^;&|\\n]*"
+        + ")";
+        "i"
+      );
+
+    def guarded_tool_call:
+      .type == "toolCall"
+      and .name == "bash"
+      and ((.arguments.command // "") | needs_confirmation);
+
+    reduce .[] as $e (
+      {
+        lastAssistantStop: null,
+        lastAssistantStopText: "",
+        lastAssistantError: null,
+        lastUserOrTool: null,
+        pendingGuardrailCalls: {}
+      };
+      if $e.type == "message" then
+        if $e.message.role == "assistant" then
+          (reduce ($e.message.content // [])[]? as $content (.;
+            if ($content | guarded_tool_call) then
+              .pendingGuardrailCalls[$content.id] = true
+            else . end
+          ))
+          | (if ($e.message.stopReason == "stop") then
+              .lastAssistantStop = $e.timestamp
+              | .lastAssistantStopText = ($e | text_content)
+            else . end)
+          | (if ($e.message.stopReason == "aborted")
+                or (($e.message.errorMessage // "") != "") then
+              .lastAssistantError = $e.timestamp
+            else . end)
+        elif ($e.message.role == "user") or ($e.message.role == "toolResult") then
+          .lastUserOrTool = $e.timestamp
+          | if $e.message.role == "toolResult" and (($e.message.toolCallId // "") != "") then
+              del(.pendingGuardrailCalls[$e.message.toolCallId])
+            else . end
+        else . end
+      else . end
+    )
+    | if (.pendingGuardrailCalls | length) > 0
+      then "input"
+      elif (.lastAssistantError != null)
+        and ((.lastUserOrTool == null) or (.lastUserOrTool < .lastAssistantError))
+      then "error"
+      elif (.lastUserOrTool != null)
+        and ((.lastAssistantStop == null) or (.lastUserOrTool > .lastAssistantStop))
+      then "busy"
+      elif (.lastAssistantStop != null)
+        and ((.lastUserOrTool == null) or (.lastAssistantStop > .lastUserOrTool))
+        and (.lastAssistantStopText | asks_for_input)
+      then "input"
+      else "idle"
+      end
+  '
+}
+
+if [ "${1:-}" = "--status-file" ]; then
+  [ "$#" -eq 2 ] || exit 2
+  session_status "$2"
+  exit
 fi
 
 # Collect (pid, cwd) pairs for live pi processes, dedup by cwd keeping lowest PID
@@ -100,45 +184,7 @@ for cwd in "${!cwd_pid[@]}"; do
   session_id=$(head -n 1 "$active_file" | jq -r 'select(.type=="session") | .id // ""' 2>/dev/null || echo "")
 
   # Status inference from the tail
-  status=$(tail -n 50 "$active_file" | jq -rs '
-    def text_content:
-      [(.message.content // [])[]? | select(.type == "text") | .text] | join("\n");
-
-    def asks_for_input:
-      gsub("[[:space:]]+$"; "")
-      | test("\\?$|(?im)(^|\\n)\\s*(pick|choose|select|run|proceed|continue|which|want me to|should i|shall i|ok to|okay to|approve|confirm)\\b.*\\?\\s*$");
-
-    # Walk events in order; track last assistant stop/error, its text, and last user/toolResult.
-    reduce .[] as $e (
-      {lastAssistantStop: null, lastAssistantStopText: "", lastAssistantError: null, lastUserOrTool: null};
-      if $e.type == "message" then
-        if $e.message.role == "assistant" then
-          (if ($e.message.stopReason == "stop") then
-            .lastAssistantStop = $e.timestamp
-            | .lastAssistantStopText = ($e | text_content)
-          else . end)
-          | (if ($e.message.stopReason == "aborted")
-                or (($e.message.errorMessage // "") != "") then
-            .lastAssistantError = $e.timestamp
-          else . end)
-        elif ($e.message.role == "user") or ($e.message.role == "toolResult") then
-          .lastUserOrTool = $e.timestamp
-        else . end
-      else . end
-    )
-    | if (.lastAssistantError != null)
-        and ((.lastUserOrTool == null) or (.lastUserOrTool < .lastAssistantError))
-      then "error"
-      elif (.lastUserOrTool != null)
-        and ((.lastAssistantStop == null) or (.lastUserOrTool > .lastAssistantStop))
-      then "busy"
-      elif (.lastAssistantStop != null)
-        and ((.lastUserOrTool == null) or (.lastAssistantStop > .lastUserOrTool))
-        and (.lastAssistantStopText | asks_for_input)
-      then "input"
-      else "idle"
-      end
-  ' 2>/dev/null || echo "idle")
+  status=$(session_status "$active_file" 2>/dev/null || echo "idle")
 
   [ -n "$status" ] || status="idle"
 
