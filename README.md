@@ -36,7 +36,7 @@ A custom, keyboard-driven shell featuring a modular status bar and settings pane
   - idle-inhibitor - Toggle to prevent the system from going idle/sleeping
   - media - Play/pause toggles for music
   - notifications - Desktop notification history and management
-  - opencode - Status indicator for running OpenCode AI agent sessions
+  - ai-agents-monitor - Status indicator for OpenCode, Claude Code, and interactive Pi sessions
   - power - Lock, suspend, logout, reboot, and shutdown actions
   - recording - Screenshot and screencast capture with file browsing
   - system-load - Live CPU and memory usage display
@@ -50,10 +50,12 @@ A custom, keyboard-driven shell featuring a modular status bar and settings pane
 - Keyboard-driven navigation throughout, status bar included
 - Catppuccin Mocha color scheme - Not configurable yet, but you can alter `core/Colors.qml`
 
-### Module: opencode
+### Module: AI Agents Monitor
 
-This module requires starting OpenCode with the `oc` binary it provides. This 
-makes the status bar segment aware of OpenCode's state in real time.
+The module discovers standalone Claude Code and interactive Pi sessions
+automatically. Headless Pi workers, including RPC sessions started by Pi Browser
+Taskbar, are ignored. OpenCode must be started with the bundled `oc` wrapper so
+the module can discover its server and report its state in real time.
 
 ## Dependencies
 There's quite a few you will need to install, seeing as this is mostly a personal setup.
