@@ -33,11 +33,15 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 0
 fi
 
-# Collect (pid, cwd) pairs for live pi processes, dedup by cwd keeping lowest PID
+# Collect (pid, cwd) pairs for interactive pi processes, dedup by cwd keeping
+# the lowest PID. Pi clears its argv after startup, so the controlling terminal
+# is the reliable way to exclude headless RPC and print-mode workers.
 declare -A cwd_pid
 
 while read -r pid; do
   [ -n "$pid" ] || continue
+  stdin=$(readlink "/proc/$pid/fd/0" 2>/dev/null) || continue
+  [[ "$stdin" == /dev/pts/* || "$stdin" == /dev/tty* ]] || continue
   cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null) || continue
   [ -n "$cwd" ] || continue
   if [ -z "${cwd_pid[$cwd]:-}" ] || [ "$pid" -lt "${cwd_pid[$cwd]}" ]; then
