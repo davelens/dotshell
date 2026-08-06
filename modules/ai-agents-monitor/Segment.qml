@@ -71,7 +71,9 @@ Item {
   TooltipBase {
     anchorItem: segment
     visible: hoverArea.containsMouse || segment.barFocused
-    fixedWidth: 280
+    fixedWidth: 400
+    horizontalPadding: 40
+    verticalPadding: 24
 
     Column {
       width: parent.width
