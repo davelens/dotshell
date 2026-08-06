@@ -205,6 +205,21 @@ fi
 assert_eq 'agents' "$($DSHELL --complete | grep -x agents)" \
   'dshell completion includes the agents group'
 
+XDG_CONFIG_TEST="$SANDBOX/config"
+XDG_DATA_TEST="$SANDBOX/data"
+mkdir -p "$XDG_CONFIG_TEST/dotshell/modules/remote" \
+  "$XDG_CONFIG_TEST/dotshell/statusbar" "$XDG_DATA_TEST/dotshell"
+printf '%s\n' '{"settingsCategoryOrder":["statusbar"]}' \
+  >"$XDG_DATA_TEST/dotshell/general.json"
+printf '%s\n' '{"id":"remote","order":205,"components":{"settings":"Settings.qml"}}' \
+  >"$XDG_CONFIG_TEST/dotshell/modules/remote/module.json"
+printf '%s\n' '{"id":"statusbar","order":5,"components":{"settings":"Settings.qml"}}' \
+  >"$XDG_CONFIG_TEST/dotshell/statusbar/module.json"
+CATEGORY_OUTPUT="$(XDG_CONFIG_HOME="$XDG_CONFIG_TEST" XDG_DATA_HOME="$XDG_DATA_TEST" \
+  "$DSHELL" --complete settings show-category)"
+assert_eq 'remote' "$(grep -x remote <<<"$CATEGORY_OUTPUT")" \
+  'settings completion includes manifest categories absent from persisted order'
+
 printf '1..%d\n' "$TESTS"
 if [[ "$FAILURES" -gt 0 ]]; then
   printf '%d of %d tests failed\n' "$FAILURES" "$TESTS" >&2

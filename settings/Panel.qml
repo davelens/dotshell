@@ -559,69 +559,98 @@ Scope {
                 }
               }
 
-              Column {
+              Flickable {
+                id: categoryList
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.right: parent.right
+                anchors.bottom: profileButtons.top
                 anchors.topMargin: 8
-                spacing: 2
+                anchors.bottomMargin: 8
+                contentWidth: width
+                contentHeight: categoryColumn.height
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: ScrollBar {}
 
-                Repeater {
-                  model: root.categories
+                Column {
+                  id: categoryColumn
+                  width: categoryList.width
+                  spacing: 2
 
-                  Rectangle {
-                    required property var modelData
-                    required property int index
-
-                    width: sidebar.width
-                    height: visible ? 44 : 0
-                    visible: root.matchesSearch(modelData)
-                    color: root.activeCategory === modelData.id ? Theme.bgCard :
-                         categoryArea.containsMouse ? Theme.bgCard : "transparent"
+                  Repeater {
+                    id: categoryRepeater
+                    model: root.categories
 
                     Rectangle {
-                      anchors.left: parent.left
-                      anchors.verticalCenter: parent.verticalCenter
-                      width: 3
-                      height: 24
-                      radius: 2
-                      color: Theme.accent
-                      visible: root.activeCategory === modelData.id
-                    }
+                      required property var modelData
+                      required property int index
 
-                    Row {
-                      anchors.left: parent.left
-                      anchors.leftMargin: 16
-                      anchors.verticalCenter: parent.verticalCenter
-                      spacing: 12
+                      width: sidebar.width
+                      height: visible ? 44 : 0
+                      visible: root.matchesSearch(modelData)
+                      color: root.activeCategory === modelData.id ? Theme.bgCard :
+                           categoryArea.containsMouse ? Theme.bgCard : "transparent"
 
-                      Text {
-                        width: 20
+                      Rectangle {
+                        anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.icon
-                        color: root.activeCategory === modelData.id ? Theme.accent : Theme.textPrimary
-                        font.pixelSize: 16
-                        font.family: "Symbols Nerd Font"
-                        horizontalAlignment: Text.AlignHCenter
+                        width: 3
+                        height: 24
+                        radius: 2
+                        color: Theme.accent
+                        visible: root.activeCategory === modelData.id
                       }
 
-                      Text {
+                      Row {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 16
                         anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.name
-                        color: root.activeCategory === modelData.id ? Theme.textPrimary : Theme.textSecondary
-                        font.pixelSize: 14
+                        spacing: 12
+
+                        Text {
+                          width: 20
+                          anchors.verticalCenter: parent.verticalCenter
+                          text: modelData.icon
+                          color: root.activeCategory === modelData.id ? Theme.accent : Theme.textPrimary
+                          font.pixelSize: 16
+                          font.family: "Symbols Nerd Font"
+                          horizontalAlignment: Text.AlignHCenter
+                        }
+
+                        Text {
+                          anchors.verticalCenter: parent.verticalCenter
+                          text: modelData.name
+                          color: root.activeCategory === modelData.id ? Theme.textPrimary : Theme.textSecondary
+                          font.pixelSize: 14
+                        }
+                      }
+
+                      MouseArea {
+                        id: categoryArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                          root.sidebarProfileFocus = -1
+                          root.activeCategory = modelData.id
+                        }
                       }
                     }
+                  }
+                }
 
-                    MouseArea {
-                      id: categoryArea
-                      anchors.fill: parent
-                      hoverEnabled: true
-                      cursorShape: Qt.PointingHandCursor
-                      onClicked: {
-                        root.sidebarProfileFocus = -1
-                        root.activeCategory = modelData.id
-                      }
+                Connections {
+                  target: root
+                  function onActiveCategoryChanged() {
+                    for (var i = 0; i < categoryRepeater.count; i++) {
+                      var item = categoryRepeater.itemAt(i)
+                      if (!item || item.modelData.id !== root.activeCategory) continue
+                      if (item.y < categoryList.contentY)
+                        categoryList.contentY = item.y
+                      else if (item.y + item.height > categoryList.contentY + categoryList.height)
+                        categoryList.contentY = item.y + item.height - categoryList.height
+                      break
                     }
                   }
                 }
@@ -629,6 +658,7 @@ Scope {
 
               // Profile buttons
               Column {
+                id: profileButtons
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right

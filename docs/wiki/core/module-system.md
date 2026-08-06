@@ -21,6 +21,12 @@ After discovery, executables in `modules/*/bin/` are symlinked into
 `$XDG_BIN_HOME`, falling back to `~/.local/bin`. Dangling symlinks pointing
 into `modules/` are pruned first, so removing a module cleans up its binaries.
 
+The persisted settings category order is a sorting preference, not an
+allowlist. Modules with a settings component that are absent from that list are
+appended by manifest order; the settings sidebar scrolls when they exceed the
+available height. CLI category completion uses the same persisted-plus-manifest
+model.
+
 ## Manifest schema (`module.json`)
 
 | Field | Meaning |
