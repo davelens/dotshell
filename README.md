@@ -57,6 +57,31 @@ automatically. Headless Pi workers, including RPC sessions started by Pi Browser
 Taskbar, are ignored. OpenCode must be started with the bundled `oc` wrapper so
 the module can discover its server and report its state in real time.
 
+#### Remote monitoring
+
+Dotshell instances can monitor each other across machines. Every instance
+publishes its locally discovered agents on the `agents` IPC target:
+
+```sh
+dshell agents current # one snapshot
+dshell agents listen  # stream one snapshot per poll
+```
+
+To subscribe from another machine, set the SSH host alias of the machine you
+want to monitor under Settings → AI Agents Monitor. The subscription runs over
+a single persistent SSH connection (BatchMode, no forwardings, host-key
+verification intact), so it works anywhere your normal SSH access works —
+including over Tailscale: use your existing SSH alias or the server's MagicDNS
+name as the host. Authentication, ports, and jump hosts all come from
+`~/.ssh/config`.
+
+Imported agents are labelled with their source host in the tooltip and are
+dropped from the counts after 60 seconds without fresh data, with the
+connection retried every 5 seconds. Snapshots contain only provider, project
+name, status, and session title — no PIDs, paths, or ports. Only locally
+discovered agents are re-published, so two machines can safely monitor each
+other without feedback loops.
+
 ## Dependencies
 There's quite a few you will need to install, seeing as this is mostly a personal setup.
 Though I dare say most of them are common, and widely used.
@@ -137,6 +162,8 @@ dshell <command> <subcommand> [args]
 
 | Command | Subcommand | Description |
 |---|---|---|
+| `agents` | `current` | Print the current local AI agent snapshot |
+| `agents` | `listen` | Stream local AI agent snapshots |
 | `bar` | `focus <verb>` | Bar focus mode: `toggle`, `enable`, `disable`, `state` |
 | `idle` | `enable` | Enable idle inhibitor |
 | `idle` | `disable` | Disable idle inhibitor |

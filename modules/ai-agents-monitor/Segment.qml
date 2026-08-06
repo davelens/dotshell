@@ -12,6 +12,7 @@ Item {
   height: row.height
 
   property bool showInBar: AiAgentsMonitorManager.totalCount > 0
+    || AiAgentsMonitorManager.remoteConfigured
 
   Row {
     id: row
@@ -136,9 +137,12 @@ Item {
 
             Text {
               anchors.verticalCenter: parent.verticalCenter
-              text: modelData.project
+              text: modelData.remote
+                ? modelData.project + " @" + modelData.source
+                : modelData.project
               color: Theme.textPrimary
               font.pixelSize: 14
+              textFormat: Text.PlainText
               elide: Text.ElideRight
               width: parent.width - statusIcon.width - providerLabel.width - statusLabel.width - 24
             }
@@ -164,11 +168,26 @@ Item {
             text: modelData.sessionTitle
             color: Theme.textSecondary
             font.pixelSize: 12
+            textFormat: Text.PlainText
             elide: Text.ElideRight
             width: parent.width
             leftPadding: statusIcon.width + providerLabel.width + 16
           }
         }
+      }
+
+      Text {
+        visible: AiAgentsMonitorManager.remoteConfigured
+          && AiAgentsMonitorManager.remoteState !== "connected"
+        text: AiAgentsMonitorManager.remoteHost
+          + (AiAgentsMonitorManager.remoteState === "connecting"
+            ? ": connecting\u2026"
+            : ": unavailable")
+        color: Theme.textMuted
+        font.pixelSize: 12
+        textFormat: Text.PlainText
+        elide: Text.ElideRight
+        width: parent.width
       }
     }
   }

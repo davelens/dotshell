@@ -3,6 +3,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import qs
 
 Singleton {
   id: manager
@@ -17,6 +18,7 @@ Singleton {
   // Per-instance details — normalized across all providers:
   //   { provider, pid, cwd, project, status, sessionTitle, <provider-specific> }
   // OpenCode extras: port
+  // Remote extras: source, remote (imported from another dotshell over SSH)
   property var instances: []
 
   // Registry directory for OpenCode (set once at startup)
@@ -73,16 +75,38 @@ Singleton {
     if (!_ocBusy && !_ccBusy && !_piBusy) _mergeProviders()
   }
 
-  // Merge completed provider instance arrays into the shared `instances` list
-  // and recompute aggregated counts.
+  // Locally discovered instances only — this is what gets exported to
+  // subscribers, so imported remote instances can never be re-exported.
+  property var _localInstances: []
+  property bool _localReady: false
+  property double _localGeneratedAtMs: 0
+
+  // Merge completed provider instance arrays into the local snapshot,
+  // broadcast it to IPC subscribers, and republish the display list.
   function _mergeProviders() {
     var merged = []
     for (var i = 0; i < _ocInstances.length; i++)
       merged.push(_ocInstances[i])
-    for (var i = 0; i < _ccInstances.length; i++)
-      merged.push(_ccInstances[i])
-    for (var i = 0; i < _piInstances.length; i++)
-      merged.push(_piInstances[i])
+    for (var j = 0; j < _ccInstances.length; j++)
+      merged.push(_ccInstances[j])
+    for (var k = 0; k < _piInstances.length; k++)
+      merged.push(_piInstances[k])
+
+    _localInstances = merged
+    _localGeneratedAtMs = Date.now()
+    _localReady = true
+    agentsIpc.snapshot(_snapshotJson())
+    _publish()
+  }
+
+  // Combine local and imported remote instances into the shared `instances`
+  // list and recompute aggregated counts.
+  function _publish() {
+    var merged = []
+    for (var i = 0; i < _localInstances.length; i++)
+      merged.push(_localInstances[i])
+    for (var j = 0; j < _remoteInstances.length; j++)
+      merged.push(_remoteInstances[j])
 
     manager.instances = merged
     manager.totalCount = merged.length
@@ -91,16 +115,51 @@ Singleton {
     var idle = 0
     var errors = 0
     var questions = 0
-    for (var j = 0; j < merged.length; j++) {
-      if (merged[j].status === "busy") busy++
-      else if (merged[j].status === "idle") idle++
-      else if (merged[j].status === "error") errors++
-      else if (merged[j].status === "input") questions++
+    for (var k = 0; k < merged.length; k++) {
+      if (merged[k].status === "busy") busy++
+      else if (merged[k].status === "idle") idle++
+      else if (merged[k].status === "error") errors++
+      else if (merged[k].status === "input") questions++
     }
     manager.busyCount = busy
     manager.idleCount = idle
     manager.errorCount = errors
     manager.questionCount = questions
+  }
+
+  // Compact v1 snapshot of local instances only — display fields, no
+  // pid/cwd/port/sessionId.
+  function _snapshotJson() {
+    var list = []
+    for (var i = 0; i < _localInstances.length; i++) {
+      var inst = _localInstances[i]
+      list.push({
+        provider: inst.provider,
+        project: inst.project,
+        status: inst.status,
+        sessionTitle: inst.sessionTitle
+      })
+    }
+    return JSON.stringify({
+      version: 1,
+      ready: _localReady,
+      generatedAtMs: _localGeneratedAtMs,
+      instances: list
+    })
+  }
+
+  // Read/subscribe surface for other dotshell instances: `call agents
+  // current` returns the latest snapshot, `listen agents snapshot` receives
+  // a push after every completed local provider poll.
+  IpcHandler {
+    id: agentsIpc
+    target: "agents"
+
+    signal snapshot(payload: string)
+
+    function current(): string {
+      return manager._snapshotJson()
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -518,6 +577,129 @@ Singleton {
       manager._piInstances = discovered
       manager._piBusy = false
       manager._tryMerge()
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Remote subscription (client mode)
+  // -------------------------------------------------------------------------
+
+  // SSH host alias of another dotshell machine to import agents from.
+  // Blank keeps this instance in publisher/local-only mode.
+  property alias remoteHost: remoteConfigAdapter.remoteHost
+  readonly property bool remoteConfigured: remoteHost.trim() !== ""
+
+  // Transport state: "" (off), "connecting", "connected", or "stale"
+  property string remoteState: ""
+
+  // Imported instances, already validated and annotated with source/remote
+  // by bin/remote-stream
+  property var _remoteInstances: []
+  property double _remoteGeneratedAtMs: -1
+  property double _remoteFreshAtMs: 0
+
+  ModuleConfig {
+    moduleId: "ai-agents-monitor"
+    scope: "general"
+    adapter: JsonAdapter {
+      id: remoteConfigAdapter
+      property string remoteHost: ""
+    }
+  }
+
+  onRemoteHostChanged: _restartRemote()
+
+  function _restartRemote() {
+    reconnectTimer.stop()
+    _remoteInstances = []
+    _remoteGeneratedAtMs = -1
+    _remoteFreshAtMs = Date.now()
+    if (remoteProc.running) {
+      // onExited reconnects with the new host (or stops when blank)
+      remoteProc.running = false
+    } else if (remoteConfigured) {
+      remoteState = "connecting"
+      _startRemoteStream()
+    }
+    if (!remoteConfigured) remoteState = ""
+    _publish()
+  }
+
+  function _startRemoteStream() {
+    if (!remoteConfigured || remoteProc.running) return
+    remoteProc.command = ["bash",
+      Quickshell.shellDir + "/modules/ai-agents-monitor/bin/remote-stream",
+      remoteHost.trim()]
+    remoteProc.running = true
+  }
+
+  // Apply one validated snapshot line from remote-stream. An advancing
+  // generation refreshes freshness; transport failures never touch local
+  // provider polling or the agent error count.
+  function _remoteIngest(line) {
+    var trimmed = line.trim()
+    if (trimmed === "") return
+
+    var payload
+    try {
+      payload = JSON.parse(trimmed)
+    } catch(e) {
+      return
+    }
+    if (!payload || payload.version !== 1 || !Array.isArray(payload.instances)) return
+    if (payload.source !== remoteHost.trim()) return
+    if (typeof payload.generatedAtMs !== "number" || !isFinite(payload.generatedAtMs)) return
+
+    var generation = payload.generatedAtMs
+    if (generation <= _remoteGeneratedAtMs) return
+
+    _remoteGeneratedAtMs = generation
+    _remoteFreshAtMs = Date.now()
+    _remoteInstances = payload.instances
+    remoteState = "connected"
+    _publish()
+  }
+
+  Process {
+    id: remoteProc
+    stdout: SplitParser {
+      onRead: line => manager._remoteIngest(line)
+    }
+    onExited: function(exitCode) {
+      if (manager.remoteConfigured) {
+        // Keep imported rows for now; the stale timer clears them if the
+        // stream stays down.
+        if (manager.remoteState !== "stale") manager.remoteState = "connecting"
+        console.warn("[AiAgentsMonitor] Remote stream exited with code", exitCode)
+        reconnectTimer.restart()
+      } else {
+        manager.remoteState = ""
+      }
+    }
+  }
+
+  Timer {
+    id: reconnectTimer
+    interval: 5000
+    onTriggered: {
+      if (manager.remoteConfigured && !remoteProc.running)
+        manager._startRemoteStream()
+    }
+  }
+
+  // Drop imported rows once the stream has gone 60s without an advancing
+  // generation, so counts never show a dead remote as active.
+  Timer {
+    interval: 10000
+    running: manager.remoteConfigured
+    repeat: true
+    onTriggered: {
+      if (manager.remoteState === "stale") return
+      if (Date.now() - manager._remoteFreshAtMs > 60000) {
+        manager.remoteState = "stale"
+        manager._remoteInstances = []
+        manager._publish()
+      }
     }
   }
 }

@@ -20,7 +20,7 @@ Row format: `"path|handler|args|description"`.
 | Field | Meaning |
 | --- | --- |
 | `path` | words after `dshell`, matched verbatim (`bar focus toggle`) |
-| `handler` | `ipc <target> <function> [fixed-args…]` or `fn <local function>` |
+| `handler` | `ipc <target> <function> [fixed-args…]`, `listen <target> <signal>`, or `fn <local function>` |
 | `args` | `<x>` required, `[x]` optional; `:source` suffix names the completion source |
 | `description` | one line, shown in usage |
 
@@ -50,10 +50,12 @@ queries return bare values (`true`/`false`) for scripting.
 ## State reads (ADR-0003)
 
 All reads of dotshell JSON state go through `json_get <file> <jq-filter>
-[default]`; jq is a hard dependency. IPC is for mutations only — the
-state files are authoritative (QML saves on every change) and reads must
-work with the shell down (`wallpaper restore` runs at compositor
-startup, before the shell).
+[default]`; jq is a hard dependency. IPC is for mutations and genuinely shell-dependent runtime queries only —
+the state files are authoritative for persisted reads and must work with the
+shell down (`wallpaper restore` runs at compositor startup, before the shell).
+`agents current` and `agents listen` cross IPC because active agent snapshots
+exist only in the running shell; both use `--any-display` so they also work in
+non-graphical SSH sessions.
 
 ## Completion
 
@@ -64,8 +66,8 @@ new terminal.
 
 ## Adding a new subcommand
 
-1. Add the IpcHandler function in the owning QML manager, returning a
-   feedback string (or `error: …`).
+1. Add the IpcHandler function or signal in the owning QML manager, returning
+   a feedback string (or `error: …`) for functions.
 2. Add one `COMMANDS` row. New command group → also one
    `GROUP_DESCRIPTIONS` row.
 3. New argument kind → add a completion source function and a case in

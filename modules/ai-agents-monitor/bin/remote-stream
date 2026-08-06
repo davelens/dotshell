@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# Streams validated agent snapshots from a remote dotshell instance over SSH.
+#
+# Usage: remote-stream <ssh-host-alias>
+#
+# Connects once, asks the remote `agents` IPC target for an initial snapshot,
+# then stays attached to its snapshot signal stream. Output is one compact
+# JSON object per line, filtered down to display fields and annotated per
+# instance with { source: <host>, remote: true }. Malformed lines, unknown
+# schema versions, and out-of-bounds payloads are dropped, never forwarded.
+#
+# SSH_BIN overrides the ssh binary (used by tests).
+
+set -eo pipefail
+
+host="${1:-}"
+
+if [ -z "$host" ] || [ "$#" -ne 1 ]; then
+  echo "usage: remote-stream <ssh-host>" >&2
+  exit 64
+fi
+
+case "$host" in
+  -*|*$'\n'*|*$'\r'*|*$'\t'*)
+    echo "error: invalid SSH host alias" >&2
+    exit 64
+    ;;
+esac
+
+if [ "${#host}" -gt 255 ]; then
+  echo "error: SSH host alias is too long" >&2
+  exit 64
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "error: jq is required" >&2
+  exit 1
+fi
+
+ssh_bin="${SSH_BIN:-ssh}"
+
+# Fetch once, then replace the remote shell with the long-lived listener.
+remote_cmd='dshell agents current; exec dshell agents listen'
+
+stream_dir=$(mktemp -d)
+stream_fifo="$stream_dir/snapshots"
+mkfifo "$stream_fifo"
+ssh_pid=""
+jq_pid=""
+
+# Called by the signal/exit traps below.
+# shellcheck disable=SC2329
+cleanup() {
+  trap - EXIT TERM INT
+  [ -z "$ssh_pid" ] || kill "$ssh_pid" 2>/dev/null || true
+  [ -z "$jq_pid" ] || kill "$jq_pid" 2>/dev/null || true
+  [ -z "$ssh_pid" ] || wait "$ssh_pid" 2>/dev/null || true
+  [ -z "$jq_pid" ] || wait "$jq_pid" 2>/dev/null || true
+  rm -f "$stream_fifo"
+  rmdir "$stream_dir" 2>/dev/null || true
+}
+trap cleanup EXIT TERM INT
+
+"$ssh_bin" -T \
+  -o BatchMode=yes \
+  -o ClearAllForwardings=yes \
+  -o ForwardAgent=no \
+  -o ForwardX11=no \
+  -o Tunnel=no \
+  -o ConnectTimeout=5 \
+  -o ServerAliveInterval=15 \
+  -o ServerAliveCountMax=2 \
+  -- "$host" "$remote_cmd" >"$stream_fifo" &
+ssh_pid=$!
+
+jq -Rc --unbuffered --arg host "$host" '
+  select(length <= 65536)
+  | fromjson?
+  | select(type == "object")
+  | select(.version == 1)
+  | select((.ready | type) == "boolean")
+  | select((.generatedAtMs | type) == "number")
+  | select(.generatedAtMs | (isnan or (isfinite | not)) | not)
+  | select((.instances | type) == "array" and (.instances | length) <= 256)
+  | {
+      version,
+      ready,
+      generatedAtMs,
+      source: $host,
+      instances: [
+        .instances[]
+        | select(type == "object")
+        | select(.provider == "opencode" or .provider == "claude-code" or .provider == "pi")
+        | select(.status == "busy" or .status == "idle" or .status == "error" or .status == "input")
+        | select((.project | type) == "string" and (.sessionTitle | type) == "string")
+        | {
+            provider,
+            project: (.project | gsub("[[:cntrl:]]"; " ") | .[0:120]),
+            status,
+            sessionTitle: (.sessionTitle | gsub("[[:cntrl:]]"; " ") | .[0:160]),
+            source: $host,
+            remote: true
+          }
+      ]
+    }
+' <"$stream_fifo" &
+jq_pid=$!
+
+set +e
+wait "$ssh_pid"
+ssh_status=$?
+wait "$jq_pid"
+jq_status=$?
+ssh_pid=""
+jq_pid=""
+set -e
+
+if [ "$ssh_status" -ne 0 ]; then
+  exit "$ssh_status"
+fi
+exit "$jq_status"
