@@ -610,12 +610,10 @@ Singleton {
   onRemoteHostChanged: _restartRemote()
 
   function _restartRemote() {
-    reconnectTimer.stop()
     _remoteInstances = []
     _remoteGeneratedAtMs = -1
     _remoteFreshAtMs = Date.now()
     if (remoteProc.running) {
-      // onExited reconnects with the new host (or stops when blank)
       remoteProc.running = false
     } else if (remoteConfigured) {
       remoteState = "connecting"
@@ -627,6 +625,8 @@ Singleton {
 
   function _startRemoteStream() {
     if (!remoteConfigured || remoteProc.running) return
+    if (_remoteFreshAtMs === 0) _remoteFreshAtMs = Date.now()
+    if (remoteState === "") remoteState = "connecting"
     remoteProc.command = ["bash",
       Quickshell.shellDir + "/modules/ai-agents-monitor/bin/remote-stream",
       remoteHost.trim()]
@@ -671,20 +671,20 @@ Singleton {
         // stream stays down.
         if (manager.remoteState !== "stale") manager.remoteState = "connecting"
         console.warn("[AiAgentsMonitor] Remote stream exited with code", exitCode)
-        reconnectTimer.restart()
       } else {
         manager.remoteState = ""
       }
     }
   }
 
+  // Ensure a configured stream starts after persisted config loads, and
+  // restart it within five seconds if the process exits.
   Timer {
-    id: reconnectTimer
     interval: 5000
-    onTriggered: {
-      if (manager.remoteConfigured && !remoteProc.running)
-        manager._startRemoteStream()
-    }
+    running: manager.remoteConfigured
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: manager._startRemoteStream()
   }
 
   // Drop imported rows once the stream has gone 60s without an advancing
