@@ -117,10 +117,13 @@ for opt in 'BatchMode=yes' 'ClearAllForwardings=yes' 'ForwardAgent=no' \
   'ServerAliveCountMax=2'; do
   if grep -qxF "$opt" <<<"$SSH_ARGS"; then pass "ssh gets -o $opt"; else fail "ssh gets -o $opt"; fi
 done
-if grep -qF 'dshell agents current; exec dshell agents listen' <<<"$SSH_ARGS"; then
-  pass 'remote command fetches then streams through dshell'
+# The expressions are intentionally expanded by the remote shell.
+# shellcheck disable=SC2016
+if grep -qF '${XDG_BIN_HOME:-$HOME/.local/bin}/dshell' <<<"$SSH_ARGS" \
+    && grep -qF 'agents current; exec "$dshell_bin" agents listen' <<<"$SSH_ARGS"; then
+  pass 'remote command uses the installed dshell path, then fetches and streams'
 else
-  fail 'remote command fetches then streams through dshell'
+  fail 'remote command uses the installed dshell path, then fetches and streams'
 fi
 
 STATUS=0
@@ -219,6 +222,29 @@ CATEGORY_OUTPUT="$(XDG_CONFIG_HOME="$XDG_CONFIG_TEST" XDG_DATA_HOME="$XDG_DATA_T
   "$DSHELL" --complete settings show-category)"
 assert_eq 'remote' "$(grep -x remote <<<"$CATEGORY_OUTPUT")" \
   'settings completion includes manifest categories absent from persisted order'
+
+# Reproduce an SSH command shell whose PATH omits ~/.local/bin.
+REMOTE_HOME="$SANDBOX/remote-home"
+mkdir -p "$REMOTE_HOME/.local/bin"
+cat >"$REMOTE_HOME/.local/bin/dshell" <<'REMOTE_DSHELL'
+#!/usr/bin/env bash
+case "$2" in
+current) printf '%s\n' '{"version":1,"ready":true,"generatedAtMs":200,"instances":[]}' ;;
+listen) printf '%s\n' '{"version":1,"ready":true,"generatedAtMs":201,"instances":[]}' ;;
+esac
+REMOTE_DSHELL
+chmod +x "$REMOTE_HOME/.local/bin/dshell"
+RESTRICTED_SSH="$SANDBOX/restricted-ssh"
+cat >"$RESTRICTED_SSH" <<'RESTRICTED'
+#!/usr/bin/env bash
+remote_command="${!#}"
+env -i HOME="$FAKE_REMOTE_HOME" PATH=/usr/bin:/bin /usr/bin/bash -c "$remote_command"
+RESTRICTED
+chmod +x "$RESTRICTED_SSH"
+RESTRICTED_OUTPUT="$(SSH_BIN="$RESTRICTED_SSH" FAKE_REMOTE_HOME="$REMOTE_HOME" \
+  "$SCRIPT" devbox)"
+assert_eq 2 "$(wc -l <<<"$RESTRICTED_OUTPUT")" \
+  'remote stream finds dshell when non-interactive SSH PATH omits ~/.local/bin'
 
 printf '1..%d\n' "$TESTS"
 if [[ "$FAILURES" -gt 0 ]]; then
