@@ -174,6 +174,9 @@ dshell <command> <subcommand> [args]
 | `notifications` | `close` | Close notification panel |
 | `notifications` | `dismiss <id>` | Dismiss a notification by id |
 | `notifications` | `clear-all` | Clear notification history |
+| `notifications` | `listen` | Stream new local notifications |
+| `notifications` | `remote set <host>` | Set the remote notification SSH host |
+| `notifications` | `remote clear` | Clear the remote notification SSH host |
 | `popup` | `toggle <name>` | Toggle a popup (e.g. `volume`, `brightness`, `wireless`) |
 | `power` | `toggle` | Toggle power menu |
 | `power` | `open` | Open power menu |

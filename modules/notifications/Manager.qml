@@ -22,6 +22,8 @@ Singleton {
   property alias dndEndHour: settingsAdapter.dndEndHour
   property alias dndEndMinute: settingsAdapter.dndEndMinute
   property alias criticalBypassDnd: settingsAdapter.criticalBypassDnd
+  property alias remoteHost: remoteAdapter.remoteHost
+  readonly property bool remoteConfigured: remoteHost.trim() !== ""
 
   // File-based persistence
   ModuleConfig {
@@ -36,6 +38,15 @@ Singleton {
       property int dndEndHour: 8                   // schedule end hour (0-23)
       property int dndEndMinute: 0                 // schedule end minute (0, 15, 30, 45)
       property bool criticalBypassDnd: true        // critical notifications bypass DND
+    }
+  }
+
+  ModuleConfig {
+    moduleId: "notifications"
+    scope: "general"
+    adapter: JsonAdapter {
+      id: remoteAdapter
+      property string remoteHost: ""
     }
   }
 
@@ -85,6 +96,19 @@ Singleton {
     onNotification: function(notification) {
       notification.tracked = true
       addToHistory(notification)
+
+      var hints = notification.hints || {}
+      if (!hints["x-dotshell-forwarded-from"]) {
+        notificationsIpc.received(JSON.stringify({
+          version: 1,
+          appName: notification.appName || "",
+          summary: notification.summary || "",
+          body: notification.body || "",
+          urgency: notification.urgency === NotificationUrgency.Critical
+            ? "critical"
+            : notification.urgency === NotificationUrgency.Low ? "low" : "normal"
+        }))
+      }
 
       // Listen for property updates triggered by replaces_id replacements.
       // Quickshell updates the Notification object in-place but does not
@@ -516,7 +540,10 @@ Singleton {
   // IPC handler for module-specific verbs; panel open/close/toggle goes
   // through the "overlay" target on OverlayManager
   IpcHandler {
+    id: notificationsIpc
     target: "notifications"
+
+    signal received(payload: string)
 
     function dismiss(id: string): string {
       notificationManager.dismissById(parseInt(id))
@@ -526,6 +553,49 @@ Singleton {
       notificationManager.clearHistory()
       return "Notification history cleared"
     }
+    function setRemoteHost(host: string): string {
+      var value = host.trim()
+      if (value === "" || value.startsWith("-") || value.length > 255 || /[\r\n\t]/.test(value))
+        return "error: invalid SSH host alias"
+      notificationManager.remoteHost = value
+      return "Remote notification host set to " + value
+    }
+    function clearRemoteHost(): string {
+      notificationManager.remoteHost = ""
+      return "Remote notification host cleared"
+    }
+  }
+
+  // =========================================================================
+  // REMOTE NOTIFICATIONS
+  // =========================================================================
+
+  onRemoteHostChanged: {
+    if (remoteProc.running) remoteProc.running = false
+  }
+
+  function startRemoteStream() {
+    if (!remoteConfigured || remoteProc.running) return
+    remoteProc.command = ["bash",
+      Quickshell.shellDir + "/modules/notifications/bin/remote-stream",
+      remoteHost.trim()]
+    remoteProc.running = true
+  }
+
+  Process {
+    id: remoteProc
+    onExited: function(exitCode) {
+      if (notificationManager.remoteConfigured)
+        console.warn("[Notifications] Remote stream exited with code", exitCode)
+    }
+  }
+
+  Timer {
+    interval: 5000
+    running: notificationManager.remoteConfigured
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: notificationManager.startRemoteStream()
   }
 
   // =========================================================================

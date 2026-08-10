@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Replays notifications from a remote dotshell instance over SSH.
+
+set -euo pipefail
+
+host="${1:-}"
+
+if [[ -z "$host" || "$#" -ne 1 ]]; then
+  echo "usage: remote-stream <ssh-host>" >&2
+  exit 64
+fi
+
+case "$host" in
+  -*|*$'\n'*|*$'\r'*|*$'\t'*)
+    echo "error: invalid SSH host alias" >&2
+    exit 64
+    ;;
+esac
+
+if [[ "${#host}" -gt 255 ]]; then
+  echo "error: SSH host alias is too long" >&2
+  exit 64
+fi
+
+command -v jq >/dev/null 2>&1 || { echo "error: jq is required" >&2; exit 1; }
+
+ssh_bin="${SSH_BIN:-ssh}"
+notify_bin="${NOTIFY_BIN:-notify-send}"
+command -v "$notify_bin" >/dev/null 2>&1 || { echo "error: notify-send is required" >&2; exit 1; }
+
+# Non-interactive SSH shells may not include ~/.local/bin in PATH.
+# shellcheck disable=SC2016
+remote_cmd='dshell_bin="${XDG_BIN_HOME:-$HOME/.local/bin}/dshell"; exec "$dshell_bin" notifications listen'
+
+stream_dir="$(mktemp -d)"
+stream_fifo="$stream_dir/notifications"
+mkfifo "$stream_fifo"
+ssh_pid=""
+
+# Called by the signal/exit traps below.
+# shellcheck disable=SC2329
+cleanup() {
+  trap - EXIT TERM INT
+  [[ -z "$ssh_pid" ]] || kill "$ssh_pid" 2>/dev/null || true
+  [[ -z "$ssh_pid" ]] || wait "$ssh_pid" 2>/dev/null || true
+  rm -f "$stream_fifo"
+  rmdir "$stream_dir" 2>/dev/null || true
+}
+trap cleanup EXIT TERM INT
+
+"$ssh_bin" -T \
+  -o BatchMode=yes \
+  -o ClearAllForwardings=yes \
+  -o ForwardAgent=no \
+  -o ForwardX11=no \
+  -o Tunnel=no \
+  -o ConnectTimeout=5 \
+  -o ServerAliveInterval=15 \
+  -o ServerAliveCountMax=2 \
+  -- "$host" "$remote_cmd" >"$stream_fifo" &
+ssh_pid=$!
+
+while IFS= read -r line; do
+  record="$(jq -Rr '
+    select(length <= 65536)
+    | fromjson?
+    | select(type == "object" and .version == 1)
+    | select((.appName | type) == "string")
+    | select((.summary | type) == "string")
+    | select((.body | type) == "string")
+    | select(.urgency == "low" or .urgency == "normal" or .urgency == "critical")
+    | [
+        .urgency,
+        (.appName | gsub("[[:cntrl:]]"; " ") | .[0:120]),
+        (.summary | gsub("[[:cntrl:]]"; " ") | .[0:160]),
+        (.body | gsub("[[:cntrl:]]"; " ") | .[0:1000])
+      ]
+    | join("\u001f")
+  ' <<<"$line")"
+  [[ -n "$record" ]] || continue
+
+  IFS=$'\x1f' read -r urgency app_name summary body <<<"$record"
+  [[ -n "$app_name" ]] || app_name="Remote"
+  "$notify_bin" \
+    -u "$urgency" \
+    -a "$app_name @ $host" \
+    -h "string:x-dotshell-forwarded-from:$host" \
+    -- "$summary" "$body"
+done <"$stream_fifo"
+
+set +e
+wait "$ssh_pid"
+status=$?
+ssh_pid=""
+set -e
+exit "$status"

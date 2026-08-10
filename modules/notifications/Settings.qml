@@ -54,6 +54,46 @@ SettingsPage {
     }
   }
 
+  // Remote notifications
+  TitleText {
+    text: settingsRoot.highlightText("Remote Notifications", settingsRoot.searchQuery)
+    textFormat: Text.RichText
+  }
+
+  Rectangle {
+    width: parent.width
+    height: remoteColumn.height + 24
+    radius: 8
+    color: Theme.bgCard
+
+    Column {
+      id: remoteColumn
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.top: parent.top
+      anchors.margins: 12
+      spacing: 12
+
+      HelpText {
+        width: parent.width
+        text: "SSH host alias of another dotshell machine whose notifications "
+          + "should appear here. Authentication and routing come from "
+          + "<b>~/.ssh/config</b>. Leave empty for local notifications only."
+        textFormat: Text.RichText
+        wrapMode: Text.WordWrap
+      }
+
+      FocusTextInput {
+        width: parent.width
+        text: NotificationManager.remoteHost
+        placeholderText: "e.g. devserver"
+        onEditingFinished: function(value) {
+          NotificationManager.remoteHost = value.trim()
+        }
+      }
+    }
+  }
+
   // Popup Settings
   TitleText {
     text: settingsRoot.highlightText("Popup Settings", settingsRoot.searchQuery)
