@@ -5,7 +5,7 @@
 # Pi has no PID-keyed registry and no HTTP endpoint, so we correlate live
 # `pi` processes (via pgrep -x pi) against ~/.config/pi/sessions/<slug>/*.jsonl
 # by working directory. The slug is the cwd with `/` replaced by `-`, wrapped
-# in `--...--`. The newest .jsonl in that directory is the active session.
+# in `--...--`. The newest .jsonl written since Pi started is the active session.
 #
 # Status inference (newest 50 lines of active session):
 #   - error: last assistant message has stopReason == "aborted" or
@@ -84,8 +84,6 @@ for cwd in "${!cwd_pid[@]}"; do
   slug=$(slugify "$cwd")
   dir="$sessions_dir/$slug"
 
-  [ -d "$dir" ] || continue
-
   # Newest .jsonl by mtime
   active_file=""
   active_mtime=0
@@ -98,7 +96,12 @@ for cwd in "${!cwd_pid[@]}"; do
     fi
   done
 
-  [ -n "$active_file" ] || continue
+  # A blank Pi process has no current session file. Do not inherit the status
+  # or title of an older session from the same cwd.
+  if [ -z "$active_file" ] || [ "$active_file" -ot "/proc/$pid" ]; then
+    printf '%s\t%s\t\tidle\t\n' "$pid" "$cwd"
+    continue
+  fi
 
   # Session id from the first line (type=session)
   session_id=$(head -n 1 "$active_file" | jq -r 'select(.type=="session") | .id // ""' 2>/dev/null || echo "")
