@@ -51,7 +51,7 @@ ssh_pid=""
 jq_pid=""
 
 # Called by the signal/exit traps below.
-# shellcheck disable=SC2329
+# shellcheck disable=SC2317,SC2329
 cleanup() {
   trap - EXIT TERM INT
   [ -z "$ssh_pid" ] || kill "$ssh_pid" 2>/dev/null || true
