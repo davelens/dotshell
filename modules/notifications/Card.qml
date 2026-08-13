@@ -20,6 +20,7 @@ Rectangle {
   property int notificationId: -1
   property var actions: []
   property string image: ""
+  property var timestamp: null
 
   // Track hover state
   property bool hovered: hoverHandler.hovered
@@ -240,6 +241,16 @@ Rectangle {
       selectionColor: Theme.bgBorder
       selectedTextColor: Theme.textPrimary
       visible: body !== ""
+    }
+
+    Text {
+      width: parent.width
+      topPadding: 4
+      horizontalAlignment: Text.AlignLeft
+      text: timestamp ? Qt.formatDateTime(timestamp,
+        timestamp.toDateString() === new Date().toDateString() ? "HH:mm" : "yyyy-MM-dd HH:mm") : ""
+      color: Theme.textMuted
+      font.pixelSize: 10
     }
   }
 

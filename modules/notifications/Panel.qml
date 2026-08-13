@@ -389,6 +389,7 @@ Scope {
                         summary: modelData.summary
                         body: modelData.body
                         urgency: modelData.urgency
+                        timestamp: modelData.timestamp
                         showCloseButton: true
                         compact: true
 
