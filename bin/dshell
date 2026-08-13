@@ -38,6 +38,7 @@ readonly -a COMMANDS=(
   "idle disable|ipc idle disable||Disable idle inhibitor"
   "idle toggle|ipc idle toggle||Toggle idle inhibitor"
   "idle state|ipc idle state||Show idle inhibitor state"
+  "network status|fn network_status||List active network connections"
   "notifications toggle|ipc overlay toggle notifications||Toggle notification panel"
   "notifications open|ipc overlay open notifications||Open notification panel"
   "notifications close|ipc overlay close notifications||Close notification panel"
@@ -75,6 +76,7 @@ readonly -a GROUP_DESCRIPTIONS=(
   "agents|AI agent monitor snapshots"
   "bar|Bar focus mode"
   "idle|Idle inhibitor control"
+  "network|Network information"
   "notifications|Notification panel and history"
   "popup|Popup windows"
   "power|Power menu"
@@ -261,6 +263,12 @@ theme_refresh() {
 
   update_gtk_css "$current"
   echo "GTK CSS regenerated for '$current'"
+}
+
+# -- network -----------------------------------------------------------------
+
+network_status() {
+  nmcli --fields NAME,TYPE,DEVICE connection show --active
 }
 
 # -- profile -----------------------------------------------------------------

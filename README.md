@@ -169,6 +169,7 @@ dshell <command> <subcommand> [args]
 | `idle` | `disable` | Disable idle inhibitor |
 | `idle` | `toggle` | Toggle idle inhibitor |
 | `idle` | `state` | Show idle inhibitor state |
+| `network` | `status` | List active network connections |
 | `notifications` | `toggle` | Toggle notification panel |
 | `notifications` | `open` | Open notification panel |
 | `notifications` | `close` | Close notification panel |
