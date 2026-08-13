@@ -288,7 +288,7 @@ Singleton {
   // Get network list (without rescan)
   Process {
     id: networkListProc
-    command: ["nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL,SECURITY", "dev", "wifi", "list"]
+    command: ["nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL,SECURITY", "dev", "wifi", "list", "--rescan", "no"]
     stdout: StdioCollector {}
     onExited: {
       wirelessManager.parseNetworkList(networkListProc.stdout.text)
