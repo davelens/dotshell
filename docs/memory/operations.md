@@ -1,6 +1,7 @@
 # Operations
 
 - `~/.config/dotshell` symlinks to this repo, so edits hit the live instance.
+- After restarting dotshell, run `dshell idle enable` so swayidle stays inhibited.
 - Arch runs dotshell as the `dotshell.service` systemd user unit:
   - restart: `systemctl --user restart dotshell.service`
   - logs: `journalctl --user -u dotshell.service`
