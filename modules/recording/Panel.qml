@@ -657,12 +657,32 @@ Scope {
                       anchors.fill: parent
                       anchors.margins: 1
                       fillMode: Image.PreserveAspectCrop
-                      source: cellRect.filePath && panel.activeTab === "screenshots" ? "file://" + cellRect.filePath : ""
-                      sourceSize.width: gridView.cellWidth * 2
-                      sourceSize.height: gridView.cellHeight * 2
                       asynchronous: true
                       cache: false
                       visible: panel.activeTab === "screenshots" && status === Image.Ready
+
+                      property string imagePath: cellRect.filePath
+                      property string thumbPath: imagePath ? RecordingManager.getThumbnailPath(imagePath) : ""
+
+                      source: panel.activeTab === "screenshots" && thumbPath ? "file://" + thumbPath : ""
+
+                      onStatusChanged: {
+                        if (panel.activeTab === "screenshots" && status === Image.Error && imagePath)
+                          RecordingManager.requestThumbnail(imagePath)
+                      }
+
+                      Connections {
+                        target: RecordingManager
+                        function onThumbnailReady(filePath, thumbPath) {
+                          if (filePath === screenshotThumb.imagePath) {
+                            screenshotThumb.source = ""
+                            screenshotThumb.source = Qt.binding(function() {
+                              return panel.activeTab === "screenshots" && screenshotThumb.thumbPath
+                                ? "file://" + screenshotThumb.thumbPath : ""
+                            })
+                          }
+                        }
+                      }
                     }
 
                     // Screencast thumbnail (lazy-loaded)
@@ -678,7 +698,7 @@ Scope {
                       property string videoPath: cellRect.filePath
                       property string thumbPath: videoPath ? RecordingManager.getThumbnailPath(videoPath) : ""
 
-                      source: thumbPath ? "file://" + thumbPath : ""
+                      source: panel.activeTab === "screencasts" && thumbPath ? "file://" + thumbPath : ""
 
                       onStatusChanged: {
                         if (panel.activeTab === "screencasts" && status === Image.Error && videoPath) {
@@ -686,18 +706,15 @@ Scope {
                         }
                       }
 
-                      Component.onCompleted: {
-                        if (panel.activeTab === "screencasts" && videoPath) {
-                          source = Qt.binding(function() { return thumbPath ? "file://" + thumbPath : "" })
-                        }
-                      }
-
                       Connections {
                         target: RecordingManager
-                        function onThumbnailReady(vPath, tPath) {
-                          if (vPath === screencastThumb.videoPath) {
+                        function onThumbnailReady(filePath, thumbPath) {
+                          if (filePath === screencastThumb.videoPath) {
                             screencastThumb.source = ""
-                            screencastThumb.source = "file://" + tPath
+                            screencastThumb.source = Qt.binding(function() {
+                              return panel.activeTab === "screencasts" && screencastThumb.thumbPath
+                                ? "file://" + screencastThumb.thumbPath : ""
+                            })
                           }
                         }
                       }

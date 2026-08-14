@@ -158,13 +158,29 @@ Rectangle {
     Image {
       id: previewImage
       visible: previewImage.status === Image.Ready
-      source: image || ""
+      property string thumbnailSource: card.image ? NotificationManager.getImageThumbnail(card.image) : ""
+      source: thumbnailSource
       width: visible ? parent.width : 0
       height: visible ? implicitHeight * (parent.width / Math.max(implicitWidth, 1)) : 0
-      sourceSize.width: parent.width * 2
+      sourceSize.width: parent.width
       fillMode: Image.PreserveAspectFit
       smooth: true
       cache: false
+
+      onStatusChanged: {
+        if (status === Image.Error && card.image)
+          NotificationManager.requestImageThumbnail(card.image)
+      }
+
+      Connections {
+        target: NotificationManager
+        function onImageThumbnailReady(source) {
+          if (source === card.image) {
+            previewImage.source = ""
+            previewImage.source = Qt.binding(function() { return previewImage.thumbnailSource })
+          }
+        }
+      }
     }
 
     // Action buttons

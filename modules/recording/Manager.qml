@@ -108,7 +108,6 @@ Singleton {
 
   // Signals for panel to react to file operations
   signal filesRefreshed()
-  signal fileDeleted(string path)
   signal fileRenamed(string oldPath, string newPath)
 
   // Panel toggle functions
@@ -176,67 +175,71 @@ Singleton {
     }
   }
 
-  // Thumbnail generation for screencasts
-  // Returns the expected cache path for a given video file
-  function getThumbnailPath(videoPath) {
-    // Use a hash of the video path as the thumbnail filename
-    var hash = Qt.md5(videoPath)
-    return cacheDir + "/" + hash + ".png"
+  // Thumbnail generation for grid previews
+  function getThumbnailPath(filePath) {
+    return cacheDir + "/" + Qt.md5(filePath) + ".png"
   }
 
-  // Request thumbnail generation (called lazily by grid delegates)
   property var _pendingThumbnails: ({})
   property var _thumbnailQueue: []
   property int _activeThumbnailJobs: 0
   readonly property int _maxThumbnailJobs: 3
+  property bool _thumbnailCacheReady: false
 
-  function requestThumbnail(videoPath) {
-    var thumbPath = getThumbnailPath(videoPath)
-    if (_pendingThumbnails[videoPath]) return // already queued or in progress
-    _pendingThumbnails[videoPath] = true
-    _thumbnailQueue.push(videoPath)
+  Process {
+    command: ["mkdir", "-p", recordingManager.cacheDir]
+    running: true
+    onExited: function(exitCode) {
+      recordingManager._thumbnailCacheReady = exitCode === 0
+      recordingManager._drainThumbnailQueue()
+    }
+  }
+
+  function requestThumbnail(filePath) {
+    if (_pendingThumbnails[filePath]) return
+    _pendingThumbnails[filePath] = true
+    _thumbnailQueue.push(filePath)
     _drainThumbnailQueue()
   }
 
   function _drainThumbnailQueue() {
-    while (_activeThumbnailJobs < _maxThumbnailJobs && _thumbnailQueue.length > 0) {
-      var path = _thumbnailQueue.shift()
-      _startThumbnailJob(path)
-    }
+    if (!_thumbnailCacheReady) return
+    while (_activeThumbnailJobs < _maxThumbnailJobs && _thumbnailQueue.length > 0)
+      _startThumbnailJob(_thumbnailQueue.shift())
   }
 
-  function _startThumbnailJob(videoPath) {
+  function _startThumbnailJob(filePath) {
     _activeThumbnailJobs++
-    var thumbPath = getThumbnailPath(videoPath)
+    var thumbPath = getThumbnailPath(filePath)
     var proc = thumbComponent.createObject(recordingManager, {
-      videoPath: videoPath,
+      filePath: filePath,
       thumbPath: thumbPath
     })
-    proc.command = ["sh", "-c",
-      "mkdir -p '" + cacheDir + "' && " +
-      "ffmpeg -y -i '" + videoPath + "' -vframes 1 -ss 00:00:01 -vf 'scale=320:-1' '" + thumbPath + "' 2>/dev/null"
-    ]
+    var seekArgs = /\.(mp4|mkv|webm|avi|mov)$/i.test(filePath) ? ["-ss", "00:00:01"] : []
+    proc.command = ["ffmpeg", "-y"].concat(seekArgs, [
+      "-i", filePath, "-vframes", "1", "-vf", "scale=320:-1", thumbPath
+    ])
     proc.running = true
   }
 
   Component {
     id: thumbComponent
     Process {
-      property string videoPath: ""
+      property string filePath: ""
       property string thumbPath: ""
+      stderr: StdioCollector {}
       onExited: function(exitCode) {
         recordingManager._activeThumbnailJobs--
-        delete recordingManager._pendingThumbnails[videoPath]
-        if (exitCode === 0) {
-          recordingManager.thumbnailReady(videoPath, thumbPath)
-        }
+        delete recordingManager._pendingThumbnails[filePath]
+        if (exitCode === 0)
+          recordingManager.thumbnailReady(filePath, thumbPath)
         recordingManager._drainThumbnailQueue()
         destroy()
       }
     }
   }
 
-  signal thumbnailReady(string videoPath, string thumbPath)
+  signal thumbnailReady(string filePath, string thumbPath)
 
   // High-resolution detail thumbnail (single job, only one detail view at a time)
   function getDetailThumbnailPath(videoPath) {
@@ -303,51 +306,28 @@ Singleton {
 
   // File operations
   function deleteFile(filePath) {
-    deleteFileProc.filePath = filePath
-    deleteFileProc.command = ["rm", "-f", filePath]
-    deleteFileProc.running = true
-  }
-
-  Process {
-    id: deleteFileProc
-    property string filePath: ""
-    onExited: function(exitCode) {
-      if (exitCode === 0) {
-        recordingManager.fileDeleted(filePath)
-        recordingManager.refreshFiles()
-      }
-    }
+    deleteFiles([filePath])
   }
 
   function deleteFiles(paths) {
     if (!paths || paths.length === 0) return
-    deleteFilesProc.command = ["rm", "-f"].concat(paths)
+    var targets = []
+    for (var i = 0; i < paths.length; i++) {
+      targets.push(paths[i])
+      targets.push(getThumbnailPath(paths[i]))
+      targets.push(getDetailThumbnailPath(paths[i]))
+    }
+    deleteFilesProc.command = ["rm", "-f"].concat(targets)
     deleteFilesProc.running = true
   }
 
   Process {
     id: deleteFilesProc
-    onExited: {
-      recordingManager.refreshFiles()
-    }
+    onExited: recordingManager.refreshFiles()
   }
 
   function deleteAll(type) {
-    var dir = (type === "screenshots") ? screenshotDir : screencastDir
-    var pattern = (type === "screenshots")
-      ? "\\.(png|jpg|jpeg|webp|bmp)$"
-      : "\\.(mp4|mkv|webm|avi|mov)$"
-    deleteAllProc.command = ["sh", "-c",
-      "find '" + dir + "' -maxdepth 1 -type f | grep -iE '" + pattern + "' | xargs rm -f 2>/dev/null ; true"
-    ]
-    deleteAllProc.running = true
-  }
-
-  Process {
-    id: deleteAllProc
-    onExited: {
-      recordingManager.refreshFiles()
-    }
+    deleteFiles(type === "screenshots" ? screenshots : screencasts)
   }
 
   function renameFile(oldPath, newName) {
