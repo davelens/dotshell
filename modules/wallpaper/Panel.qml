@@ -730,14 +730,30 @@ Scope {
                     }
 
                     Image {
+                      id: localThumbnail
                       anchors.fill: parent
                       anchors.margins: 1
                       fillMode: Image.PreserveAspectCrop
-                      source: localCell.filePath ? "file://" + localCell.filePath : ""
-                      sourceSize.width: gridView.cellWidth * 2
-                      sourceSize.height: gridView.cellHeight * 2
+                      source: ThumbnailCache.thumbnailUrl(localCell.filePath)
                       asynchronous: true
                       cache: false
+
+                      onStatusChanged: {
+                        if (status === Image.Error && localCell.filePath)
+                          ThumbnailCache.request(localCell.filePath)
+                      }
+
+                      Connections {
+                        target: ThumbnailCache
+                        function onThumbnailReady(thumbnailPath) {
+                          if (thumbnailPath === ThumbnailCache.thumbnailPath(localCell.filePath)) {
+                            localThumbnail.source = ""
+                            localThumbnail.source = Qt.binding(function() {
+                              return ThumbnailCache.thumbnailUrl(localCell.filePath)
+                            })
+                          }
+                        }
+                      }
                     }
 
                     // Filename label

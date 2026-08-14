@@ -289,7 +289,7 @@ Singleton {
 
   function deleteFile(path) {
     deleteProc.filePath = path
-    deleteProc.command = ["rm", "-f", path]
+    deleteProc.command = ["rm", "-f", path, ThumbnailCache.thumbnailPath(path)]
     deleteProc.running = true
   }
 

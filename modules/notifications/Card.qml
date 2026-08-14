@@ -158,7 +158,7 @@ Rectangle {
     Image {
       id: previewImage
       visible: previewImage.status === Image.Ready
-      property string thumbnailSource: card.image ? NotificationManager.getImageThumbnail(card.image) : ""
+      property string thumbnailSource: ThumbnailCache.thumbnailUrl(card.image)
       source: thumbnailSource
       width: visible ? parent.width : 0
       height: visible ? implicitHeight * (parent.width / Math.max(implicitWidth, 1)) : 0
@@ -169,13 +169,13 @@ Rectangle {
 
       onStatusChanged: {
         if (status === Image.Error && card.image)
-          NotificationManager.requestImageThumbnail(card.image)
+          ThumbnailCache.request(card.image)
       }
 
       Connections {
-        target: NotificationManager
-        function onImageThumbnailReady(source) {
-          if (source === card.image) {
+        target: ThumbnailCache
+        function onThumbnailReady(thumbnailPath) {
+          if (thumbnailPath === ThumbnailCache.thumbnailPath(card.image)) {
             previewImage.source = ""
             previewImage.source = Qt.binding(function() { return previewImage.thumbnailSource })
           }

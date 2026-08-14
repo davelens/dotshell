@@ -8,6 +8,7 @@ singleton PopupManager 1.0 core/PopupManager.qml
 singleton ScreenManager 1.0 core/ScreenManager.qml
 singleton OverlayManager 1.0 core/OverlayManager.qml
 singleton Time 1.0 core/Time.qml
+singleton ThumbnailCache 1.0 core/ThumbnailCache.qml
 EnsureFile 1.0 core/EnsureFile.qml
 ModuleConfig 1.0 core/ModuleConfig.qml
 singleton StatusbarManager 1.0 statusbar/Manager.qml

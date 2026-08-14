@@ -92,8 +92,6 @@ Singleton {
       screenshotCount = 0
       screencasts = []
       screencastCount = 0
-      _pendingThumbnails = ({})
-      _thumbnailQueue = []
     }
   }
 
@@ -175,72 +173,6 @@ Singleton {
     }
   }
 
-  // Thumbnail generation for grid previews
-  function getThumbnailPath(filePath) {
-    return cacheDir + "/" + Qt.md5(filePath) + ".png"
-  }
-
-  property var _pendingThumbnails: ({})
-  property var _thumbnailQueue: []
-  property int _activeThumbnailJobs: 0
-  readonly property int _maxThumbnailJobs: 3
-  property bool _thumbnailCacheReady: false
-
-  Process {
-    command: ["mkdir", "-p", recordingManager.cacheDir]
-    running: true
-    onExited: function(exitCode) {
-      recordingManager._thumbnailCacheReady = exitCode === 0
-      recordingManager._drainThumbnailQueue()
-    }
-  }
-
-  function requestThumbnail(filePath) {
-    if (_pendingThumbnails[filePath]) return
-    _pendingThumbnails[filePath] = true
-    _thumbnailQueue.push(filePath)
-    _drainThumbnailQueue()
-  }
-
-  function _drainThumbnailQueue() {
-    if (!_thumbnailCacheReady) return
-    while (_activeThumbnailJobs < _maxThumbnailJobs && _thumbnailQueue.length > 0)
-      _startThumbnailJob(_thumbnailQueue.shift())
-  }
-
-  function _startThumbnailJob(filePath) {
-    _activeThumbnailJobs++
-    var thumbPath = getThumbnailPath(filePath)
-    var proc = thumbComponent.createObject(recordingManager, {
-      filePath: filePath,
-      thumbPath: thumbPath
-    })
-    var seekArgs = /\.(mp4|mkv|webm|avi|mov)$/i.test(filePath) ? ["-ss", "00:00:01"] : []
-    proc.command = ["ffmpeg", "-y"].concat(seekArgs, [
-      "-i", filePath, "-vframes", "1", "-vf", "scale=320:-1", thumbPath
-    ])
-    proc.running = true
-  }
-
-  Component {
-    id: thumbComponent
-    Process {
-      property string filePath: ""
-      property string thumbPath: ""
-      stderr: StdioCollector {}
-      onExited: function(exitCode) {
-        recordingManager._activeThumbnailJobs--
-        delete recordingManager._pendingThumbnails[filePath]
-        if (exitCode === 0)
-          recordingManager.thumbnailReady(filePath, thumbPath)
-        recordingManager._drainThumbnailQueue()
-        destroy()
-      }
-    }
-  }
-
-  signal thumbnailReady(string filePath, string thumbPath)
-
   // High-resolution detail thumbnail (single job, only one detail view at a time)
   function getDetailThumbnailPath(videoPath) {
     var hash = Qt.md5(videoPath)
@@ -314,7 +246,7 @@ Singleton {
     var targets = []
     for (var i = 0; i < paths.length; i++) {
       targets.push(paths[i])
-      targets.push(getThumbnailPath(paths[i]))
+      targets.push(ThumbnailCache.thumbnailPath(paths[i]))
       targets.push(getDetailThumbnailPath(paths[i]))
     }
     deleteFilesProc.command = ["rm", "-f"].concat(targets)

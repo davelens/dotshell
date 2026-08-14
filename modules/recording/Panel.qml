@@ -662,19 +662,19 @@ Scope {
                       visible: panel.activeTab === "screenshots" && status === Image.Ready
 
                       property string imagePath: cellRect.filePath
-                      property string thumbPath: imagePath ? RecordingManager.getThumbnailPath(imagePath) : ""
+                      property string thumbPath: ThumbnailCache.thumbnailPath(imagePath)
 
                       source: panel.activeTab === "screenshots" && thumbPath ? "file://" + thumbPath : ""
 
                       onStatusChanged: {
                         if (panel.activeTab === "screenshots" && status === Image.Error && imagePath)
-                          RecordingManager.requestThumbnail(imagePath)
+                          ThumbnailCache.request(imagePath)
                       }
 
                       Connections {
-                        target: RecordingManager
-                        function onThumbnailReady(filePath, thumbPath) {
-                          if (filePath === screenshotThumb.imagePath) {
+                        target: ThumbnailCache
+                        function onThumbnailReady(thumbPath) {
+                          if (thumbPath === screenshotThumb.thumbPath) {
                             screenshotThumb.source = ""
                             screenshotThumb.source = Qt.binding(function() {
                               return panel.activeTab === "screenshots" && screenshotThumb.thumbPath
@@ -696,20 +696,20 @@ Scope {
                       visible: panel.activeTab === "screencasts" && status === Image.Ready
 
                       property string videoPath: cellRect.filePath
-                      property string thumbPath: videoPath ? RecordingManager.getThumbnailPath(videoPath) : ""
+                      property string thumbPath: ThumbnailCache.thumbnailPath(videoPath)
 
                       source: panel.activeTab === "screencasts" && thumbPath ? "file://" + thumbPath : ""
 
                       onStatusChanged: {
                         if (panel.activeTab === "screencasts" && status === Image.Error && videoPath) {
-                          RecordingManager.requestThumbnail(videoPath)
+                          ThumbnailCache.request(videoPath)
                         }
                       }
 
                       Connections {
-                        target: RecordingManager
-                        function onThumbnailReady(filePath, thumbPath) {
-                          if (filePath === screencastThumb.videoPath) {
+                        target: ThumbnailCache
+                        function onThumbnailReady(thumbPath) {
+                          if (thumbPath === screencastThumb.thumbPath) {
                             screencastThumb.source = ""
                             screencastThumb.source = Qt.binding(function() {
                               return panel.activeTab === "screencasts" && screencastThumb.thumbPath

@@ -64,11 +64,6 @@ Singleton {
   property var history: []                     // all notifications grouped by app
   property int unreadCount: 0                  // unread notification count
 
-  readonly property string thumbnailCacheDir: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/dotshell/thumbnails"
-  property var _pendingThumbnails: ({})
-  property var _thumbnailQueue: []
-  property bool _thumbnailCacheReady: false
-
   // Computed: is DND currently active?
   readonly property bool isDndActive: dndEnabled || isInDndSchedule()
 
@@ -199,53 +194,6 @@ Singleton {
     if (hints["image-path"]) return "file://" + hints["image-path"]
     return ""
   }
-
-  function getImageThumbnail(source) {
-    var path = source.startsWith("file://") ? source.substring(7) : source
-    return "file://" + thumbnailCacheDir + "/" + Qt.md5(path) + ".png"
-  }
-
-  function requestImageThumbnail(source) {
-    if (!source || _pendingThumbnails[source]) return
-    _pendingThumbnails[source] = true
-    _thumbnailQueue.push(source)
-    startNextThumbnail()
-  }
-
-  function startNextThumbnail() {
-    if (!_thumbnailCacheReady || thumbnailProc.running || _thumbnailQueue.length === 0) return
-    var source = _thumbnailQueue.shift()
-    var path = source.startsWith("file://") ? source.substring(7) : source
-    thumbnailProc.source = source
-    thumbnailProc.thumbPath = getImageThumbnail(source).substring(7)
-    thumbnailProc.command = ["ffmpeg", "-y", "-i", path, "-vframes", "1", "-vf", "scale=320:-1", thumbnailProc.thumbPath]
-    thumbnailProc.running = true
-  }
-
-  Process {
-    command: ["mkdir", "-p", notificationManager.thumbnailCacheDir]
-    running: true
-    onExited: function(exitCode) {
-      notificationManager._thumbnailCacheReady = exitCode === 0
-      notificationManager.startNextThumbnail()
-    }
-  }
-
-  Process {
-    id: thumbnailProc
-    property string source: ""
-    property string thumbPath: ""
-    stderr: StdioCollector {}
-    onExited: function(exitCode) {
-      delete notificationManager._pendingThumbnails[source]
-      if (exitCode === 0)
-        notificationManager.imageThumbnailReady(source)
-      source = ""
-      notificationManager.startNextThumbnail()
-    }
-  }
-
-  signal imageThumbnailReady(string source)
 
   function showPopup(notification) {
     // Insert at beginning (max 5)
