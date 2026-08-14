@@ -12,7 +12,6 @@ Item {
   height: row.height
 
   property bool showInBar: AiAgentsMonitorManager.totalCount > 0
-    || AiAgentsMonitorManager.remoteConfigured
 
   Row {
     id: row
