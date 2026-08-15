@@ -69,14 +69,6 @@ Singleton {
     }
   }
 
-  function togglePanel() {
-    OverlayManager.toggle("wallpaper")
-  }
-
-  function closePanel() {
-    OverlayManager.close("wallpaper")
-  }
-
   // -- Local files ----------------------------------------------------------
 
   property var localFiles: []

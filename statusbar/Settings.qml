@@ -55,48 +55,38 @@ Item {
     var contentY = globalMouseY + scrollView.contentItem.contentY
 
     // Check each section
-    var sections = [
-      { name: "left", col: leftSection, items: StatusbarManager.leftItems },
-      { name: "center", col: centerSection, items: StatusbarManager.centerItems },
-      { name: "right", col: rightSection, items: StatusbarManager.rightItems }
-    ]
+    var sections = [leftSection, centerSection, rightSection]
 
     for (var s = 0; s < sections.length; s++) {
-      var sec = sections[s]
-      var colPos = sec.col.mapToItem(scrollContent, 0, 0)
-      var colTop = colPos.y
-      var colBottom = colTop + sec.col.height
+      var section = sections[s]
+      var sectionPos = section.mapToItem(scrollContent, 0, 0)
+      var sectionTop = sectionPos.y
+      var sectionBottom = sectionTop + section.height
 
-      if (contentY >= colTop && contentY <= colBottom) {
-        if (sec.items.length === 0) {
-          dropSection = sec.name
+      if (contentY >= sectionTop && contentY <= sectionBottom) {
+        if (section.sectionItems.length === 0) {
+          dropSection = section.sectionName
           dropIndex = 0
           return
         }
 
-        // Find which row we're over.
-        // children[1] is the items Column (children[0] is the section label text).
-        // Inside that Column, Repeater delegates are at children[0..N-1].
-        var itemsCol = sec.col.children[1]
-        if (!itemsCol) continue
-
-        for (var i = 0; i < sec.items.length; i++) {
-          var rowWrapper = itemsCol.children[i]
+        for (var i = 0; i < section.sectionItems.length; i++) {
+          var rowWrapper = section.rowAt(i)
           if (!rowWrapper || rowWrapper.height === 0) continue
 
           var rowPos = rowWrapper.mapToItem(scrollContent, 0, 0)
           var rowMid = rowPos.y + rowWrapper.height / 2
 
           if (contentY < rowMid) {
-            dropSection = sec.name
+            dropSection = section.sectionName
             dropIndex = i
             return
           }
         }
 
         // Below all items in this section
-        dropSection = sec.name
-        dropIndex = sec.items.length
+        dropSection = section.sectionName
+        dropIndex = section.sectionItems.length
         return
       }
     }
@@ -184,154 +174,16 @@ Item {
           width: parent.width
           spacing: 24
 
-          Row {
-            spacing: 8
-
-            Text {
-              anchors.verticalCenter: parent.verticalCenter
-              text: "Left:"
-              color: Theme.textPrimary
-              font.pixelSize: 13
-            }
-
-            SpinBox {
-              id: leftMarginSpin
-              from: 0
-              to: 100
-              value: StatusbarManager.barMargins.left
-              editable: true
-              width: 80
-
-              onValueModified: {
-                StatusbarManager.setBarMargins(value, StatusbarManager.barMargins.right)
-              }
-
-              background: Rectangle {
-                color: Theme.bgCard
-                radius: 4
-              }
-
-              contentItem: TextInput {
-                z: 2
-                text: leftMarginSpin.textFromValue(leftMarginSpin.value, leftMarginSpin.locale)
-                color: Theme.textPrimary
-                font.pixelSize: 13
-                horizontalAlignment: Qt.AlignHCenter
-                verticalAlignment: Qt.AlignVCenter
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: 24
-                anchors.rightMargin: 24
-                readOnly: !leftMarginSpin.editable
-                validator: leftMarginSpin.validator
-                inputMethodHints: Qt.ImhFormattedNumbersOnly
-              }
-
-              up.indicator: Rectangle {
-                x: parent.width - width
-                height: parent.height
-                width: 24
-                color: leftMarginSpin.up.pressed ? Theme.bgBorder : Theme.bgCardHover
-                radius: 4
-
-                Text {
-                  anchors.centerIn: parent
-                  text: "+"
-                  color: Theme.textPrimary
-                  font.pixelSize: 14
-                }
-              }
-
-              down.indicator: Rectangle {
-                x: 0
-                height: parent.height
-                width: 24
-                color: leftMarginSpin.down.pressed ? Theme.bgBorder : Theme.bgCardHover
-                radius: 4
-
-                Text {
-                  anchors.centerIn: parent
-                  text: "-"
-                  color: Theme.textPrimary
-                  font.pixelSize: 14
-                }
-              }
-            }
+          BarMarginControl {
+            label: "Left"
+            value: StatusbarManager.barMargins.left
+            onValueModified: value => StatusbarManager.setBarMargins(value, StatusbarManager.barMargins.right)
           }
 
-          Row {
-            spacing: 8
-
-            Text {
-              anchors.verticalCenter: parent.verticalCenter
-              text: "Right:"
-              color: Theme.textPrimary
-              font.pixelSize: 13
-            }
-
-            SpinBox {
-              id: rightMarginSpin
-              from: 0
-              to: 100
-              value: StatusbarManager.barMargins.right
-              editable: true
-              width: 80
-
-              onValueModified: {
-                StatusbarManager.setBarMargins(StatusbarManager.barMargins.left, value)
-              }
-
-              background: Rectangle {
-                color: Theme.bgCard
-                radius: 4
-              }
-
-              contentItem: TextInput {
-                z: 2
-                text: rightMarginSpin.textFromValue(rightMarginSpin.value, rightMarginSpin.locale)
-                color: Theme.textPrimary
-                font.pixelSize: 13
-                horizontalAlignment: Qt.AlignHCenter
-                verticalAlignment: Qt.AlignVCenter
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: 24
-                anchors.rightMargin: 24
-                readOnly: !rightMarginSpin.editable
-                validator: rightMarginSpin.validator
-                inputMethodHints: Qt.ImhFormattedNumbersOnly
-              }
-
-              up.indicator: Rectangle {
-                x: parent.width - width
-                height: parent.height
-                width: 24
-                color: rightMarginSpin.up.pressed ? Theme.bgBorder : Theme.bgCardHover
-                radius: 4
-
-                Text {
-                  anchors.centerIn: parent
-                  text: "+"
-                  color: Theme.textPrimary
-                  font.pixelSize: 14
-                }
-              }
-
-              down.indicator: Rectangle {
-                x: 0
-                height: parent.height
-                width: 24
-                color: rightMarginSpin.down.pressed ? Theme.bgBorder : Theme.bgCardHover
-                radius: 4
-
-                Text {
-                  anchors.centerIn: parent
-                  text: "-"
-                  color: Theme.textPrimary
-                  font.pixelSize: 14
-                }
-              }
-            }
+          BarMarginControl {
+            label: "Right"
+            value: StatusbarManager.barMargins.right
+            onValueModified: value => StatusbarManager.setBarMargins(StatusbarManager.barMargins.left, value)
           }
         }
       }
@@ -358,103 +210,31 @@ Item {
       Rectangle { width: parent.width; height: 1; color: Theme.bgCardHover }
 
       // Left section
-      Column {
+      StatusbarSection {
         id: leftSection
-        width: parent.width
-        spacing: 8
-
-        TitleText {
-          text: settingsRoot.highlightText("Left Section", settingsRoot.searchQuery)
-          textFormat: Text.RichText
-        }
-
-        Column {
-          width: parent.width
-          spacing: 0
-
-          Repeater {
-            model: StatusbarManager.leftItems
-
-            ItemRowWrapper {
-              required property var modelData
-              required property int index
-              item: modelData
-              itemIndex: index
-              section: "left"
-              sectionItems: StatusbarManager.leftItems
-            }
-          }
-        }
-
-        EmptyDropZone { sectionName: "left"; sectionItems: StatusbarManager.leftItems }
+        sectionName: "left"
+        title: "Left Section"
+        sectionItems: StatusbarManager.leftItems
       }
 
       Rectangle { width: parent.width; height: 1; color: Theme.bgCardHover }
 
       // Center section
-      Column {
+      StatusbarSection {
         id: centerSection
-        width: parent.width
-        spacing: 8
-
-        TitleText {
-          text: settingsRoot.highlightText("Center Section", settingsRoot.searchQuery)
-          textFormat: Text.RichText
-        }
-
-        Column {
-          width: parent.width
-          spacing: 0
-
-          Repeater {
-            model: StatusbarManager.centerItems
-
-            ItemRowWrapper {
-              required property var modelData
-              required property int index
-              item: modelData
-              itemIndex: index
-              section: "center"
-              sectionItems: StatusbarManager.centerItems
-            }
-          }
-        }
-
-        EmptyDropZone { sectionName: "center"; sectionItems: StatusbarManager.centerItems }
+        sectionName: "center"
+        title: "Center Section"
+        sectionItems: StatusbarManager.centerItems
       }
 
       Rectangle { width: parent.width; height: 1; color: Theme.bgCardHover }
 
       // Right section
-      Column {
+      StatusbarSection {
         id: rightSection
-        width: parent.width
-        spacing: 8
-
-        TitleText {
-          text: settingsRoot.highlightText("Right Section", settingsRoot.searchQuery)
-          textFormat: Text.RichText
-        }
-
-        Column {
-          width: parent.width
-          spacing: 0
-
-          Repeater {
-            model: StatusbarManager.rightItems
-
-            ItemRowWrapper {
-              required property var modelData
-              required property int index
-              item: modelData
-              itemIndex: index
-              section: "right"
-              sectionItems: StatusbarManager.rightItems
-            }
-          }
-        }
-
-        EmptyDropZone { sectionName: "right"; sectionItems: StatusbarManager.rightItems }
+        sectionName: "right"
+        title: "Right Section"
+        sectionItems: StatusbarManager.rightItems
       }
 
       // Separator line
@@ -479,6 +259,127 @@ Item {
           onClicked: StatusbarManager.resetToDefaults()
         }
       }
+    }
+  }
+
+  component BarMarginControl: Row {
+    id: marginControl
+    property string label
+    property int value
+    signal valueModified(int value)
+
+    spacing: 8
+
+    Text {
+      anchors.verticalCenter: parent.verticalCenter
+      text: marginControl.label + ":"
+      color: Theme.textPrimary
+      font.pixelSize: 13
+    }
+
+    SpinBox {
+      id: marginSpin
+      from: 0
+      to: 100
+      value: marginControl.value
+      editable: true
+      width: 80
+
+      onValueModified: marginControl.valueModified(value)
+
+      background: Rectangle {
+        color: Theme.bgCard
+        radius: 4
+      }
+
+      contentItem: TextInput {
+        z: 2
+        text: marginSpin.textFromValue(marginSpin.value, marginSpin.locale)
+        color: Theme.textPrimary
+        font.pixelSize: 13
+        horizontalAlignment: Qt.AlignHCenter
+        verticalAlignment: Qt.AlignVCenter
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: 24
+        anchors.rightMargin: 24
+        readOnly: !marginSpin.editable
+        validator: marginSpin.validator
+        inputMethodHints: Qt.ImhFormattedNumbersOnly
+      }
+
+      up.indicator: Rectangle {
+        x: parent.width - width
+        height: parent.height
+        width: 24
+        color: marginSpin.up.pressed ? Theme.bgBorder : Theme.bgCardHover
+        radius: 4
+
+        Text {
+          anchors.centerIn: parent
+          text: "+"
+          color: Theme.textPrimary
+          font.pixelSize: 14
+        }
+      }
+
+      down.indicator: Rectangle {
+        x: 0
+        height: parent.height
+        width: 24
+        color: marginSpin.down.pressed ? Theme.bgBorder : Theme.bgCardHover
+        radius: 4
+
+        Text {
+          anchors.centerIn: parent
+          text: "-"
+          color: Theme.textPrimary
+          font.pixelSize: 14
+        }
+      }
+    }
+  }
+
+  component StatusbarSection: Column {
+    id: sectionRoot
+    property string sectionName
+    property string title
+    property var sectionItems
+
+    width: parent.width
+    spacing: 8
+
+    function rowAt(index) {
+      return itemRepeater.itemAt(index)
+    }
+
+    TitleText {
+      text: settingsRoot.highlightText(sectionRoot.title, settingsRoot.searchQuery)
+      textFormat: Text.RichText
+    }
+
+    Column {
+      width: parent.width
+      spacing: 0
+
+      Repeater {
+        id: itemRepeater
+        model: sectionRoot.sectionItems
+
+        ItemRowWrapper {
+          required property var modelData
+          required property int index
+          item: modelData
+          itemIndex: index
+          section: sectionRoot.sectionName
+          sectionItems: sectionRoot.sectionItems
+        }
+      }
+    }
+
+    EmptyDropZone {
+      sectionName: sectionRoot.sectionName
+      sectionItems: sectionRoot.sectionItems
     }
   }
 

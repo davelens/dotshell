@@ -72,7 +72,6 @@ Singleton {
   // =========================================================================
 
   readonly property string iconNone: "󰂚"       // no notifications
-  readonly property string iconHas: "󰂚"        // has notifications (same icon, badge shows count)
   readonly property string iconDnd: "󰂠"        // DND enabled
 
   function getIcon() {
@@ -519,20 +518,6 @@ Singleton {
 
   function toggleDnd() {
     dndEnabled = !dndEnabled
-  }
-
-  function togglePanel() {
-    OverlayManager.toggle("notifications")
-  }
-
-  function closePanel() {
-    OverlayManager.close("notifications")
-  }
-
-  function openSettingsNotifications() {
-    // Open settings on the Notifications category; OverlayManager closes
-    // the notification panel as a side effect of switching overlays
-    OverlayManager.open("settings", { category: "notifications" })
   }
 
   Component.onCompleted: OverlayManager.register("notifications", "Notifications panel")

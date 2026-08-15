@@ -208,21 +208,6 @@ Singleton {
     return true
   }
 
-  // Get all items across all sections (for settings panel)
-  function getAllItems() {
-    var all = []
-    for (var i = 0; i < leftItems.length; i++) {
-      all.push(Object.assign({}, leftItems[i], { section: "left", index: i }))
-    }
-    for (var j = 0; j < centerItems.length; j++) {
-      all.push(Object.assign({}, centerItems[j], { section: "center", index: j }))
-    }
-    for (var k = 0; k < rightItems.length; k++) {
-      all.push(Object.assign({}, rightItems[k], { section: "right", index: k }))
-    }
-    return all
-  }
-
   // Get items for a specific section
   function getItemsForSection(section) {
     if (section === "left") return leftItems
@@ -325,14 +310,6 @@ Singleton {
     saveConfig()
   }
 
-  // Set section spacing
-  function setSectionSpacing(section, value) {
-    var newSpacing = Object.assign({}, sectionSpacing)
-    newSpacing[section] = value
-    sectionSpacing = newSpacing
-    saveConfig()
-  }
-
   // Toggle popup stem connector
   function togglePopupStem() {
     popupStem = !popupStem
@@ -359,7 +336,7 @@ Singleton {
     moduleConfig.save(config)
   }
 
-  // Strip metadata added by getAllItems
+  // Serialize only the persisted item fields
   function stripMeta(item) {
     return {
       id: item.id,

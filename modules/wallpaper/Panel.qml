@@ -20,9 +20,17 @@ Scope {
 
       property string activeTab: "local"
       property string searchQuery: ""
-      property int selectedIndex: -1
       property int pendingDeleteIndex: -1
       readonly property int columnsPerRow: 4
+
+      GridNavigator {
+        id: gridNavigator
+        index: -1
+        count: panel.activeTab === "local"
+                 ? panel.displayCount : WallpaperManager.searchResultCount
+        columns: panel.columnsPerRow
+        gridView: panel.activeTab === "local" ? localGridView : browseGridView
+      }
 
       // Preview state
       property bool previewOpen: false
@@ -43,7 +51,7 @@ Scope {
 
       onActiveTabChanged: {
         searchQuery = ""
-        selectedIndex = -1
+        gridNavigator.index = -1
         pendingDeleteIndex = -1
         previewOpen = false
         previewItem = null
@@ -80,9 +88,6 @@ Scope {
           displayFiles = []
           displayCount = WallpaperManager.searchResultCount
         }
-
-        if (selectedIndex >= displayCount)
-          selectedIndex = displayCount - 1
       }
 
       onSearchQueryChanged: {
@@ -100,90 +105,13 @@ Scope {
           if (WallpaperManager.panelOpen) {
             panel.activeTab = "local"
             panel.searchQuery = ""
-            panel.selectedIndex = -1
+            gridNavigator.index = -1
             panel.pendingDeleteIndex = -1
             panel.previewOpen = false
             panel.previewItem = null
             panel.previewSource = ""
             panel.updateDisplayFiles()
           }
-        }
-      }
-
-      // -- Grid navigation --------------------------------------------------
-
-      function ensureSelection() {
-        var count = activeTab === "local" ? displayCount : WallpaperManager.searchResultCount
-        if (count === 0) return false
-        if (selectedIndex < 0) { selectedIndex = 0; scrollToCell(0) }
-        return true
-      }
-
-      function moveLeft() {
-        if (!ensureSelection()) return
-        if (selectedIndex > 0) selectedIndex--
-        scrollToCell(selectedIndex)
-      }
-
-      function moveRight() {
-        var count = activeTab === "local" ? displayCount : WallpaperManager.searchResultCount
-        if (!ensureSelection()) return
-        if (selectedIndex < count - 1) selectedIndex++
-        scrollToCell(selectedIndex)
-      }
-
-      function moveUp() {
-        if (!ensureSelection()) return
-        var target = selectedIndex - columnsPerRow
-        if (target >= 0) selectedIndex = target
-        scrollToCell(selectedIndex)
-      }
-
-      function moveDown() {
-        var count = activeTab === "local" ? displayCount : WallpaperManager.searchResultCount
-        if (!ensureSelection()) return
-        var target = selectedIndex + columnsPerRow
-        if (target < count) selectedIndex = target
-        scrollToCell(selectedIndex)
-      }
-
-      function getActiveGridView() {
-        return activeTab === "local" ? gridView : browseGridView
-      }
-
-      function pageUp() {
-        if (!ensureSelection()) return
-        var gv = getActiveGridView()
-        if (!gv || !gv.cellHeight) return
-        var visibleRows = Math.max(1, Math.floor(gv.height / gv.cellHeight))
-        var target = selectedIndex - (visibleRows * columnsPerRow)
-        selectedIndex = Math.max(0, target)
-        scrollToCell(selectedIndex)
-      }
-
-      function pageDown() {
-        var count = activeTab === "local" ? displayCount : WallpaperManager.searchResultCount
-        if (!ensureSelection()) return
-        var gv = getActiveGridView()
-        if (!gv || !gv.cellHeight) return
-        var visibleRows = Math.max(1, Math.floor(gv.height / gv.cellHeight))
-        var target = selectedIndex + (visibleRows * columnsPerRow)
-        selectedIndex = Math.min(count - 1, target)
-        scrollToCell(selectedIndex)
-      }
-
-      function scrollToCell(idx) {
-        var gv = getActiveGridView()
-        if (!gv || idx < 0 || !gv.cellHeight) return
-        var row = Math.floor(idx / columnsPerRow)
-        var cellTop = row * gv.cellHeight
-        var cellBottom = cellTop + gv.cellHeight
-        var viewTop = gv.contentY
-        var viewBottom = viewTop + gv.height
-        if (cellTop < viewTop) {
-          gv.contentY = cellTop
-        } else if (cellBottom > viewBottom) {
-          gv.contentY = cellBottom - gv.height
         }
       }
 
@@ -230,7 +158,7 @@ Scope {
             } else if (panel.pendingDeleteIndex >= 0) {
               panel.pendingDeleteIndex = -1
             } else {
-              WallpaperManager.closePanel()
+              OverlayManager.close("wallpaper")
             }
             event.accepted = true
             return
@@ -246,7 +174,7 @@ Scope {
             } else if (panel.pendingDeleteIndex >= 0) {
               panel.pendingDeleteIndex = -1
             } else {
-              WallpaperManager.closePanel()
+              OverlayManager.close("wallpaper")
             }
             event.accepted = true
             return
@@ -291,46 +219,46 @@ Scope {
           }
           // Ctrl+J: page down
           else if (event.key === Qt.Key_J && ctrl) {
-            panel.pageDown()
+            gridNavigator.pageDown()
             event.accepted = true
           }
           // Ctrl+K: page up
           else if (event.key === Qt.Key_K && ctrl) {
-            panel.pageUp()
+            gridNavigator.pageUp()
             event.accepted = true
           }
           // h: move left
           else if (event.key === Qt.Key_H) {
-            panel.moveLeft()
+            gridNavigator.moveLeft()
             event.accepted = true
           }
           // l: move right
           else if (event.key === Qt.Key_L) {
-            panel.moveRight()
+            gridNavigator.moveRight()
             event.accepted = true
           }
           // j: move down one row
           else if (event.key === Qt.Key_J) {
-            panel.moveDown()
+            gridNavigator.moveDown()
             event.accepted = true
           }
           // k: move up one row
           else if (event.key === Qt.Key_K) {
-            panel.moveUp()
+            gridNavigator.moveUp()
             event.accepted = true
           }
           // Enter: preview
           else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            if (panel.ensureSelection()) panel.openPreview(panel.selectedIndex)
+            if (gridNavigator.ensure()) panel.openPreview(gridNavigator.index)
             event.accepted = true
           }
           // Space: quick-apply (local) or download+apply (browse)
           else if (event.key === Qt.Key_Space) {
-            if (panel.ensureSelection()) {
-              if (panel.activeTab === "local" && panel.selectedIndex < panel.displayCount) {
-                WallpaperManager.applyWallpaper(panel.displayFiles[panel.selectedIndex])
-              } else if (panel.activeTab === "browse" && panel.selectedIndex < WallpaperManager.searchResultCount) {
-                var item = WallpaperManager.searchResults[panel.selectedIndex]
+            if (gridNavigator.ensure()) {
+              if (panel.activeTab === "local" && gridNavigator.index < panel.displayCount) {
+                WallpaperManager.applyWallpaper(panel.displayFiles[gridNavigator.index])
+              } else if (panel.activeTab === "browse" && gridNavigator.index < WallpaperManager.searchResultCount) {
+                var item = WallpaperManager.searchResults[gridNavigator.index]
                 WallpaperManager.downloadAndApply(item.fullPath, item.id)
               }
             }
@@ -338,12 +266,12 @@ Scope {
           }
           // d: delete local file (two-step)
           else if (event.key === Qt.Key_D && panel.activeTab === "local") {
-            if (panel.pendingDeleteIndex === panel.selectedIndex && panel.selectedIndex >= 0) {
-              var path = panel.displayFiles[panel.selectedIndex]
+            if (panel.pendingDeleteIndex === gridNavigator.index && gridNavigator.index >= 0) {
+              var path = panel.displayFiles[gridNavigator.index]
               panel.pendingDeleteIndex = -1
               WallpaperManager.deleteFile(path)
-            } else if (panel.selectedIndex >= 0 && panel.selectedIndex < panel.displayCount) {
-              panel.pendingDeleteIndex = panel.selectedIndex
+            } else if (gridNavigator.index >= 0 && gridNavigator.index < panel.displayCount) {
+              panel.pendingDeleteIndex = gridNavigator.index
             }
             event.accepted = true
           }
@@ -366,7 +294,7 @@ Scope {
         enabled: WallpaperManager.panelOpen
         onClicked: {
           if (panel.previewOpen) panel.closePreview()
-          else WallpaperManager.closePanel()
+          else OverlayManager.close("wallpaper")
         }
       }
 
@@ -501,7 +429,7 @@ Scope {
                 onTextChanged: {
                   if (panel.activeTab === "local") {
                     panel.searchQuery = text
-                    panel.selectedIndex = -1
+                    gridNavigator.index = -1
                   }
                 }
 
@@ -648,7 +576,7 @@ Scope {
               visible: panel.activeTab === "local" && !panel.previewOpen
 
               GridView {
-                id: gridView
+                id: localGridView
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -662,8 +590,8 @@ Scope {
                 delegate: Item {
                   required property int index
 
-                  width: gridView.cellWidth
-                  height: gridView.cellHeight
+                  width: localGridView.cellWidth
+                  height: localGridView.cellHeight
 
                   // Focus ring
                   Rectangle {
@@ -676,11 +604,11 @@ Scope {
                     border.color: {
                       if (index === panel.pendingDeleteIndex)
                         return Theme.danger
-                      if (index === panel.selectedIndex)
+                      if (index === gridNavigator.index)
                         return Theme.focusRing
                       return Theme.focusRing
                     }
-                    visible: index === panel.selectedIndex
+                    visible: index === gridNavigator.index
                     z: 1
                   }
 
@@ -692,15 +620,15 @@ Scope {
                     color: {
                       if (index === panel.pendingDeleteIndex)
                         return Qt.rgba(Theme.danger.r, Theme.danger.g, Theme.danger.b, 0.15)
-                      if (index === panel.selectedIndex)
+                      if (index === gridNavigator.index)
                         return Theme.bgCardHover
                       return Theme.bgCard
                     }
-                    border.width: index === panel.selectedIndex ? 2 : 1
+                    border.width: index === gridNavigator.index ? 2 : 1
                     border.color: {
                       if (index === panel.pendingDeleteIndex)
                         return Theme.danger
-                      if (index === panel.selectedIndex)
+                      if (index === gridNavigator.index)
                         return Theme.focusRing
                       return Theme.bgBorder
                     }
@@ -785,10 +713,10 @@ Scope {
                       hoverEnabled: true
                       cursorShape: Qt.PointingHandCursor
                       onContainsMouseChanged: {
-                        if (containsMouse) panel.selectedIndex = index
+                        if (containsMouse) gridNavigator.index = index
                       }
                       onClicked: {
-                        panel.selectedIndex = index
+                        gridNavigator.index = index
                         panel.openPreview(index)
                       }
                     }
@@ -866,7 +794,7 @@ Scope {
                     color: "transparent"
                     border.width: 2
                     border.color: Theme.focusRing
-                    visible: index === panel.selectedIndex
+                    visible: index === gridNavigator.index
                     z: 1
                   }
 
@@ -875,9 +803,9 @@ Scope {
                     anchors.fill: parent
                     anchors.margins: 4
                     radius: 6
-                    color: index === panel.selectedIndex ? Theme.bgCardHover : Theme.bgCard
-                    border.width: index === panel.selectedIndex ? 2 : 1
-                    border.color: index === panel.selectedIndex ? Theme.focusRing : Theme.bgBorder
+                    color: index === gridNavigator.index ? Theme.bgCardHover : Theme.bgCard
+                    border.width: index === gridNavigator.index ? 2 : 1
+                    border.color: index === gridNavigator.index ? Theme.focusRing : Theme.bgBorder
 
                     property var itemData: index < WallpaperManager.searchResults.length
                                              ? WallpaperManager.searchResults[index] : null
@@ -951,10 +879,10 @@ Scope {
                       hoverEnabled: true
                       cursorShape: Qt.PointingHandCursor
                       onContainsMouseChanged: {
-                        if (containsMouse) panel.selectedIndex = index
+                        if (containsMouse) gridNavigator.index = index
                       }
                       onClicked: {
-                        panel.selectedIndex = index
+                        gridNavigator.index = index
                         panel.openPreview(index)
                       }
                     }

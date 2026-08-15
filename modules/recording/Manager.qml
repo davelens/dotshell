@@ -108,15 +108,6 @@ Singleton {
   signal filesRefreshed()
   signal fileRenamed(string oldPath, string newPath)
 
-  // Panel toggle functions
-  function togglePanel() {
-    OverlayManager.toggle("recording")
-  }
-
-  function closePanel() {
-    OverlayManager.close("recording")
-  }
-
   // File listing
   function refreshFiles() {
     refreshScreenshots()
@@ -299,7 +290,7 @@ Singleton {
     var isVideo = /\.(mp4|mkv|webm|avi|mov)$/i.test(filePath)
     var app = isVideo ? videoPreviewer : imagePreviewer
     if (!app) app = "sushi"
-    closePanel()
+    OverlayManager.close("recording")
     openFileProc.command = [app, filePath]
     openFileProc.running = true
   }

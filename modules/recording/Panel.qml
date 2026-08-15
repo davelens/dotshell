@@ -27,15 +27,27 @@ Scope {
       property int filteredCount: 0
 
       // Grid navigation
-      property int selectedIndex: -1
       property int pendingDeleteIndex: -1
       readonly property int columnsPerRow: 5
+
+      GridNavigator {
+        id: gridNavigator
+        index: -1
+        count: panel.filteredCount
+        columns: panel.columnsPerRow
+        gridView: recordingGridView
+        onIndexChanged: panel.pendingDeleteIndex = -1
+      }
+
+      FocusNavigator {
+        id: detailFocusNavigator
+        root: detailContainer
+        manageFocusRing: true
+      }
 
       // Multi-select (Space to toggle, path-based so it survives refiltering)
       property var selectedPaths: ({})
       property int selectedCount: 0
-
-      onSelectedIndexChanged: pendingDeleteIndex = -1
 
       function toggleSelection(idx) {
         if (idx < 0 || idx >= filteredCount) return
@@ -56,10 +68,6 @@ Scope {
         if (idx < 0 || idx >= filteredFiles.length) return false
         return !!selectedPaths[filteredFiles[idx]]
       }
-
-      // Detail focus cycling
-      property var detailFocusables: []
-      property int detailFocusIndex: -1
 
       // -- File list helpers ------------------------------------------------
 
@@ -83,10 +91,6 @@ Scope {
           filteredFiles = result
           filteredCount = result.length
         }
-        // Clamp selection
-        if (selectedIndex >= filteredCount)
-          selectedIndex = filteredCount - 1
-
         // Prune stale multi-selections
         if (selectedCount > 0) {
           var lookup = {}
@@ -108,7 +112,7 @@ Scope {
         viewMode = "grid"
         detailPath = ""
         searchQuery = ""
-        selectedIndex = -1
+        gridNavigator.index = -1
         pendingDeleteIndex = -1
         clearSelection()
         updateFilteredFiles()
@@ -130,7 +134,7 @@ Scope {
             panel.viewMode = "grid"
             panel.detailPath = ""
             panel.searchQuery = ""
-            panel.selectedIndex = -1
+            gridNavigator.index = -1
             panel.pendingDeleteIndex = -1
             panel.clearSelection()
             panel.updateFilteredFiles()
@@ -138,73 +142,9 @@ Scope {
         }
       }
 
-      // -- Grid navigation functions ----------------------------------------
-
-      function ensureSelection() {
-        if (filteredCount === 0) return false
-        if (selectedIndex < 0) { selectedIndex = 0; scrollToCell(0) }
-        return true
-      }
-
-      function moveLeft() {
-        if (!ensureSelection()) return
-        if (selectedIndex > 0) selectedIndex--
-        scrollToCell(selectedIndex)
-      }
-
-      function moveRight() {
-        if (!ensureSelection()) return
-        if (selectedIndex < filteredCount - 1) selectedIndex++
-        scrollToCell(selectedIndex)
-      }
-
-      function moveUp() {
-        if (!ensureSelection()) return
-        var target = selectedIndex - columnsPerRow
-        if (target >= 0) selectedIndex = target
-        scrollToCell(selectedIndex)
-      }
-
-      function moveDown() {
-        if (!ensureSelection()) return
-        var target = selectedIndex + columnsPerRow
-        if (target < filteredCount) selectedIndex = target
-        scrollToCell(selectedIndex)
-      }
-
-      function pageUp() {
-        if (!ensureSelection()) return
-        var visibleRows = Math.max(1, Math.floor(gridView.height / gridView.cellHeight))
-        var target = selectedIndex - (visibleRows * columnsPerRow)
-        selectedIndex = Math.max(0, target)
-        scrollToCell(selectedIndex)
-      }
-
-      function pageDown() {
-        if (!ensureSelection()) return
-        var visibleRows = Math.max(1, Math.floor(gridView.height / gridView.cellHeight))
-        var target = selectedIndex + (visibleRows * columnsPerRow)
-        selectedIndex = Math.min(filteredCount - 1, target)
-        scrollToCell(selectedIndex)
-      }
-
-      function scrollToCell(idx) {
-        if (idx < 0 || !gridView.cellHeight) return
-        var row = Math.floor(idx / columnsPerRow)
-        var cellTop = row * gridView.cellHeight
-        var cellBottom = cellTop + gridView.cellHeight
-        var viewTop = gridView.contentY
-        var viewBottom = viewTop + gridView.height
-        if (cellTop < viewTop) {
-          gridView.contentY = cellTop
-        } else if (cellBottom > viewBottom) {
-          gridView.contentY = cellBottom - gridView.height
-        }
-      }
-
       function openSelected() {
-        if (selectedIndex >= 0 && selectedIndex < filteredCount) {
-          detailPath = filteredFiles[selectedIndex]
+        if (gridNavigator.index >= 0 && gridNavigator.index < filteredCount) {
+          detailPath = filteredFiles[gridNavigator.index]
           viewMode = "detail"
         }
       }
@@ -213,60 +153,12 @@ Scope {
         // Try to restore selection to the file we were viewing
         if (detailPath) {
           var idx = filteredFiles.indexOf(detailPath)
-          if (idx >= 0) selectedIndex = idx
+          if (idx >= 0) gridNavigator.index = idx
         }
         viewMode = "grid"
         detailPath = ""
-        detailFocusables = []
-        detailFocusIndex = -1
+        detailFocusNavigator.reset()
         contentItem.forceActiveFocus()
-      }
-
-      // -- Detail focus cycling (Ctrl+N / Ctrl+P) ---------------------------
-
-      function findFocusables(item, result) {
-        if (!item || !item.visible) return
-        if (item.enabled === false) return
-        if (item.showFocusRing !== undefined) {
-          result.push(item)
-        } else if (item.activeFocusOnTab === true) {
-          result.push(item)
-        }
-        if (item.children) {
-          for (var i = 0; i < item.children.length; i++) {
-            findFocusables(item.children[i], result)
-          }
-        }
-        if (item.contentItem) {
-          findFocusables(item.contentItem, result)
-        }
-      }
-
-      function refreshDetailFocusables() {
-        detailFocusables = []
-        findFocusables(detailContainer, detailFocusables)
-      }
-
-      function focusItemViaKeyboard(item) {
-        if (!item) return
-        if (item.keyboardFocus !== undefined) item.keyboardFocus = true
-        if (item.showFocusRing !== undefined) item.showFocusRing = true
-        if (item.forceActiveFocus) item.forceActiveFocus()
-      }
-
-      function focusNextDetail() {
-        refreshDetailFocusables()
-        if (detailFocusables.length === 0) return
-        detailFocusIndex = (detailFocusIndex + 1) % detailFocusables.length
-        focusItemViaKeyboard(detailFocusables[detailFocusIndex])
-      }
-
-      function focusPreviousDetail() {
-        refreshDetailFocusables()
-        if (detailFocusables.length === 0) return
-        if (detailFocusIndex < 0) detailFocusIndex = detailFocusables.length - 1
-        else detailFocusIndex = (detailFocusIndex - 1 + detailFocusables.length) % detailFocusables.length
-        focusItemViaKeyboard(detailFocusables[detailFocusIndex])
       }
 
       // -- Keyboard handler -------------------------------------------------
@@ -291,7 +183,7 @@ Scope {
             } else if (panel.pendingDeleteIndex >= 0) {
               panel.pendingDeleteIndex = -1
             } else {
-              RecordingManager.closePanel()
+              OverlayManager.close("recording")
             }
             event.accepted = true
             return
@@ -309,7 +201,7 @@ Scope {
             } else if (panel.pendingDeleteIndex >= 0) {
               panel.pendingDeleteIndex = -1
             } else {
-              RecordingManager.closePanel()
+              OverlayManager.close("recording")
             }
             event.accepted = true
             return
@@ -343,32 +235,32 @@ Scope {
             }
             // Ctrl+J: page down
             else if (event.key === Qt.Key_J && ctrl) {
-              panel.pageDown()
+              gridNavigator.pageDown()
               event.accepted = true
             }
             // Ctrl+K: page up
             else if (event.key === Qt.Key_K && ctrl) {
-              panel.pageUp()
+              gridNavigator.pageUp()
               event.accepted = true
             }
             // h: move left
             else if (event.key === Qt.Key_H) {
-              panel.moveLeft()
+              gridNavigator.moveLeft()
               event.accepted = true
             }
             // l: move right
             else if (event.key === Qt.Key_L) {
-              panel.moveRight()
+              gridNavigator.moveRight()
               event.accepted = true
             }
             // j: move down one row
             else if (event.key === Qt.Key_J) {
-              panel.moveDown()
+              gridNavigator.moveDown()
               event.accepted = true
             }
             // k: move up one row
             else if (event.key === Qt.Key_K) {
-              panel.moveUp()
+              gridNavigator.moveUp()
               event.accepted = true
             }
             // Enter: open detail view for focused item
@@ -378,9 +270,9 @@ Scope {
             }
             // Space: toggle selection on focused item
             else if (event.key === Qt.Key_Space) {
-              if (panel.ensureSelection()) {
+              if (gridNavigator.ensure()) {
                 panel.pendingDeleteIndex = -1
-                panel.toggleSelection(panel.selectedIndex)
+                panel.toggleSelection(gridNavigator.index)
               }
               event.accepted = true
             }
@@ -390,12 +282,12 @@ Scope {
                 var paths = Object.keys(panel.selectedPaths)
                 panel.clearSelection()
                 RecordingManager.deleteFiles(paths)
-              } else if (panel.pendingDeleteIndex === panel.selectedIndex && panel.selectedIndex >= 0) {
-                var singlePath = panel.filteredFiles[panel.selectedIndex]
+              } else if (panel.pendingDeleteIndex === gridNavigator.index && gridNavigator.index >= 0) {
+                var singlePath = panel.filteredFiles[gridNavigator.index]
                 panel.pendingDeleteIndex = -1
                 RecordingManager.deleteFile(singlePath)
-              } else if (panel.selectedIndex >= 0 && panel.selectedIndex < panel.filteredCount) {
-                panel.pendingDeleteIndex = panel.selectedIndex
+              } else if (gridNavigator.index >= 0 && gridNavigator.index < panel.filteredCount) {
+                panel.pendingDeleteIndex = gridNavigator.index
               }
               event.accepted = true
             }
@@ -405,12 +297,12 @@ Scope {
           else if (panel.viewMode === "detail") {
             // Ctrl+N: focus next element
             if (event.key === Qt.Key_N && ctrl) {
-              panel.focusNextDetail()
+              detailFocusNavigator.focusNext()
               event.accepted = true
             }
             // Ctrl+P: focus previous element
             else if (event.key === Qt.Key_P && ctrl) {
-              panel.focusPreviousDetail()
+              detailFocusNavigator.focusPrevious()
               event.accepted = true
             }
           }
@@ -425,7 +317,7 @@ Scope {
           if (panel.viewMode === "detail") {
             panel.returnToGrid()
           } else {
-            RecordingManager.closePanel()
+            OverlayManager.close("recording")
           }
         }
       }
@@ -555,7 +447,7 @@ Scope {
 
               onTextChanged: {
                 panel.searchQuery = text
-                panel.selectedIndex = -1
+                gridNavigator.index = -1
               }
 
               Keys.onEscapePressed: {
@@ -589,7 +481,7 @@ Scope {
               visible: panel.viewMode === "grid"
 
               GridView {
-                id: gridView
+                id: recordingGridView
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -603,8 +495,8 @@ Scope {
                 delegate: Item {
                   required property int index
 
-                  width: gridView.cellWidth
-                  height: gridView.cellHeight
+                  width: recordingGridView.cellWidth
+                  height: recordingGridView.cellHeight
 
                   // Focus / selection ring
                   Rectangle {
@@ -615,15 +507,15 @@ Scope {
                     color: "transparent"
                     border.width: 2
                     border.color: {
-                      if (index === panel.selectedIndex && index === panel.pendingDeleteIndex)
+                      if (index === gridNavigator.index && index === panel.pendingDeleteIndex)
                         return Theme.danger
-                      if (index === panel.selectedIndex)
+                      if (index === gridNavigator.index)
                         return Theme.focusRing
                       if (panel.isSelected(index))
                         return Theme.accent
                       return Theme.focusRing
                     }
-                    visible: index === panel.selectedIndex || panel.isSelected(index)
+                    visible: index === gridNavigator.index || panel.isSelected(index)
                     z: 1
                   }
 
@@ -635,15 +527,15 @@ Scope {
                     color: {
                       if (index === panel.pendingDeleteIndex)
                         return Qt.rgba(Theme.danger.r, Theme.danger.g, Theme.danger.b, 0.15)
-                      if (index === panel.selectedIndex)
+                      if (index === gridNavigator.index)
                         return Theme.bgCardHover
                       return Theme.bgCard
                     }
-                    border.width: index === panel.selectedIndex ? 2 : 1
+                    border.width: index === gridNavigator.index ? 2 : 1
                     border.color: {
                       if (index === panel.pendingDeleteIndex)
                         return Theme.danger
-                      if (index === panel.selectedIndex)
+                      if (index === gridNavigator.index)
                         return Theme.focusRing
                       return Theme.bgBorder
                     }
@@ -785,11 +677,11 @@ Scope {
                       hoverEnabled: true
                       cursorShape: Qt.PointingHandCursor
                       onContainsMouseChanged: {
-                        if (containsMouse) panel.selectedIndex = index
+                        if (containsMouse) gridNavigator.index = index
                       }
                       onClicked: {
                         if (cellRect.filePath) {
-                          panel.selectedIndex = index
+                          gridNavigator.index = index
                           panel.detailPath = cellRect.filePath
                           panel.viewMode = "detail"
                         }
@@ -926,7 +818,7 @@ Scope {
                   detailContainer.confirmDelete = false
                   detailContainer.detailDuration = ""
                   if (panel.viewMode === "detail") {
-                    panel.detailFocusIndex = -1
+                    detailFocusNavigator.reset()
                     if (detailContainer.isVideo && panel.detailPath) {
                       RecordingManager.requestDuration(panel.detailPath)
                     }

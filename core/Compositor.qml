@@ -41,19 +41,6 @@ Singleton {
   // Emitted when applyPosition() finishes (success or failure)
   signal positionApplied(bool success)
 
-  // Rotate a display. transform values: "normal", "90", "180", "270"
-  function setTransform(name, transform) {
-    if (!name) return
-    if (_skip("setTransform")) return
-    if (resolvedBackend === "niri") {
-      niriTransformProc.command = ["niri", "msg", "output", name, "transform", transform]
-      niriTransformProc.running = true
-    } else {
-      swayTransformProc.command = ["swaymsg", "output", name, "transform", transform]
-      swayTransformProc.running = true
-    }
-  }
-
   // Focus a window by app_id / desktop entry
   function focusWindow(appId) {
     if (!appId) return
@@ -99,11 +86,6 @@ Singleton {
 
   // Sway processes
   Process {
-    id: swayTransformProc
-    running: false
-  }
-
-  Process {
     id: swayFocusProc
     running: false
   }
@@ -129,11 +111,6 @@ Singleton {
   }
 
   // Niri processes
-  Process {
-    id: niriTransformProc
-    running: false
-  }
-
   Process {
     id: niriFocusProc
     running: false

@@ -7,7 +7,7 @@ Core (`core/`, `shell.qml`, `statusbar/`, `settings/`) must not hardcode
 module ids, labels, or state-file names. Sanctioned mechanisms:
 
 - **Manifests** — modules self-describe in `module.json`; core queries
-  through `ModuleRegistry` (`hasPopup`, `getBarComponents`, …).
+  through `ModuleRegistry` (`getPopupModules`, `getBarComponents`, …).
 - **Runtime registration** — managers announce capabilities at startup
   (e.g. `OverlayManager.register(id, label)`); the registrations double
   as the known-id list for IPC validation.

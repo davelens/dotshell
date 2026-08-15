@@ -202,12 +202,6 @@ Singleton {
     return !!(module && module.requiresHostWindow === true)
   }
 
-  // Check if a module has a popup component
-  function hasPopup(id) {
-    var module = getModule(id)
-    return module && module.components && module.components.popup
-  }
-
   // Get IDs of all modules that have a popup component
   function getPopupModuleIds() {
     return modules.filter(function(m) {

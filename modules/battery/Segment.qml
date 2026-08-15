@@ -55,7 +55,6 @@ Item {
   function getBatteryColor(percentage, charging, fullyCharged) {
     if (charging || fullyCharged) return Theme.success
     if (percentage <= 10) return Theme.danger
-    if (percentage <= 25) return Theme.warning
     if (percentage <= 50) return Theme.warning
     return Theme.success
   }

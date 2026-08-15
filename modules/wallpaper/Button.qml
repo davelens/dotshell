@@ -9,6 +9,6 @@ BarButton {
   iconColor: Theme.textPrimary
 
   onClicked: {
-    WallpaperManager.togglePanel()
+    OverlayManager.toggle("wallpaper")
   }
 }

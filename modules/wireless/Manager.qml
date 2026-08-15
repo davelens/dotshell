@@ -166,23 +166,6 @@ Singleton {
     return iconSignal[0]
   }
 
-  function formatDuration(seconds) {
-    if (seconds < 60) return "Just now"
-    var minutes = Math.floor(seconds / 60)
-    var hours = Math.floor(minutes / 60)
-    var days = Math.floor(hours / 24)
-
-    if (days > 0) {
-      hours = hours % 24
-      return days + "d " + hours + "h"
-    }
-    if (hours > 0) {
-      minutes = minutes % 60
-      return hours + "h " + minutes + "m"
-    }
-    return minutes + "m"
-  }
-
   function formatDurationLong(seconds) {
     if (seconds < 60) return "Less than a minute"
     var minutes = Math.floor(seconds / 60) % 60
@@ -195,13 +178,6 @@ Singleton {
     if (minutes > 0) parts.push(minutes + (minutes === 1 ? " min" : " mins"))
 
     return parts.join(", ")
-  }
-
-  function getConnectionDuration() {
-    if (connectionTimestamp <= 0) return ""
-    var now = Math.floor(Date.now() / 1000)
-    var seconds = now - connectionTimestamp
-    return formatDuration(seconds)
   }
 
   function getConnectionDurationLong() {

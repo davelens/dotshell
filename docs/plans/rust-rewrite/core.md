@@ -231,8 +231,9 @@ Keymaps preserved from `settings/Panel.qml`: `Escape`/`q`/`Ctrl+[`
 close, `Ctrl+h`/`Ctrl+l` sidebar↔content, `Ctrl+n`/`Ctrl+p`
 next/previous, `Space`/`Return`/`Enter` activate, plus
 `NewProfileDialog` / `SwitchProfileDialog` as `DialogOverlay`s.
-`settings showCategory <id>` IPC preserved (used by display module's
-"configure" jump).
+`settings showCategory <id>` IPC preserved for external callers. The
+display module's "Configure" jump opens the settings overlay directly
+with `{ category: "display" }`.
 
 ## Compositor (`ds-core::compositor`)
 
@@ -240,8 +241,8 @@ Trait with `Sway` (via `swayipc-async`; also covers i3 semantics) and
 `Niri` (JSON over `NIRI_SOCKET`) implementations. Detection identical:
 `SWAYSOCK`/`I3SOCK` → sway, `NIRI_SOCKET` → niri, fallback sway with
 `detected = false` and every helper no-oping with a warning. Same
-helper set: `set_transform`, `focus_window`, `apply_position`,
-`fetch_outputs` (async, event-style results). `ScreenManager` ports
+helper set: `focus_window`, `apply_position`, `fetch_outputs` (async,
+event-style results). `ScreenManager` ports
 as-is: `screens.json`, stable id `model:serialNumber`, first-screen
 fallback, drives bar/settings/popup-fallback placement.
 
@@ -263,8 +264,8 @@ reads must work with the shell down). Changes:
    `dotshell ipc call "$@"`. The client exits non-zero on `error:`
    replies itself, but `ipc()` keeps its stderr/exit handling so
    behavior is identical either way.
-2. `settings/Panel.qml`'s internal `qs ipc call settings showCategory
-   display` becomes an in-process call (no subprocess at all).
+2. The display popup's "Configure" action remains a direct in-process
+   settings-overlay open with the `display` category context.
 3. No row, verb, or completion-source changes. `wallpaper
    set/restore`, `theme *`, `profile list/current` stay local fns on
    `json_get`.

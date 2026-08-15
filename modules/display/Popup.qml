@@ -28,7 +28,7 @@ ModulePopup {
         textColor: Theme.textMuted
         hoverColor: Theme.accent
         fontSize: 12
-        onClicked: DisplayConfig.openSettings()
+        onClicked: OverlayManager.open("settings", { category: "display" })
       }
     }
 

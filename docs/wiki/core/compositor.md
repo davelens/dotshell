@@ -17,7 +17,6 @@ of firing `swaymsg` blindly.
 
 | Function | sway | niri |
 | --- | --- | --- |
-| `setTransform(name, t)` | `swaymsg output … transform` | `niri msg output … transform` |
 | `focusWindow(appId)` | `swaymsg [app_id=…] focus` | `niri msg action focus-window --app-id` |
 | `applyPosition(name, x, y)` | `swaymsg output … pos` | `niri msg output … position set` |
 | `fetchOutputs()` | `swaymsg -t get_outputs` | `niri msg -j outputs` |

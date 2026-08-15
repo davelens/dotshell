@@ -13,82 +13,23 @@ Scope {
       namespaceName: "dotshell-power-menu"
       color: "transparent"
 
-    // Keyboard focus cycling state
-    property var focusables: []
-    property int focusIndex: -1
-
-    function findFocusables(item, result) {
-      if (!item || !item.visible) return
-      if (item.showFocusRing !== undefined && item.enabled !== false) {
-        result.push(item)
-      }
-      if (item.children) {
-        for (var i = 0; i < item.children.length; i++) {
-          findFocusables(item.children[i], result)
-        }
-      }
-      if (item.contentItem) {
-        findFocusables(item.contentItem, result)
-      }
-    }
-
-    function refreshFocusables() {
-      focusables = []
-      findFocusables(cardContent, focusables)
-    }
-
-    function focusItem(item) {
-      if (!item) return
-      if (item.keyboardFocus !== undefined) item.keyboardFocus = true
-      if (item.showFocusRing !== undefined) item.showFocusRing = true
-      if (item.forceActiveFocus) item.forceActiveFocus()
-    }
-
-    function focusNext() {
-      refreshFocusables()
-      if (focusables.length === 0) return
-      focusIndex = (focusIndex + 1) % focusables.length
-      focusItem(focusables[focusIndex])
-    }
-
-    function focusPrevious() {
-      refreshFocusables()
-      if (focusables.length === 0) return
-      if (focusIndex < 0) focusIndex = focusables.length - 1
-      else focusIndex = (focusIndex - 1 + focusables.length) % focusables.length
-      focusItem(focusables[focusIndex])
-    }
-
-    function resetFocus() {
-      for (var i = 0; i < focusables.length; i++) {
-        if (focusables[i].keyboardFocus !== undefined)
-          focusables[i].keyboardFocus = false
-      }
-      focusIndex = -1
-      focusables = []
+    FocusNavigator {
+      id: focusNavigator
+      root: cardContent
+      manageFocusRing: true
     }
 
     // Auto-select "suspend" when the overlay is created
-    Component.onCompleted: {
-      Qt.callLater(function() {
-        overlay.refreshFocusables()
-        if (overlay.focusables.length > 1) {
-          overlay.focusIndex = 1
-          overlay.focusItem(overlay.focusables[1])
-        }
-      })
-    }
+    Component.onCompleted: Qt.callLater(function() { focusNavigator.focusAt(1) })
 
     Connections {
       target: PowerManager
       function onPendingActionChanged() {
         if (PowerManager.pendingAction !== "") {
-          overlay.resetFocus()
-          overlay.refreshFocusables()
-          if (overlay.focusables.length > 0) {
-            overlay.focusIndex = overlay.focusables.length - 1
-            overlay.focusItem(overlay.focusables[overlay.focusIndex])
-          }
+          focusNavigator.reset()
+          var focusables = focusNavigator.refresh()
+          if (focusables.length > 0)
+            focusNavigator.focusAt(focusables.length - 1)
         }
       }
     }
@@ -99,22 +40,22 @@ Scope {
         if (event.key === Qt.Key_Escape
             || (event.key === Qt.Key_BracketLeft && (event.modifiers & Qt.ControlModifier))) {
           if (PowerManager.pendingAction !== "") {
-            overlay.resetFocus()
+            focusNavigator.reset()
             PowerManager.cancelAction()
           } else {
-            overlay.resetFocus()
-            PowerManager.close()
+            focusNavigator.reset()
+            OverlayManager.close("power")
           }
           event.accepted = true
         } else if (event.key === Qt.Key_Q && !(event.modifiers & Qt.ControlModifier)) {
-          overlay.resetFocus()
-          PowerManager.close()
+          focusNavigator.reset()
+          OverlayManager.close("power")
           event.accepted = true
         } else if (event.key === Qt.Key_N && (event.modifiers & Qt.ControlModifier)) {
-          overlay.focusNext()
+          focusNavigator.focusNext()
           event.accepted = true
         } else if (event.key === Qt.Key_P && (event.modifiers & Qt.ControlModifier)) {
-          overlay.focusPrevious()
+          focusNavigator.focusPrevious()
           event.accepted = true
         }
       }
@@ -127,7 +68,7 @@ Scope {
 
       MouseArea {
         anchors.fill: parent
-        onClicked: PowerManager.close()
+        onClicked: OverlayManager.close("power")
       }
     }
 
@@ -307,7 +248,11 @@ Scope {
 
           Text {
             width: parent.width
-            text: PowerManager.getDescription(PowerManager.pendingAction)
+            text: {
+              var action = PowerManager.actions.find(
+                candidate => candidate.id === PowerManager.pendingAction)
+              return action ? action.description : ""
+            }
             color: Theme.textSecondary
             font.pixelSize: 13
             horizontalAlignment: Text.AlignHCenter

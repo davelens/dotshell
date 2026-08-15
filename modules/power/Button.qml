@@ -6,5 +6,5 @@ BarButton {
   icon: "󰐥"
   iconColor: Theme.accent
 
-  onClicked: PowerManager.toggle()
+  onClicked: OverlayManager.toggle("power")
 }

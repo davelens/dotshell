@@ -24,8 +24,6 @@ Scope {
 
   // Focus mode: "categories" or "content"
   property string focusMode: "categories"
-  property var contentFocusables: []  // List of focusable items in current panel
-  property int contentFocusIndex: -1  // Current focused item index in content
 
   // Sidebar profile button focus (-1 = none, 0 = New Profile, 1 = Switch Profile)
   property int sidebarProfileFocus: -1
@@ -65,17 +63,14 @@ Scope {
     if (!visible) {
       searchQuery = ""
       focusMode = "categories"
-      contentFocusIndex = -1
+      contentFocusNavigator.index = -1
       sidebarProfileFocus = -1
       activeOverlay = ""
     }
   }
 
   // Reset content focus when category changes
-  onActiveCategoryChanged: {
-    contentFocusIndex = -1
-    contentFocusables = []
-  }
+  onActiveCategoryChanged: contentFocusNavigator.reset()
 
   // Return to category mode when overlay closes
   onActiveOverlayChanged: {
@@ -175,123 +170,33 @@ Scope {
   property var currentContentLoader: null
   property var overlayLoaderRef: null
 
-  // Find all focusable items in the current content
-  function findFocusables(item, result) {
-    if (!item) return
-    if (item.showFocusRing !== undefined) {
-      result.push(item)
-    } else if (item.activeFocusOnTab === true) {
-      result.push(item)
-    }
-    // Recurse into children
-    if (item.children) {
-      for (var i = 0; i < item.children.length; i++) {
-        findFocusables(item.children[i], result)
-      }
-    }
-    // Also check data (for Repeater items)
-    if (item.contentItem) {
-      findFocusables(item.contentItem, result)
-    }
-  }
-
-  // Refresh the list of focusable items
-  function refreshFocusables() {
-    contentFocusables = []
-    if (root.activeOverlay !== "" && overlayLoaderRef && overlayLoaderRef.item) {
-      findFocusables(overlayLoaderRef.item, contentFocusables)
-    } else if (currentContentLoader && currentContentLoader.item) {
-      findFocusables(currentContentLoader.item, contentFocusables)
-    }
-  }
-
-  // Find the Flickable ancestor of an item (ScrollView's internal Flickable)
-  function findFlickable(item) {
-    var parent = item ? item.parent : null
-    while (parent) {
-      // Flickable has contentY and flick method
-      if (parent.contentY !== undefined && parent.contentHeight !== undefined && parent.height !== undefined) {
-        return parent
-      }
-      parent = parent.parent
-    }
-    return null
-  }
-
-  // Scroll to make an item visible
-  function scrollToItem(item) {
-    if (!item) return
-    var flickable = findFlickable(item)
-    if (!flickable) return
-
-    // Map item position to flickable's content coordinates
-    var mapped = item.mapToItem(flickable.contentItem, 0, 0)
-    var itemTop = mapped.y
-    var itemBottom = itemTop + item.height
-
-    // Current visible area
-    var visibleTop = flickable.contentY
-    var visibleBottom = visibleTop + flickable.height
-
-    // Add padding for focus ring
-    var padding = 24
-
-    // Scroll if item is outside visible area
-    if (itemTop - padding < visibleTop) {
-      // Item is above visible area - scroll up
-      flickable.contentY = Math.max(0, itemTop - padding)
-    } else if (itemBottom + padding > visibleBottom) {
-      // Item is below visible area - scroll down
-      flickable.contentY = Math.min(
-        flickable.contentHeight - flickable.height,
-        itemBottom + padding - flickable.height
-      )
-    }
-  }
-
-  // Focus an item via keyboard (sets keyboardFocus flag and scrolls to it)
-  function focusItemViaKeyboard(item) {
-    if (item) {
-      if (item.keyboardFocus !== undefined) item.keyboardFocus = true
-      if (item.forceActiveFocus) item.forceActiveFocus()
-      scrollToItem(item)
-    }
-  }
-
-  // Focus next item in content
-  function focusNextContent() {
-    refreshFocusables()
-    if (contentFocusables.length === 0) return
-    contentFocusIndex = (contentFocusIndex + 1) % contentFocusables.length
-    focusItemViaKeyboard(contentFocusables[contentFocusIndex])
-  }
-
-  // Focus previous item in content
-  function focusPreviousContent() {
-    refreshFocusables()
-    if (contentFocusables.length === 0) return
-    if (contentFocusIndex < 0) contentFocusIndex = contentFocusables.length - 1
-    else contentFocusIndex = (contentFocusIndex - 1 + contentFocusables.length) % contentFocusables.length
-    focusItemViaKeyboard(contentFocusables[contentFocusIndex])
+  FocusNavigator {
+    id: contentFocusNavigator
+    root: root.activeOverlay !== "" && root.overlayLoaderRef && root.overlayLoaderRef.item
+      ? root.overlayLoaderRef.item
+      : root.currentContentLoader && root.currentContentLoader.item
+        ? root.currentContentLoader.item
+        : null
+    manageFocusRing: false
+    scrollEnabled: true
   }
 
   // Enter content focus mode
   function enterContentMode() {
     focusMode = "content"
     sidebarProfileFocus = -1
-    refreshFocusables()
+    contentFocusNavigator.refresh()
     // Re-enable focus rings on all content items
-    for (var i = 0; i < contentFocusables.length; i++) {
-      var item = contentFocusables[i]
+    for (var i = 0; i < contentFocusNavigator.focusables.length; i++) {
+      var item = contentFocusNavigator.focusables[i]
       if (item && item.showFocusRing !== undefined) {
         item.showFocusRing = true
       }
     }
-    contentFocusIndex = -1
+    contentFocusNavigator.index = -1
     // Focus first item if available
-    if (contentFocusables.length > 0) {
-      contentFocusIndex = 0
-      focusItemViaKeyboard(contentFocusables[0])
+    if (contentFocusNavigator.focusables.length > 0) {
+      contentFocusNavigator.focusAt(0)
     }
   }
 
@@ -300,13 +205,13 @@ Scope {
     focusMode = "categories"
     sidebarProfileFocus = -1
     // Hide focus rings on all content items
-    for (var i = 0; i < contentFocusables.length; i++) {
-      var item = contentFocusables[i]
+    for (var i = 0; i < contentFocusNavigator.focusables.length; i++) {
+      var item = contentFocusNavigator.focusables[i]
       if (item && item.showFocusRing !== undefined) {
         item.showFocusRing = false
       }
     }
-    contentFocusIndex = -1
+    contentFocusNavigator.index = -1
     // Return focus to panel root
     if (panelRoot) panelRoot.forceActiveFocus()
   }
@@ -402,7 +307,7 @@ Scope {
             if (root.focusMode === "categories") {
               root.selectNextCategory()
             } else {
-              root.focusNextContent()
+              contentFocusNavigator.focusNext()
             }
             event.accepted = true
           }
@@ -411,7 +316,7 @@ Scope {
             if (root.focusMode === "categories") {
               root.selectPreviousCategory()
             } else {
-              root.focusPreviousContent()
+              contentFocusNavigator.focusPrevious()
             }
             event.accepted = true
           }

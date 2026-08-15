@@ -54,17 +54,22 @@ Singleton {
     if (menuOpen) uptimeProc.running = true
   }
   property string pendingAction: ""
-  property string username: ""
+  readonly property string username: Quickshell.env("USER")
   property string uptime: ""
 
   // -- Actions metadata ----------------------------------------------------
 
   readonly property var actions: [
-    { id: "lock",     label: "Lock",     icon: "󰌾" },
-    { id: "suspend",  label: "Suspend",  icon: "󰤄" },
-    { id: "logout",   label: "Logout",   icon: "󰍃" },
-    { id: "reboot",   label: "Reboot",   icon: "󰜉" },
-    { id: "shutdown", label: "Shutdown", icon: "󰐥" }
+    { id: "lock", label: "Lock", icon: "󰌾",
+      description: "This will lock your session." },
+    { id: "suspend", label: "Suspend", icon: "󰤄",
+      description: "This will suspend your computer." },
+    { id: "logout", label: "Logout", icon: "󰍃",
+      description: "This will end your session." },
+    { id: "reboot", label: "Reboot", icon: "󰜉",
+      description: "This will reboot your computer." },
+    { id: "shutdown", label: "Shutdown", icon: "󰐥",
+      description: "This will shut down your computer." }
   ]
 
   // Map action id to its user-configured command
@@ -79,31 +84,7 @@ Singleton {
     }
   }
 
-  // Description shown in the confirmation dialog
-  function getDescription(actionId) {
-    switch (actionId) {
-      case "lock":     return "This will lock your session."
-      case "suspend":  return "This will suspend your computer."
-      case "logout":   return "This will end your session."
-      case "reboot":   return "This will reboot your computer."
-      case "shutdown": return "This will shut down your computer."
-      default:         return ""
-    }
-  }
-
   // -- Public API ----------------------------------------------------------
-
-  function toggle() {
-    OverlayManager.toggle("power")
-  }
-
-  function open() {
-    OverlayManager.open("power")
-  }
-
-  function close() {
-    OverlayManager.close("power")
-  }
 
   function requestAction(actionId) {
     pendingAction = actionId
@@ -116,7 +97,7 @@ Singleton {
       actionProc.command = ["sh", "-c", cmd]
       actionProc.running = true
     }
-    close()
+    OverlayManager.close("power")
   }
 
   function cancelAction() {
@@ -124,16 +105,6 @@ Singleton {
   }
 
   // -- Processes -----------------------------------------------------------
-
-  // Get username at startup
-  Process {
-    id: whoamiProc
-    command: ["whoami"]
-    running: true
-    stdout: SplitParser {
-      onRead: data => { powerManager.username = data.trim() }
-    }
-  }
 
   // Get uptime when menu opens
   Process {
