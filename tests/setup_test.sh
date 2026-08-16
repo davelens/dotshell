@@ -168,6 +168,7 @@ assert_contains "$(cat "$TEST_LOG")" 'paru <-S> <--needed> <--noconfirm> <quicks
 assert_contains "$(cat "$TEST_LOG")" 'systemctl <--user> <disable> <--now> <quickshell.service>' 'Arch disables the legacy systemd user service'
 assert_contains "$(cat "$TEST_LOG")" 'systemctl <--user> <enable>' 'Arch enables the systemd user service'
 assert_contains "$(cat "$TEST_LOG")" 'systemctl <--user> <restart> <dotshell.service>' 'Arch restarts the dotshell systemd user service'
+assert_contains "$(cat "$REPO_ROOT/setup/dotshell.service")" 'Environment=QSG_RHI_BACKEND=vulkan' 'Arch service defaults to Vulkan'
 assert_symlink "$TEST_CONFIG/dotshell" "$REPO_ROOT" 'Arch setup links the repository at a path containing spaces'
 assert_symlink "$TEST_BIN_HOME/dshell" "$REPO_ROOT/bin/dshell" 'Arch setup installs dshell in XDG_BIN_HOME'
 assert_symlink "$TEST_DATA/bash-completion/completions/dshell" "$REPO_ROOT/bin/dshell-completion.bash" 'Arch setup installs completion'
@@ -196,6 +197,7 @@ assert_contains "$(cat "$TEST_LOG")" '<NetworkManager>' 'Void uses the distribut
 assert_contains "$(cat "$TEST_LOG")" 'sudo <usermod> <-aG> <network> <test-user>' 'Void grants the network group'
 assert_contains "$(cat "$TEST_LOG")" 'sudo <usermod> <-aG> <bluetooth> <test-user>' 'Void grants the bluetooth group'
 assert_symlink "$TEST_HOME/.config/service/dotshell/run" "$REPO_ROOT/setup/dotshell.run" 'Void installs the runit service'
+assert_contains "$(cat "$REPO_ROOT/setup/dotshell.run")" 'QSG_RHI_BACKEND:-vulkan' 'Void service defaults to Vulkan'
 assert_contains "$(cat "$TEST_LOG")" 'sv <status>' 'Void checks whether runit already supervises the service'
 assert_contains "$(cat "$TEST_LOG")" 'sv <restart>' 'Void restarts an already supervised service'
 run_setup

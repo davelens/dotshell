@@ -134,6 +134,14 @@ launches the process into the active graphical session, allowing background
 polkit requests to reach its graphical agent. If you need external monitor
 brightness control, log out and back in to refresh group membership.
 
+### Renderer backend
+
+The installed services default to `QSG_RHI_BACKEND=vulkan`, which used about
+64 MB less PSS than Qt's OpenGL backend in testing. Use `opengl` as a
+compatibility fallback; changing the backend requires restarting dotshell.
+Platform-specific override instructions live in the
+[setup documentation](docs/wiki/setup.md#renderer-backend).
+
 ## Tests
 
 Run the safe, distribution-independent test harness from the repository root:

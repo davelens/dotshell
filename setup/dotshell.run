@@ -32,6 +32,7 @@ rm -f "$pidfile"
 cat >"$launcher" <<EOF
 #!/bin/sh
 umask 077
+export QSG_RHI_BACKEND="\${QSG_RHI_BACKEND:-vulkan}"
 echo \$\$ >"$pidfile"
 exec /usr/bin/quickshell -p "$HOME/.config/dotshell"
 EOF

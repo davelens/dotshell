@@ -29,6 +29,32 @@ and service:
 
 Mako must not run — the notifications module is its own daemon.
 
+## Renderer backend
+
+Both service definitions default `QSG_RHI_BACKEND` to `vulkan`. Compared with
+Qt's OpenGL backend on the reference AMD system, Vulkan reduced dotshell's
+median PSS from 270.7 MB to 206.4 MB. The backend is selected before QML loads,
+so changing it requires a service restart.
+
+| Value | Use |
+| --- | --- |
+| `vulkan` | Default; lowest measured memory usage. |
+| `opengl` | Compatibility fallback if Vulkan rendering misbehaves. |
+
+On Arch, override the default with `systemctl --user edit dotshell.service`:
+
+```ini
+[Service]
+Environment=QSG_RHI_BACKEND=opengl
+```
+
+Then run `systemctl --user restart dotshell.service` and `dshell idle enable`.
+Remove the override, or change it back to `vulkan`, to restore the default.
+
+On Void, `setup/dotshell.run` preserves an existing `QSG_RHI_BACKEND` from the
+turnstile environment and otherwise supplies `vulkan`; set that environment
+entry to `opengl` and restart the runit service to use the fallback.
+
 `setup/uninstall.sh` detects the same distributions and reverses the matching
 service, symlinks, profile data, desktop entry, runtime logs, and Quickshell
 runtime package after confirmation.
