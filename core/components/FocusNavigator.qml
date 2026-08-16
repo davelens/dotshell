@@ -23,7 +23,8 @@ QtObject {
     if (!item || visited.indexOf(item) !== -1) return
     visited.push(item)
 
-    if (!item.visible || item.enabled === false) return
+    if (!item.visible || item.enabled === false
+        || item.focusNavigationSkip === true) return
 
     if (item.showFocusRing !== undefined || item.activeFocusOnTab === true)
       result.push(item)

@@ -71,6 +71,19 @@ Scope {
         scrollEnabled: true
       }
 
+      readonly property var historyRows: {
+        var rows = []
+        for (var i = 0; i < NotificationManager.history.length; i++) {
+          var group = NotificationManager.history[i]
+          rows.push({ kind: "group", group: group })
+          if (group.expanded) {
+            for (var j = 0; j < group.notifications.length; j++)
+              rows.push({ kind: "notification", notification: group.notifications[j] })
+          }
+        }
+        return rows
+      }
+
       contentItem {
         focus: NotificationManager.panelOpen
         Keys.onPressed: function(event) {
@@ -233,100 +246,168 @@ Scope {
           }
 
           // Notifications list
-          ScrollView {
+          Item {
             width: parent.width
             height: parent.height - 32 - 16 - dndColumn.height - 24 - 16 - clearButton.height - 16
-            clip: true
 
             Column {
-              width: parent.width
+              anchors.centerIn: parent
               spacing: 8
+              visible: panel.historyRows.length === 0
 
-              // Empty state
-              Item {
-                width: parent.width
-                height: 120
-                visible: NotificationManager.history.length === 0
-
-                Column {
-                  anchors.centerIn: parent
-                  spacing: 8
-
-                  Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "󰂚"
-                    color: Theme.textMuted
-                    font.pixelSize: 48
-                    font.family: "Symbols Nerd Font"
-                  }
-
-                  Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "All caught up!"
-                    color: Theme.textMuted
-                    font.pixelSize: 14
-                  }
-                }
+              Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "󰂚"
+                color: Theme.textMuted
+                font.pixelSize: 48
+                font.family: "Symbols Nerd Font"
               }
 
-              // Grouped notifications
-              Repeater {
-                model: NotificationManager.history
+              Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "All caught up!"
+                color: Theme.textMuted
+                font.pixelSize: 14
+              }
+            }
 
-                Column {
-                  id: groupColumn
+            FocusScope {
+              id: historyFocus
+              anchors.fill: parent
+              visible: panel.historyRows.length > 0
+              activeFocusOnTab: true
+
+              property bool showFocusRing: true
+              property bool keyboardFocus: false
+
+              onActiveFocusChanged: {
+                if (!activeFocus) keyboardFocus = false
+              }
+
+              ListView {
+                id: historyList
+                anchors.fill: parent
+                clip: true
+                focus: true
+                spacing: 4
+                model: panel.historyRows
+                reuseItems: true
+                cacheBuffer: height
+
+                Keys.onPressed: function(event) {
+                  var ctrl = event.modifiers & Qt.ControlModifier
+                  if (ctrl && event.key === Qt.Key_N && currentIndex < count - 1) {
+                    incrementCurrentIndex()
+                    event.accepted = true
+                  } else if (ctrl && event.key === Qt.Key_P && currentIndex > 0) {
+                    decrementCurrentIndex()
+                    event.accepted = true
+                  } else if (event.key === Qt.Key_Y && currentIndex >= 0) {
+                    var row = panel.historyRows[currentIndex]
+                    if (row.kind === "notification") {
+                      Quickshell.clipboardText = row.notification.body || row.notification.summary
+                      event.accepted = true
+                    }
+                  } else if (event.key === Qt.Key_Delete && currentIndex >= 0) {
+                    var deleteRow = panel.historyRows[currentIndex]
+                    if (deleteRow.kind === "notification") {
+                      NotificationManager.removeFromHistory(deleteRow.notification.id)
+                      event.accepted = true
+                    }
+                  } else if ((event.key === Qt.Key_Space || event.key === Qt.Key_Return
+                              || event.key === Qt.Key_Enter) && currentIndex >= 0) {
+                    var activateRow = panel.historyRows[currentIndex]
+                    if (activateRow.kind === "group") {
+                      NotificationManager.toggleGroup(activateRow.group.appName)
+                      event.accepted = true
+                    }
+                  }
+                }
+
+                delegate: FocusScope {
+                  id: historyRow
+
                   required property var modelData
                   required property int index
 
-                  width: parent.width
-                  spacing: 4
+                  property bool focusNavigationSkip: true
 
-                  // Group header
-                  FocusListItem {
-                    itemHeight: 36
-                    bodyMargins: 0
-                    bodyRadius: 6
-                    icon: groupColumn.modelData.expanded ? "󰅀" : "󰅂"
-                    iconSize: 12
-                    text: groupColumn.modelData.appName + " (" + groupColumn.modelData.notifications.length + ")"
-                    fontSize: 13
-                    hoverBackgroundColor: Theme.bgCard
-                    onClicked: NotificationManager.toggleGroup(groupColumn.modelData.appName)
-                  }
+                  width: historyList.width
+                  height: rowLoader.height
+                  focus: ListView.isCurrentItem
 
-                  // Notifications in group
-                  Column {
+                  Loader {
+                    id: rowLoader
                     width: parent.width
-                    spacing: 4
-                    visible: groupColumn.modelData.expanded
+                    height: item ? item.height : 0
+                    sourceComponent: historyRow.modelData.kind === "group"
+                      ? groupRowComponent : notificationRowComponent
 
-                    Repeater {
-                      model: groupColumn.modelData.notifications
-
-                      NotificationCard {
-                        required property var modelData
-                        required property int index
-
-                        width: parent.width
-                        appName: modelData.appName
-                        appIcon: modelData.appIcon
-                        summary: modelData.summary
-                        body: modelData.body
-                        urgency: modelData.urgency
-                        timestamp: modelData.timestamp
-                        showCloseButton: true
-                        compact: true
-
-                        onDismissed: {
-                          NotificationManager.removeFromHistory(modelData.id)
-                        }
-
-                        onClicked: {
-                          // Could open the app or do something else
-                        }
-                      }
-                    }
+                    property var rowData: historyRow.modelData
+                    property int rowIndex: historyRow.index
                   }
+
+                  Rectangle {
+                    anchors.fill: parent
+                    radius: 6
+                    color: "transparent"
+                    border.width: 2
+                    border.color: Theme.focusRing
+                    visible: historyFocus.keyboardFocus
+                      && historyList.currentIndex === historyRow.index
+                    z: 1
+                  }
+                }
+              }
+            }
+
+            Component {
+              id: groupRowComponent
+
+              FocusListItem {
+                width: parent.width
+                itemHeight: 36
+                bodyMargins: 0
+                bodyRadius: 6
+                icon: parent.rowData.group.expanded ? "󰅀" : "󰅂"
+                iconSize: 12
+                text: parent.rowData.group.appName + " ("
+                  + parent.rowData.group.notifications.length + ")"
+                fontSize: 13
+                hoverBackgroundColor: Theme.bgCard
+                showFocusRing: false
+                activeFocusOnTab: false
+                onClicked: {
+                  historyList.currentIndex = parent.rowIndex
+                  NotificationManager.toggleGroup(parent.rowData.group.appName)
+                }
+              }
+            }
+
+            Component {
+              id: notificationRowComponent
+
+              NotificationCard {
+                width: parent.width
+                appName: parent.rowData.notification.appName
+                appIcon: parent.rowData.notification.appIcon
+                summary: parent.rowData.notification.summary
+                body: parent.rowData.notification.body
+                urgency: parent.rowData.notification.urgency
+                timestamp: parent.rowData.notification.timestamp
+                showCloseButton: true
+                showFocusRing: false
+                activeFocusOnTab: false
+                compact: true
+
+                onClicked: {
+                  historyList.currentIndex = parent.rowIndex
+                  historyFocus.forceActiveFocus()
+                }
+
+                onDismissed: {
+                  historyList.currentIndex = parent.rowIndex
+                  NotificationManager.removeFromHistory(parent.rowData.notification.id)
                 }
               }
             }

@@ -62,7 +62,7 @@ Rectangle {
     id: hoverHandler
   }
 
-  layer.enabled: true
+  layer.enabled: !compact
   layer.effect: MultiEffect {
     shadowEnabled: true
     shadowColor: Theme.overlay
