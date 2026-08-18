@@ -23,12 +23,13 @@ Component.onCompleted: OverlayManager.register("wallpaper", "Wallpaper browser")
 The registrations map id → human label. Labels build the feedback
 strings ("Wallpaper browser opened"); the id set validates calls —
 unknown ids return `error: unknown overlay '<id>'`. Registered overlays:
-`notifications`, `power`, `recording`, `wallpaper` (modules) and
+`notifications`, `power`, `screen-recording`, `wallpaper` (modules) and
 `settings` (core, `settings/Panel.qml`).
 
 `dshell` maps its per-module verbs onto this target (`dshell power
-toggle` → `ipc overlay toggle power`), so the CLI vocabulary stays
-per-module while QML has one seam.
+toggle` → `ipc overlay toggle power`, `dshell screen-recording files toggle` →
+`ipc overlay toggle screen-recording`), so the CLI vocabulary stays per-module
+while QML has one seam.
 
 ## Module-specific IPC verbs
 
@@ -43,6 +44,13 @@ Only verbs that genuinely belong to a module keep their own target:
 | `bar` | `enable/disable/toggle/state` (focus mode, `shell.qml`) |
 | `popup` | `toggle(name)` |
 | `theme` / `profile` | `set`, `current`, `list` (`core/GeneralSettings.qml`) |
+
+These are internal names, not public command groups. For example,
+`dshell status-bar focus toggle` maps to the `bar` target,
+`dshell idle-inhibitor toggle` maps to `idle`, and `dshell bluetooth toggle`,
+`dshell brightness toggle`, `dshell display toggle`, `dshell system-updates
+toggle`, `dshell volume toggle`, and `dshell wireless toggle` map to
+`popup.toggle(name)`.
 
 ## Popup anchoring and the stem
 
@@ -73,5 +81,7 @@ offset via existing bindings.
    `OverlayManager.isOpen(id)`, mutate via `toggle/open/close`.
 2. `Component.onCompleted: OverlayManager.register(id, label)` in the
    manager.
-3. Three `COMMANDS` rows in `bin/dshell` mapping the module's CLI verbs
-   to `ipc overlay <verb> <id>`.
+3. Register the module's three CLI verbs in
+   `modules/<module-id>/dshell/init.sh`, mapping them to `ipc overlay <verb>
+   <id>`. The file is discovered on each `dshell` invocation/completion; no
+   manifest or setup declaration is needed.

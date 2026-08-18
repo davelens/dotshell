@@ -33,8 +33,8 @@ SettingsPage {
 
         SwitchToggle {
           anchors.verticalCenter: parent.verticalCenter
-          checked: UpdatesManager.includeFlatpak
-          onClicked: UpdatesManager.includeFlatpak = !UpdatesManager.includeFlatpak
+          checked: SystemUpdatesManager.includeFlatpak
+          onClicked: SystemUpdatesManager.includeFlatpak = !SystemUpdatesManager.includeFlatpak
         }
 
         Text {
@@ -48,7 +48,7 @@ SettingsPage {
       HelpText {
         width: parent.width
         text: "When enabled, the \"System Update\" action also runs <b>flatpak update</b> after the "
-          + UpdatesManager.backendName + " system upgrade."
+          + SystemUpdatesManager.backendName + " system upgrade."
         textFormat: Text.RichText
         wrapMode: Text.WordWrap
       }

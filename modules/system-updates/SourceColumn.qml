@@ -26,12 +26,12 @@ Column {
     height: 26
     text: "Update all"
     fontSize: 12
-    backgroundColor: sourceColumn.updates.length > 0 && !UpdatesManager.blocked ? Theme.bgCardHover : Theme.bgBaseAlt
-    textColor: sourceColumn.updates.length > 0 && !UpdatesManager.blocked ? Theme.textPrimary : Theme.textMuted
+    backgroundColor: sourceColumn.updates.length > 0 && !SystemUpdatesManager.blocked ? Theme.bgCardHover : Theme.bgBaseAlt
+    textColor: sourceColumn.updates.length > 0 && !SystemUpdatesManager.blocked ? Theme.textPrimary : Theme.textMuted
     hoverColor: Theme.bgBorder
-    enabled: sourceColumn.updates.length > 0 && !UpdatesManager.blocked
+    enabled: sourceColumn.updates.length > 0 && !SystemUpdatesManager.blocked
     opacity: enabled ? 1.0 : 0.4
-    onClicked: UpdatesManager.updateSource(sourceColumn.sourceId)
+    onClicked: SystemUpdatesManager.updateSource(sourceColumn.sourceId)
   }
 
   ScrollView {
@@ -55,7 +55,7 @@ Column {
           id: packageRow
           required property var modelData
           readonly property string packageKey: sourceColumn.sourceId === "flatpak" ? modelData.appId : modelData.name
-          readonly property bool updating: UpdatesManager.isUpdating(packageKey)
+          readonly property bool updating: SystemUpdatesManager.isUpdating(packageKey)
 
           width: parent.width
           height: sourceColumn.rowHeight
@@ -96,7 +96,7 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             text: packageRow.updating ? "󰔿" : "󰇚"
             color: {
-              if (UpdatesManager.blocked) return Theme.bgBorder
+              if (SystemUpdatesManager.blocked) return Theme.bgBorder
               if (packageRow.updating) return Theme.textMuted
               return packageMouse.containsMouse ? Theme.success : Theme.textMuted
             }
@@ -116,10 +116,10 @@ Column {
             id: packageMouse
             anchors.fill: parent
             hoverEnabled: true
-            cursorShape: UpdatesManager.blocked || packageRow.updating ? Qt.ForbiddenCursor : Qt.PointingHandCursor
+            cursorShape: SystemUpdatesManager.blocked || packageRow.updating ? Qt.ForbiddenCursor : Qt.PointingHandCursor
             onClicked: {
-              if (!UpdatesManager.blocked && !packageRow.updating) {
-                UpdatesManager.updatePackage(packageRow.packageKey, sourceColumn.sourceId)
+              if (!SystemUpdatesManager.blocked && !packageRow.updating) {
+                SystemUpdatesManager.updatePackage(packageRow.packageKey, sourceColumn.sourceId)
               }
             }
           }

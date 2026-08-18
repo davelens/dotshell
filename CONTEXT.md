@@ -26,7 +26,7 @@ Terms used consistently across code and docs. Keep this list short and exact.
   `defaults.json` files and no defaults copy step; a missing state file is
   recreated from the QML defaults.
 - **Overlay** — a full-screen surface: slide-in panel (notifications,
-  recording, wallpaper), power menu, or the settings panel. Identity lives
+  screen-recording, wallpaper), power menu, or the settings panel. Identity lives
   in **OverlayManager** (`core/OverlayManager.qml`): at most one overlay is
   active; opening one closes the active popup and any other overlay, and
   bar focus watches its single `overlayOpen` signal. Managers bind their
@@ -40,7 +40,7 @@ Terms used consistently across code and docs. Keep this list short and exact.
 - **PanelBase** — the full-screen overlay window scaffold
   (`core/components/PanelBase.qml`): covers the screen, ignores exclusion
   zones, exclusive keyboard focus, compositor namespace via
-  `namespaceName`. Used by recording/wallpaper/power/settings; the
+  `namespaceName`. Used by screen-recording/wallpaper/power/settings; the
   notifications panel keeps its own latched window for slide animation.
 - **SettingsPage** — the scaffold for module settings pages
   (`core/components/SettingsPage.qml`): scroll chrome, optional `title`,
@@ -50,9 +50,12 @@ Terms used consistently across code and docs. Keep this list short and exact.
 - **Profile** — a named directory of profile-scoped state files under the
   data dir, managed by `GeneralSettings`. The first-run profile is named
   `defaults` (directory name), displayed as "Default".
-- **Command registry** — the single source of truth for the `dshell` CLI
-  surface: the `COMMANDS` table in `bin/dshell`. Dispatch, usage text, and
-  bash completion (`dshell --complete`) are generated views of it; adding a
-  subcommand means adding one row plus its IpcHandler function. Verb
-  grammar and the `error:`-prefix feedback convention are recorded in
-  ADR-0002.
+- **Command registry** — the distributed source of truth for the `dshell`
+  CLI surface: core registrations and registry helpers live in `bin/dshell`;
+  installed modules add side-effect-free registrations and local CLI functions
+  from `modules/<module-id>/dshell/init.sh`. `dshell` discovers them through
+  `$CONFIG_DIR` on every invocation and completion. Dispatch, usage text, and
+  bash completion (`dshell --complete`) are generated views. The module id
+  comes from the directory name, not `module.json`; removing a module removes
+  its CLI without a setup change. Verb grammar and the `error:`-prefix feedback
+  convention are recorded in ADR-0002.

@@ -27,6 +27,11 @@ and service:
 - Module binaries in `modules/*/bin/` are symlinked separately into the same
   `$XDG_BIN_HOME` directory by `ModuleRegistry` at shell startup, not by init.sh.
 
+Module CLI extensions need no setup integration or manifest field. The installed
+`bin/dshell` discovers `$CONFIG_DIR/modules/*/dshell/init.sh` on every invocation
+and completion, so adding or removing a module adds or removes its CLI surface.
+Extension files only register commands/groups and define local CLI functions.
+
 Mako must not run — the notifications module is its own daemon.
 
 ## Renderer backend
@@ -48,7 +53,7 @@ On Arch, override the default with `systemctl --user edit dotshell.service`:
 Environment=QSG_RHI_BACKEND=opengl
 ```
 
-Then run `systemctl --user restart dotshell.service` and `dshell idle enable`.
+Then run `systemctl --user restart dotshell.service` and `dshell idle-inhibitor enable`.
 Remove the override, or change it back to `vulkan`, to restore the default.
 
 On Void, `setup/dotshell.run` preserves an existing `QSG_RHI_BACKEND` from the

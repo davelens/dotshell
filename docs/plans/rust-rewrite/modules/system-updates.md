@@ -1,6 +1,6 @@
-# updates — Rust rewrite plan
+# system-updates — Rust rewrite plan
 
-Ports `modules/updates/` (Manager + Button + Popup + Settings,
+Ports `modules/system-updates/` (Manager + Button + Popup + Settings,
 ~1109 lines QML). Pending pacman/AUR/flatpak update counts and lists.
 
 ## Feature parity
@@ -26,15 +26,15 @@ Ports `modules/updates/` (Manager + Button + Popup + Settings,
 
 ## State
 
-- Same state file under the `updates` id, adapter mode, same fields
+- Same state file under the `system-updates` id, adapter mode, same fields
   and defaults (interval etc.).
 
 ## IPC / dshell
 
-- No module-owned verbs. `dshell popup toggle updates` reaches it via
-  the generic `popup` target.
-- Sway bind: `$mod+Shift+u` → `dshell popup toggle updates`. This is
-  the canonical test for the stemless-popup rule: with the updates
+- No module-owned IPC verbs. `dshell system-updates toggle` reaches it via the
+  internal generic `popup` target.
+- Sway bind: `$mod+Shift+u` → `dshell system-updates toggle`. This is
+  the canonical test for the stemless-popup rule: with the system updates
   button disabled in the bar, the IPC-opened popup anchors to the
   primary screen's right edge minus 20px, draws no stem, square
   top-right corner.

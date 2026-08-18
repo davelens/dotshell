@@ -1,5 +1,6 @@
 {
-  "id": "recording",
+  "id": "screen-recording",
+  "formerlyKnownAs": ["recording"],
   "name": "Screen Recording",
   "icon": "󰑊",
   "order": 5,

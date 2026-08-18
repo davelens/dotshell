@@ -12,7 +12,7 @@ parsing `bluetoothctl` stdout.
   disconnect.
 - Settings page: current options preserved as-is.
 - IPC: none of its own (popup opens via bar button or
-  `dshell popup toggle bluetooth`).
+  `dshell bluetooth toggle`, which maps to the internal `popup` target).
 
 ## Stack
 

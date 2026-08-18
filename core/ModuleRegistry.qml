@@ -140,6 +140,26 @@ Singleton {
     return null
   }
 
+  // Module id aliases declared by manifests, used to migrate persisted state.
+  function getRenameMappings() {
+    var mappings = []
+    for (var i = 0; i < modules.length; i++) {
+      var aliases = modules[i].formerlyKnownAs || []
+      for (var j = 0; j < aliases.length; j++) {
+        mappings.push({ oldId: aliases[j], newId: modules[i].id })
+      }
+    }
+    return mappings
+  }
+
+  function migrateId(id) {
+    var mappings = getRenameMappings()
+    for (var i = 0; i < mappings.length; i++) {
+      if (mappings[i].oldId === id) return mappings[i].newId
+    }
+    return ""
+  }
+
   // Internal: return the bar component file for a module (button or segment), or ""
   function _barFile(module) {
     if (!module || !module.components) return ""

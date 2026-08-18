@@ -7,9 +7,9 @@ Prevent idle/sleep; today by holding a
 ## Feature parity
 
 - Bar button toggles the inhibitor; icon reflects state (󰈈 variants).
-- IPC target `idle`: `enable`, `disable`, `toggle`, `state` — the
-  `dshell idle …` rows are unchanged. Feedback strings identical
-  ("Idle inhibitor is now enabled"); `state` returns bare
+- Internal IPC target `idle`: `enable`, `disable`, `toggle`, `state` — exposed
+  as `dshell idle-inhibitor enable|disable|toggle|state`. Feedback strings stay
+  identical ("Idle inhibitor is now enabled"); `state` returns bare
   `true`/`false`; `toggle` delegates to enable/disable (ADR-0002).
 
 ## Stack
@@ -34,6 +34,6 @@ Prevent idle/sleep; today by holding a
 
 ## Verification
 
-- `dshell idle toggle` twice: feedback strings match current output
-  verbatim; `systemd-inhibit --list` shows the hold appearing and
-  disappearing; `dshell idle state` prints bare `true`/`false`.
+- `dshell idle-inhibitor toggle` twice: feedback strings match current output
+  verbatim; `systemd-inhibit --list` shows the hold appearing and disappearing;
+  `dshell idle-inhibitor state` prints bare `true`/`false`.

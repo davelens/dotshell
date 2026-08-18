@@ -1,5 +1,6 @@
 {
   "id": "ai-agents-monitor",
+  "formerlyKnownAs": ["opencode"],
   "name": "AI Agents Monitor",
   "icon": "󰚩",
   "order": 205,

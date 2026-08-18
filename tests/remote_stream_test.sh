@@ -7,6 +7,12 @@ DSHELL="$REPO_ROOT/bin/dshell"
 TESTS=0
 FAILURES=0
 SANDBOX="$(mktemp -d)"
+export XDG_CONFIG_HOME="$SANDBOX/config"
+export XDG_DATA_HOME="$SANDBOX/data"
+mkdir -p "$XDG_CONFIG_HOME/dotshell/modules/ai-agents-monitor/dshell" \
+  "$XDG_DATA_HOME/dotshell"
+cp "$REPO_ROOT/modules/ai-agents-monitor/dshell/init.sh" \
+  "$XDG_CONFIG_HOME/dotshell/modules/ai-agents-monitor/dshell/init.sh"
 
 cleanup() {
   rm -rf "$SANDBOX"
@@ -120,7 +126,7 @@ done
 # The expressions are intentionally expanded by the remote shell.
 # shellcheck disable=SC2016
 if grep -qF '${XDG_BIN_HOME:-$HOME/.local/bin}/dshell' <<<"$SSH_ARGS" \
-    && grep -qF 'agents current; exec "$dshell_bin" agents listen' <<<"$SSH_ARGS"; then
+    && grep -qF 'ai-agents-monitor current; exec "$dshell_bin" ai-agents-monitor listen' <<<"$SSH_ARGS"; then
   pass 'remote command uses the installed dshell path, then fetches and streams'
 else
   fail 'remote command uses the installed dshell path, then fetches and streams'
@@ -187,26 +193,27 @@ QS
 chmod +x "$FAKE_QS"
 
 CURRENT_OUTPUT="$(PATH="$SANDBOX:$PATH" FAKE_QS_ARGS="$QS_ARGS" \
-  FAKE_QS_OUTPUT='{"version":1}' "$DSHELL" agents current)"
-assert_eq '{"version":1}' "$CURRENT_OUTPUT" 'dshell agents current returns the IPC snapshot'
+  FAKE_QS_OUTPUT='{"version":1}' "$DSHELL" ai-agents-monitor current)"
+assert_eq '{"version":1}' "$CURRENT_OUTPUT" \
+  'dshell ai-agents-monitor current returns the IPC snapshot'
 assert_eq '--any-display' "$(sed -n '/^ipc$/{n;p;}' "$QS_ARGS")" \
-  'dshell agents current works without a display environment'
+  'dshell ai-agents-monitor current works without a display environment'
 if grep -qxF 'call' "$QS_ARGS" && grep -qxF 'current' "$QS_ARGS"; then
-  pass 'dshell agents current calls the agents current handler'
+  pass 'dshell ai-agents-monitor current calls the agents current handler'
 else
-  fail 'dshell agents current calls the agents current handler'
+  fail 'dshell ai-agents-monitor current calls the agents current handler'
 fi
 
 PATH="$SANDBOX:$PATH" FAKE_QS_ARGS="$QS_ARGS" FAKE_QS_OUTPUT='{"version":1}' \
-  "$DSHELL" agents listen >/dev/null
+  "$DSHELL" ai-agents-monitor listen >/dev/null
 if grep -qxF 'listen' "$QS_ARGS" && grep -qxF 'snapshot' "$QS_ARGS"; then
-  pass 'dshell agents listen subscribes to snapshot events'
+  pass 'dshell ai-agents-monitor listen subscribes to snapshot events'
 else
-  fail 'dshell agents listen subscribes to snapshot events'
+  fail 'dshell ai-agents-monitor listen subscribes to snapshot events'
 fi
 
-assert_eq 'agents' "$($DSHELL --complete | grep -x agents)" \
-  'dshell completion includes the agents group'
+assert_eq 'ai-agents-monitor' "$($DSHELL --complete | grep -x ai-agents-monitor)" \
+  'dshell completion includes the ai-agents-monitor group'
 
 XDG_CONFIG_TEST="$SANDBOX/config"
 XDG_DATA_TEST="$SANDBOX/data"

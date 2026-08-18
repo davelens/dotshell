@@ -26,6 +26,14 @@ Singleton {
   readonly property string statePath: DataManager.dataDir + "/general.json"
   readonly property string defaultsPath: Quickshell.shellDir + "/core/defaults.json"
   property bool fileReady: false
+  property bool configLoaded: false
+
+  Connections {
+    target: ModuleRegistry
+    function onReadyChanged() {
+      if (ModuleRegistry.ready) settings.migrateModuleIds()
+    }
+  }
 
   // Copy defaults if state file doesn't exist
   EnsureFile {
@@ -71,8 +79,32 @@ Singleton {
         DataManager.setActiveProfile(profile)
         ready = true
       }
+
+      configLoaded = true
+      migrateModuleIds()
     } catch (e) {
       console.error("[GeneralSettings] Failed to parse config:", e)
+    }
+  }
+
+  function migrateModuleIds() {
+    if (!configLoaded || !ModuleRegistry.ready) return
+
+    var migrated = []
+    var seen = {}
+    var changed = false
+    for (var i = 0; i < settingsCategoryOrder.length; i++) {
+      var oldId = settingsCategoryOrder[i]
+      var newId = ModuleRegistry.migrateId(oldId) || oldId
+      if (newId !== oldId || seen[newId]) changed = true
+      if (!seen[newId]) {
+        migrated.push(newId)
+        seen[newId] = true
+      }
+    }
+    if (changed) {
+      settingsCategoryOrder = migrated
+      saveConfig()
     }
   }
 

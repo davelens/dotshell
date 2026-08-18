@@ -22,12 +22,13 @@ A custom, keyboard-driven shell featuring a modular status bar and settings pane
 ### Settings panel
 <img width="1554" height="1141" alt="image" src="https://github.com/user-attachments/assets/012ece19-c5ba-4378-86c6-3cf39541acd6" />
 
-### Updates panel
+### System updates panel
 <img width="935" height="664" alt="image" src="https://github.com/user-attachments/assets/5b2baa8d-030f-4119-9cac-a728b6f9fdd4" />
 
 ## Features
 
 - Modular status bar with drop-in modules:
+  - ai-agents-monitor - Status indicator for OpenCode, Claude Code, and interactive Pi sessions
   - battery - Charge level and AC adapter status
   - bluetooth - Device pairing and connection management
   - brightness - Backlight control for laptop and external monitors
@@ -36,11 +37,10 @@ A custom, keyboard-driven shell featuring a modular status bar and settings pane
   - idle-inhibitor - Toggle to prevent the system from going idle/sleeping
   - media - Play/pause toggles for music
   - notifications - Desktop notification history and management
-  - ai-agents-monitor - Status indicator for OpenCode, Claude Code, and interactive Pi sessions
   - power - Lock, suspend, logout, reboot, and shutdown actions
-  - recording - Screenshot and screencast capture with file browsing
+  - screen-recording - Screenshot and screencast capture with file browsing
   - system-load - Live CPU and memory usage display
-  - updates - Package update checker for native repositories, community packages, and Flatpak
+  - system-updates - Package update checker for native repositories, community packages, and Flatpak
   - volume - Audio output and input level control
   - wallpaper - Browse, download, and apply wallpapers via Wallhaven
   - wireless - Wi-Fi network scanning and connection management
@@ -63,8 +63,8 @@ Dotshell instances can monitor each other across machines. Every instance
 publishes its locally discovered agents on the `agents` IPC target:
 
 ```sh
-dshell agents current # one snapshot
-dshell agents listen  # stream one snapshot per poll
+dshell ai-agents-monitor current # one snapshot
+dshell ai-agents-monitor listen  # stream one snapshot per poll
 ```
 
 To subscribe from another machine, set the SSH host alias of the machine you
@@ -164,20 +164,29 @@ validation.
 
 dotshell ships a `dshell` CLI for controlling the shell from the command line or window manager keybinds. It is symlinked into `$XDG_BIN_HOME`, falling back to `~/.local/bin`; make sure that directory is in your `$PATH`.
 
+`bin/dshell` owns the core command registrations, dispatch, usage, completion,
+and registration helpers. On every invocation, including completion, it
+sources each installed `modules/<module-id>/dshell/init.sh` through
+`$CONFIG_DIR`. These files only register commands/groups and define local CLI
+functions, so removing a module also removes its commands. This needs no
+`module.json` declaration or setup change.
+
 ```sh
 dshell <command> <subcommand> [args]
 ```
 
 | Command | Subcommand | Description |
 |---|---|---|
-| `agents` | `current` | Print the current local AI agent snapshot |
-| `agents` | `listen` | Stream local AI agent snapshots |
-| `bar` | `focus <verb>` | Bar focus mode: `toggle`, `enable`, `disable`, `state` |
-| `idle` | `enable` | Enable idle inhibitor |
-| `idle` | `disable` | Disable idle inhibitor |
-| `idle` | `toggle` | Toggle idle inhibitor |
-| `idle` | `state` | Show idle inhibitor state |
-| `network` | `status` | List active network connections |
+| `ai-agents-monitor` | `current` | Print the current local AI agent snapshot |
+| `ai-agents-monitor` | `listen` | Stream local AI agent snapshots |
+| `status-bar` | `focus <verb>` | Status bar focus mode: `toggle`, `enable`, `disable`, `state` |
+| `bluetooth` | `toggle` | Toggle Bluetooth popup |
+| `brightness` | `toggle` | Toggle brightness popup |
+| `display` | `toggle` | Toggle display popup |
+| `idle-inhibitor` | `enable` | Enable idle inhibitor |
+| `idle-inhibitor` | `disable` | Disable idle inhibitor |
+| `idle-inhibitor` | `toggle` | Toggle idle inhibitor |
+| `idle-inhibitor` | `state` | Show idle inhibitor state |
 | `notifications` | `toggle` | Toggle notification panel |
 | `notifications` | `open` | Open notification panel |
 | `notifications` | `close` | Close notification panel |
@@ -186,7 +195,6 @@ dshell <command> <subcommand> [args]
 | `notifications` | `listen` | Stream new local notifications |
 | `notifications` | `remote set <host>` | Set the remote notification SSH host |
 | `notifications` | `remote clear` | Clear the remote notification SSH host |
-| `popup` | `toggle <name>` | Toggle a popup (e.g. `volume`, `brightness`, `wireless`) |
 | `power` | `toggle` | Toggle power menu |
 | `power` | `open` | Open power menu |
 | `power` | `close` | Close power menu |
@@ -202,9 +210,15 @@ dshell <command> <subcommand> [args]
 | `theme` | `set <name>` | Switch to a theme |
 | `theme` | `current` | Show active theme name |
 | `theme` | `refresh` | Regenerate GTK CSS for the active theme |
+| `system-updates` | `toggle` | Toggle system updates popup |
+| `volume` | `toggle` | Toggle volume popup |
 | `wallpaper` | `browser <verb>` | Wallpaper browser panel: `toggle`, `open`, `close` |
 | `wallpaper` | `set <path>` | Set a wallpaper by file path |
 | `wallpaper` | `restore [fallback]` | Restore saved wallpaper |
+| `wireless` | `status` | List active network connections |
+| `wireless` | `toggle` | Toggle wireless popup |
+
+There are no compatibility aliases for removed command names.
 
 ## License
 

@@ -3,10 +3,9 @@
 # This is a CLI companion to dotshell. It's intended to be a functional,
 # autocompleted replacement for `qs ipc call` instructions.
 #
-# The COMMANDS registry below is the single source of truth for the CLI
-# surface: dispatch, usage text, and bash completion (`dshell --complete`)
-# are all generated from it. Adding a subcommand means adding one row
-# (plus its IpcHandler function on the QML side).
+# The command registry is the single source of truth for the CLI surface:
+# dispatch, usage text, and bash completion (`dshell --complete`) are all
+# generated from it. Modules extend the core registry from dshell/init.sh.
 
 set -euo pipefail
 
@@ -24,39 +23,17 @@ readonly GENERAL_JSON="$DATA_DIR/general.json"
 #               or "fn <local function>"
 #   args        space-separated tokens; <x> required, [x] optional.
 #               A :source suffix names the completion source
-#               (theme, profile, category, popup, file).
+#               (theme, profile, category, file).
 #   description one line, shown in usage
 
-readonly -a COMMANDS=(
-  "agents current|ipc --any-display agents current||Print the current local AI agent snapshot"
-  "agents listen|listen agents snapshot||Stream local AI agent snapshots"
-  "bar focus toggle|ipc bar toggle||Toggle bar focus mode"
-  "bar focus enable|ipc bar enable||Enable bar focus mode"
-  "bar focus disable|ipc bar disable||Disable bar focus mode"
-  "bar focus state|ipc bar state||Show bar focus state"
-  "idle enable|ipc idle enable||Enable idle inhibitor"
-  "idle disable|ipc idle disable||Disable idle inhibitor"
-  "idle toggle|ipc idle toggle||Toggle idle inhibitor"
-  "idle state|ipc idle state||Show idle inhibitor state"
-  "network status|fn network_status||List active network connections"
-  "notifications toggle|ipc overlay toggle notifications||Toggle notification panel"
-  "notifications open|ipc overlay open notifications||Open notification panel"
-  "notifications close|ipc overlay close notifications||Close notification panel"
-  "notifications dismiss|ipc notifications dismiss|<id>|Dismiss a notification by id"
-  "notifications clear-all|ipc notifications clearAll||Clear notification history"
-  "notifications listen|listen notifications received||Stream new local notifications"
-  "notifications remote set|ipc notifications setRemoteHost|<host>|Set the remote notification SSH host"
-  "notifications remote clear|ipc notifications clearRemoteHost||Clear the remote notification SSH host"
-  "popup toggle|ipc popup toggle|<name:popup>|Toggle a popup (e.g. volume, brightness)"
-  "power toggle|ipc overlay toggle power||Toggle power menu"
-  "power open|ipc overlay open power||Open power menu"
-  "power close|ipc overlay close power||Close power menu"
+COMMANDS=(
+  "status-bar focus toggle|ipc bar toggle||Toggle status bar focus mode"
+  "status-bar focus enable|ipc bar enable||Enable status bar focus mode"
+  "status-bar focus disable|ipc bar disable||Disable status bar focus mode"
+  "status-bar focus state|ipc bar state||Show status bar focus state"
   "profile list|fn profile_list||List all profiles"
   "profile current|fn profile_current||Show active profile name"
   "profile set|ipc profile set|<name:profile>|Switch to a profile"
-  "screen-recording files toggle|ipc overlay toggle recording||Toggle the screen recording file browser"
-  "screen-recording files open|ipc overlay open recording||Open the screen recording file browser"
-  "screen-recording files close|ipc overlay close recording||Close the screen recording file browser"
   "settings toggle|ipc overlay toggle settings||Toggle settings panel"
   "settings open|ipc overlay open settings||Open settings panel"
   "settings close|ipc overlay close settings||Close settings panel"
@@ -65,27 +42,36 @@ readonly -a COMMANDS=(
   "theme set|fn theme_set|<name:theme>|Switch to a theme"
   "theme current|fn active_theme||Show active theme name"
   "theme refresh|fn theme_refresh||Regenerate GTK CSS for the active theme"
-  "wallpaper browser toggle|ipc overlay toggle wallpaper||Toggle the wallpaper browser"
-  "wallpaper browser open|ipc overlay open wallpaper||Open the wallpaper browser"
-  "wallpaper browser close|ipc overlay close wallpaper||Close the wallpaper browser"
-  "wallpaper set|fn wallpaper_set|<path:file>|Set a wallpaper by file path"
-  "wallpaper restore|fn wallpaper_restore|[fallback:file]|Restore saved wallpaper (optional fallback)"
 )
 
-readonly -a GROUP_DESCRIPTIONS=(
-  "agents|AI agent monitor snapshots"
-  "bar|Bar focus mode"
-  "idle|Idle inhibitor control"
-  "network|Network information"
-  "notifications|Notification panel and history"
-  "popup|Popup windows"
-  "power|Power menu"
+GROUP_DESCRIPTIONS=(
+  "status-bar|Status bar focus mode"
   "profile|Profile management"
-  "screen-recording|Screen recording file browser"
   "settings|Settings panel"
   "theme|Theme management"
-  "wallpaper|Wallpaper browser and setter"
 )
+
+DSHELL_MODULE_ID=""
+
+dshell_register_group() {
+  GROUP_DESCRIPTIONS+=("$DSHELL_MODULE_ID|$1")
+}
+
+dshell_register_command() {
+  COMMANDS+=("$DSHELL_MODULE_ID${1:+ $1}|$2|$3|$4")
+}
+
+load_extensions() {
+  local init
+  for init in "$CONFIG_DIR"/modules/*/dshell/init.sh; do
+    [[ -f "$init" ]] || continue
+    DSHELL_MODULE_ID="${init%/dshell/init.sh}"
+    DSHELL_MODULE_ID="${DSHELL_MODULE_ID##*/}"
+    # shellcheck source=/dev/null
+    source "$init"
+  done
+  DSHELL_MODULE_ID=""
+}
 
 # -- helpers -----------------------------------------------------------------
 
@@ -164,11 +150,6 @@ settings_categories() {
     jq -rs 'sort_by(.order // 100)[] | select(.components.settings != null) | .id' \
       "$CONFIG_DIR"/modules/*/module.json "$CONFIG_DIR"/statusbar/module.json 2>/dev/null || true
   } | awk 'NF && !seen[$0]++'
-}
-
-popup_modules() {
-  jq -r 'select(.components.popup != null) | .id' \
-    "$CONFIG_DIR"/modules/*/module.json 2>/dev/null || true
 }
 
 # -- theme -------------------------------------------------------------------
@@ -265,12 +246,6 @@ theme_refresh() {
   echo "GTK CSS regenerated for '$current'"
 }
 
-# -- network -----------------------------------------------------------------
-
-network_status() {
-  nmcli --fields NAME,TYPE,DEVICE connection show --active
-}
-
 # -- profile -----------------------------------------------------------------
 
 profile_current() {
@@ -312,46 +287,6 @@ profile_list() {
   done
 }
 
-# -- wallpaper ---------------------------------------------------------------
-
-wallpaper_set() {
-  local path="$1"
-  [[ -f "$path" ]] || die "wallpaper file not found: $path"
-  ipc wallpaper set "$path"
-}
-
-wallpaper_restore() {
-  local fallback="${1:-}"
-
-  # Read active profile dir, then the saved wallpaper from profile state
-  local profile_dir wallpaper=""
-  profile_dir="$(json_get "$GENERAL_JSON" '.activeProfile')"
-  if [[ -n "$profile_dir" ]]; then
-    wallpaper="$(json_get "$DATA_DIR/${profile_dir}/wallpaper.json" '.currentWallpaper')"
-  fi
-
-  # Fall back if no saved wallpaper or file is missing
-  if [[ -z "$wallpaper" || ! -f "$wallpaper" ]]; then
-    if [[ -n "$fallback" && -f "$fallback" ]]; then
-      wallpaper="$fallback"
-    else
-      echo "No saved wallpaper found" >&2
-      return 1
-    fi
-  fi
-
-  # Detect compositor and apply
-  if [[ -n "${SWAYSOCK:-}" || -n "${I3SOCK:-}" ]]; then
-    swaymsg output '*' bg "$wallpaper" fill
-  else
-    # Niri or other wlroots compositor: manage swaybg directly
-    pkill -x swaybg 2>/dev/null || true
-    sleep 0.1
-    swaybg -o '*' -i "$wallpaper" -m fill &
-    disown
-  fi
-}
-
 # -- usage (generated from the registry) ---------------------------------------
 
 usage() {
@@ -360,17 +295,17 @@ usage() {
   echo "Commands:"
 
   local width=0 rec group desc
-  for rec in "${GROUP_DESCRIPTIONS[@]}"; do
+  while IFS= read -r rec; do
     group="${rec%%|*}"
     if ((${#group} > width)); then width=${#group}; fi
-  done
-  for rec in "${GROUP_DESCRIPTIONS[@]}"; do
+  done < <(printf '%s\n' "${GROUP_DESCRIPTIONS[@]}" | sort)
+  while IFS= read -r rec; do
     IFS='|' read -r group desc <<<"$rec"
     printf "  %-${width}s  %s\n" "$group" "$desc"
-  done
+  done < <(printf '%s\n' "${GROUP_DESCRIPTIONS[@]}" | sort)
 }
 
-# Usage for a command prefix (e.g. "bar" or "bar focus"), listing every
+# Usage for a command prefix (e.g. "status-bar" or "status-bar focus"), listing every
 # registry row underneath it.
 prefix_usage() {
   local prefix="$*"
@@ -451,7 +386,6 @@ complete_words() {
       theme) themes_all ;;
       profile) profile_names ;;
       category) settings_categories ;;
-      popup) popup_modules ;;
       file) echo "__files__" ;;
       esac
       return 0
@@ -468,6 +402,7 @@ complete_words() {
 
 main() {
   command -v jq >/dev/null || die "jq is required"
+  load_extensions
 
   case "${1:-}" in
   -h | --help | "")

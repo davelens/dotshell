@@ -1,5 +1,6 @@
 {
-  "id": "updates",
+  "id": "system-updates",
+  "formerlyKnownAs": ["updates"],
   "name": "System Updates",
   "icon": "󰄠",
   "order": 15,

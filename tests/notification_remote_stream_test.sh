@@ -5,6 +5,12 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SCRIPT="$REPO_ROOT/modules/notifications/bin/remote-stream"
 DSHELL="$REPO_ROOT/bin/dshell"
 SANDBOX="$(mktemp -d)"
+export XDG_CONFIG_HOME="$SANDBOX/config"
+export XDG_DATA_HOME="$SANDBOX/data"
+mkdir -p "$XDG_CONFIG_HOME/dotshell/modules/notifications/dshell" \
+  "$XDG_DATA_HOME/dotshell"
+cp "$REPO_ROOT/modules/notifications/dshell/init.sh" \
+  "$XDG_CONFIG_HOME/dotshell/modules/notifications/dshell/init.sh"
 TESTS=0
 FAILURES=0
 trap 'rm -rf "$SANDBOX"' EXIT

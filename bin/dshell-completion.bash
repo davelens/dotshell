@@ -1,6 +1,5 @@
 # Bash completion for dshell — a thin adapter: candidates come from
-# `dshell --complete`, so the command registry in bin/dshell is the single
-# source of truth.
+# `dshell --complete`, which loads core and installed module registrations.
 
 _dshell_complete() {
   local cur

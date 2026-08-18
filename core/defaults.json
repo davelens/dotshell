@@ -6,7 +6,7 @@
     "wireless",
     "bluetooth",
     "notifications",
-    "recording",
+    "screen-recording",
     "power"
   ],
   "theme": "catppuccin-mocha",

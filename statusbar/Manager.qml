@@ -43,7 +43,7 @@ Singleton {
       { id: "active-collab", enabled: true, marginLeft: 0, marginRight: 20 },
       { id: "wallpaper", enabled: true, marginLeft: 0, marginRight: 20 },
       { id: "system-load", enabled: true, marginLeft: 0, marginRight: 20 },
-      { id: "recording", enabled: true, marginLeft: 0, marginRight: 10 },
+      { id: "screen-recording", enabled: true, marginLeft: 0, marginRight: 10 },
       { id: "wireless", enabled: true, marginLeft: 0, marginRight: 10 },
       { id: "bluetooth", enabled: true, marginLeft: 0, marginRight: 10 },
       { id: "display", enabled: true, marginLeft: 0, marginRight: 10 },
@@ -51,7 +51,7 @@ Singleton {
       { id: "volume", enabled: true, marginLeft: 0, marginRight: 16 },
       { id: "battery", enabled: true, marginLeft: 0, marginRight: 16 },
       { id: "clock", enabled: true, marginLeft: 0, marginRight: 16 },
-      { id: "updates", enabled: true, marginLeft: 0, marginRight: 10 },
+      { id: "system-updates", enabled: true, marginLeft: 0, marginRight: 10 },
       { id: "notifications", enabled: true, marginLeft: 0, marginRight: 0 }
     ]
   })
@@ -120,7 +120,7 @@ Singleton {
       for (var s = 0; s < sections.length; s++) {
         var items = config[sections[s]] || []
         for (var m = 0; m < items.length; m++) {
-          var newId = _migrateId(items[m].id)
+          var newId = ModuleRegistry.migrateId(items[m].id)
           if (newId) {
             items[m].id = newId
             migrated = true
@@ -151,16 +151,6 @@ Singleton {
     } catch (e) {
       console.error("[StatusbarManager] Failed to parse config:", e)
     }
-  }
-
-  // Renamed module IDs: old → new. Add entries here when a module is renamed.
-  readonly property var _renamedModules: ({
-    "opencode": "ai-agents-monitor"
-  })
-
-  // Returns the new ID if the module was renamed, or empty string if no migration needed
-  function _migrateId(id) {
-    return _renamedModules[id] || ""
   }
 
   // Filter out items whose modules don't exist

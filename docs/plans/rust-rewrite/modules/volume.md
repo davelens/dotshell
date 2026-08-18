@@ -29,9 +29,8 @@ it sits directly on `Quickshell.Services.Pipewire` today).
 
 ## State / IPC
 
-- None persisted; popup reachable via `dshell popup toggle volume`
-  (generic `popup` target), stemless fallback rules apply when the
-  button is disabled.
+- None persisted; popup reachable via `dshell volume toggle` (internal generic
+  `popup` target), stemless fallback rules apply when the button is disabled.
 
 ## Keymaps
 

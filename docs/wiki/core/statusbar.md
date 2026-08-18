@@ -18,8 +18,8 @@ popup and its bar button; see
 Config load is deferred until `ModuleRegistry.ready`, then
 self-healing, persisting back when anything changed:
 
-1. `_migrateId` rewrites renamed module ids (map in core for now — plan:
-   `docs/plans/module-rename-migrations-in-manifest.md`).
+1. `ModuleRegistry.migrateId` rewrites renamed module ids from each manifest's
+   `formerlyKnownAs` aliases.
 2. `filterValidItems` drops items whose module has no bar component.
 3. `mergeNewModules` prepends unseen modules (disabled) to the right
    section.
@@ -37,5 +37,5 @@ buttons fire `clicked()`, segments with `activate()` run it, anything
 else dismisses focus mode. While active the bar takes exclusive
 keyboard focus (`WlrKeyboardFocus.Exclusive`).
 
-Controlled via `dshell bar focus toggle|enable|disable|state`
+Controlled via `dshell status-bar focus toggle|enable|disable|state`
 (IpcHandler in `shell.qml`).

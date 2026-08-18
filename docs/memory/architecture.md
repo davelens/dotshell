@@ -37,8 +37,8 @@ callers or setup entry points:
 
 - `setup/platforms/<id>.sh` implements the setup/uninstall adapter interface;
   `setup/init.sh` and `setup/uninstall.sh` never branch on distro ids.
-- `modules/updates/backends/<id>.sh` implements package checks and update
-  actions; `UpdatesManager` exposes generic repository/community/Flatpak
+- `modules/system-updates/backends/<id>.sh` implements package checks and update
+  actions; `SystemUpdatesManager` exposes generic repository/community/Flatpak
   sources and contains no package-manager commands.
 - Prefer removing distro coupling over adapting it when a native protocol
   exists (for example, Wayland `IdleInhibitor` instead of `systemd-inhibit`).
@@ -48,8 +48,15 @@ callers or setup entry points:
 
 ## dshell CLI invariants
 
-- `COMMANDS` registry in `bin/dshell` is the single source of truth:
-  dispatch, usage, completion (`dshell --complete`) are generated views.
+- `bin/dshell` owns core registrations, dispatch, usage, completion
+  (`dshell --complete`), and the group/command registration helpers.
+- On every invocation, including completion, it discovers and sources installed
+  `modules/<module-id>/dshell/init.sh` files through `$CONFIG_DIR`. Extension
+  files are side-effect-free: they only register groups/commands and define
+  local CLI functions.
+- The core and module registrations are the distributed source of truth.
+  Removing a module removes its CLI; there is no `module.json` CLI declaration,
+  setup integration, or compatibility alias.
 - Verb grammar + `error:`-prefix feedback convention: ADR-0002.
 - All state reads via `json_get` on jq (hard dep); IPC for mutations
   only: ADR-0003.

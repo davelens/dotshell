@@ -11,7 +11,7 @@ Scope {
   // PanelWindow is only created when panelOpen is true and destroyed when
   // closed, avoiding the cost of a full-screen Wayland surface at idle.
   Variants {
-    model: RecordingManager.panelOpen && ScreenManager.primaryScreen ? [ScreenManager.primaryScreen] : []
+    model: ScreenRecordingManager.panelOpen && ScreenManager.primaryScreen ? [ScreenManager.primaryScreen] : []
 
     PanelBase {
       id: panel
@@ -73,8 +73,8 @@ Scope {
 
       function currentFiles() {
         if (activeTab === "screenshots")
-          return RecordingManager.screenshots
-        return RecordingManager.screencasts
+          return ScreenRecordingManager.screenshots
+        return ScreenRecordingManager.screencasts
       }
 
       function updateFilteredFiles() {
@@ -121,7 +121,7 @@ Scope {
       onSearchQueryChanged: updateFilteredFiles()
 
       Connections {
-        target: RecordingManager
+        target: ScreenRecordingManager
         function onFilesRefreshed() { panel.updateFilteredFiles() }
         function onFileRenamed(oldPath, newPath) {
           if (panel.detailPath === oldPath) {
@@ -129,7 +129,7 @@ Scope {
           }
         }
         function onPanelOpenChanged() {
-          if (RecordingManager.panelOpen) {
+          if (ScreenRecordingManager.panelOpen) {
             panel.activeTab = "screenshots"
             panel.viewMode = "grid"
             panel.detailPath = ""
@@ -164,7 +164,7 @@ Scope {
       // -- Keyboard handler -------------------------------------------------
 
       contentItem {
-        focus: RecordingManager.panelOpen
+        focus: ScreenRecordingManager.panelOpen
 
         Keys.onPressed: function(event) {
           var ctrl = event.modifiers & Qt.ControlModifier
@@ -183,7 +183,7 @@ Scope {
             } else if (panel.pendingDeleteIndex >= 0) {
               panel.pendingDeleteIndex = -1
             } else {
-              OverlayManager.close("recording")
+              OverlayManager.close("screen-recording")
             }
             event.accepted = true
             return
@@ -201,7 +201,7 @@ Scope {
             } else if (panel.pendingDeleteIndex >= 0) {
               panel.pendingDeleteIndex = -1
             } else {
-              OverlayManager.close("recording")
+              OverlayManager.close("screen-recording")
             }
             event.accepted = true
             return
@@ -281,11 +281,11 @@ Scope {
               if (panel.selectedCount > 0) {
                 var paths = Object.keys(panel.selectedPaths)
                 panel.clearSelection()
-                RecordingManager.deleteFiles(paths)
+                ScreenRecordingManager.deleteFiles(paths)
               } else if (panel.pendingDeleteIndex === gridNavigator.index && gridNavigator.index >= 0) {
                 var singlePath = panel.filteredFiles[gridNavigator.index]
                 panel.pendingDeleteIndex = -1
-                RecordingManager.deleteFile(singlePath)
+                ScreenRecordingManager.deleteFile(singlePath)
               } else if (gridNavigator.index >= 0 && gridNavigator.index < panel.filteredCount) {
                 panel.pendingDeleteIndex = gridNavigator.index
               }
@@ -312,12 +312,12 @@ Scope {
       // Scrim click to close
       MouseArea {
         anchors.fill: parent
-        enabled: RecordingManager.panelOpen
+        enabled: ScreenRecordingManager.panelOpen
         onClicked: {
           if (panel.viewMode === "detail") {
             panel.returnToGrid()
           } else {
-            OverlayManager.close("recording")
+            OverlayManager.close("screen-recording")
           }
         }
       }
@@ -766,7 +766,7 @@ Scope {
                   hoverColor: Qt.darker(Theme.danger, 1.2)
                   onClicked: {
                     if (deleteAllRow.confirmDelete) {
-                      RecordingManager.deleteAll(panel.activeTab)
+                      ScreenRecordingManager.deleteAll(panel.activeTab)
                       deleteAllRow.confirmDelete = false
                     } else {
                       deleteAllRow.confirmDelete = true
@@ -820,14 +820,14 @@ Scope {
                   if (panel.viewMode === "detail") {
                     detailFocusNavigator.reset()
                     if (detailContainer.isVideo && panel.detailPath) {
-                      RecordingManager.requestDuration(panel.detailPath)
+                      ScreenRecordingManager.requestDuration(panel.detailPath)
                     }
                   }
                 }
               }
 
               Connections {
-                target: RecordingManager
+                target: ScreenRecordingManager
                 function onDurationReady(vPath, duration) {
                   if (vPath === panel.detailPath) {
                     detailContainer.detailDuration = duration
@@ -870,7 +870,7 @@ Scope {
                     Keys.onPressed: function(event) {
                       if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
                         if (panel.detailPath)
-                          RecordingManager.openFile(panel.detailPath)
+                          ScreenRecordingManager.openFile(panel.detailPath)
                         event.accepted = true
                       }
                     }
@@ -927,7 +927,7 @@ Scope {
                         parent.keyboardFocus = false
                         parent.showFocusRing = false
                         if (panel.detailPath)
-                          RecordingManager.openFile(panel.detailPath)
+                          ScreenRecordingManager.openFile(panel.detailPath)
                       }
                     }
                   }
@@ -943,7 +943,7 @@ Scope {
                     Keys.onPressed: function(event) {
                       if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
                         if (panel.detailPath)
-                          RecordingManager.openFile(panel.detailPath)
+                          ScreenRecordingManager.openFile(panel.detailPath)
                         event.accepted = true
                       }
                     }
@@ -955,17 +955,17 @@ Scope {
                       asynchronous: true
                       cache: false
 
-                      property string detailThumbPath: panel.detailPath ? RecordingManager.getDetailThumbnailPath(panel.detailPath) : ""
+                      property string detailThumbPath: panel.detailPath ? ScreenRecordingManager.getDetailThumbnailPath(panel.detailPath) : ""
                       source: detailThumbPath ? "file://" + detailThumbPath : ""
 
                       onStatusChanged: {
                         if (status === Image.Error && panel.detailPath) {
-                          RecordingManager.requestDetailThumbnail(panel.detailPath)
+                          ScreenRecordingManager.requestDetailThumbnail(panel.detailPath)
                         }
                       }
 
                       Connections {
-                        target: RecordingManager
+                        target: ScreenRecordingManager
                         function onDetailThumbnailReady(vPath, tPath) {
                           if (vPath === panel.detailPath) {
                             detailVideoThumb.source = ""
@@ -1017,7 +1017,7 @@ Scope {
                         parent.keyboardFocus = false
                         parent.showFocusRing = false
                         if (panel.detailPath)
-                          RecordingManager.openFile(panel.detailPath)
+                          ScreenRecordingManager.openFile(panel.detailPath)
                       }
                     }
                   }
@@ -1053,7 +1053,7 @@ Scope {
                     text: detailContainer.baseName
                     onEditingFinished: function(value) {
                       if (value && value !== detailContainer.baseName) {
-                        RecordingManager.renameFile(panel.detailPath, value)
+                        ScreenRecordingManager.renameFile(panel.detailPath, value)
                       }
                       panel.contentItem.forceActiveFocus()
                     }
@@ -1083,14 +1083,14 @@ Scope {
                     id: openBtn
                     text: "Open"
                     width: 80
-                    onClicked: RecordingManager.openFile(panel.detailPath)
+                    onClicked: ScreenRecordingManager.openFile(panel.detailPath)
                   }
 
                   FocusButton {
                     id: copyBtn
                     text: "Copy path"
                     width: 120
-                    onClicked: RecordingManager.copyPath(panel.detailPath)
+                    onClicked: ScreenRecordingManager.copyPath(panel.detailPath)
                   }
 
                   FocusButton {
@@ -1113,7 +1113,7 @@ Scope {
                     hoverColor: Qt.darker(Theme.danger, 1.2)
                     visible: detailContainer.confirmDelete
                     onClicked: {
-                      RecordingManager.deleteFile(panel.detailPath)
+                      ScreenRecordingManager.deleteFile(panel.detailPath)
                       panel.viewMode = "grid"
                       panel.detailPath = ""
                     }

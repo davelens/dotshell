@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+state_dir="$1"
+suffix="$2"
+shift 2
+
+while (($#)); do
+  (($# >= 2)) || { echo "error: module rename mappings must be old/new pairs" >&2; exit 1; }
+  old_path="$state_dir/$1$suffix.json"
+  new_path="$state_dir/$2$suffix.json"
+  shift 2
+
+  [[ -e "$new_path" || ! -e "$old_path" ]] || mv -- "$old_path" "$new_path"
+done

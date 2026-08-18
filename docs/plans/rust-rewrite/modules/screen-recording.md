@@ -1,6 +1,6 @@
-# recording — Rust rewrite plan
+# screen-recording — Rust rewrite plan
 
-Ports `modules/recording/` (Manager + Button + Panel + Settings,
+Ports `modules/screen-recording/` (Manager + Button + Panel + Settings,
 ~1848 lines QML). gpu-screen-recorder lifecycle + a keyboard-driven
 file browser for screencasts/screenshots.
 
@@ -10,7 +10,7 @@ file browser for screencasts/screenshots.
   (default `gpu-screen-recorder`, editable in Settings), liveness via
   `pidof`, stop via `pkill`/`wait-recording` semantics as today; bar
   button reflects recording state (record glyph 󰑊 + active styling).
-- **Files panel** (`PanelBase`, overlay id `recording`): grid browser
+- **Files panel** (`PanelBase`, overlay id `screen-recording`): grid browser
   over `~/Videos/screencasts/` (and screenshots dir), newest-first,
   metadata via `ffprobe`, open/preview via the same external viewer
   used today (`sushi`), copy path via `wl-copy` (including the
@@ -33,13 +33,13 @@ file browser for screencasts/screenshots.
 
 ## State
 
-- Same state file under the `recording` id (adapter mode, same fields
+- Same state file under the `screen-recording` id (adapter mode, same fields
   incl. `processName`).
 
-## IPC / dshell (unchanged)
+## IPC / dshell
 
-- `dshell screen-recording files toggle|open|close` → `overlay`
-  target, id `recording`.
+- `dshell screen-recording files toggle|open|close` → internal `overlay` target,
+  id `screen-recording`.
 - Sway bind: `mod4+Shift+s` → `dshell screen-recording files toggle`.
 
 ## Keymaps (exact, from `Panel.qml` — richest surface in the shell)

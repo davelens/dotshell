@@ -6,7 +6,7 @@ import QtQuick
 import qs
 
 Singleton {
-  id: recordingManager
+  id: screenRecordingManager
 
   // General (profile-independent) settings
   property alias processName: generalAdapter.processName
@@ -16,7 +16,7 @@ Singleton {
   property alias videoPreviewer: generalAdapter.videoPreviewer
 
   ModuleConfig {
-    moduleId: "recording"
+    moduleId: "screen-recording"
     scope: "general"
     adapter: JsonAdapter {
       id: generalAdapter
@@ -34,11 +34,11 @@ Singleton {
 
   Timer {
     interval: 2000
-    running: !recordingManager._stopping
+    running: !screenRecordingManager._stopping
     repeat: true
     triggeredOnStart: true
     onTriggered: {
-      _checkRecordingProc.command = ["pidof", recordingManager.processName]
+      _checkRecordingProc.command = ["pidof", screenRecordingManager.processName]
       _checkRecordingProc.running = true
     }
   }
@@ -46,7 +46,7 @@ Singleton {
   Process {
     id: _checkRecordingProc
     onExited: function(exitCode, exitStatus) {
-      recordingManager.isRecording = (exitCode === 0)
+      screenRecordingManager.isRecording = (exitCode === 0)
     }
   }
 
@@ -61,7 +61,7 @@ Singleton {
   Process {
     id: _stopProc
     onExited: function(exitCode, exitStatus) {
-      _waitProc.command = ["bash", "-c", 'while pidof "$1" > /dev/null 2>&1; do sleep 0.2; done', "wait-recording", recordingManager.processName]
+      _waitProc.command = ["bash", "-c", 'while pidof "$1" > /dev/null 2>&1; do sleep 0.2; done', "wait-recording", screenRecordingManager.processName]
       _waitProc.running = true
     }
   }
@@ -70,8 +70,8 @@ Singleton {
   Process {
     id: _waitProc
     onExited: function(exitCode, exitStatus) {
-      recordingManager.isRecording = false
-      recordingManager._stopping = false
+      screenRecordingManager.isRecording = false
+      screenRecordingManager._stopping = false
       _copyLatestPathProc.running = true
     }
   }
@@ -83,7 +83,7 @@ Singleton {
   }
 
   // Panel state
-  readonly property bool panelOpen: OverlayManager.isOpen("recording")
+  readonly property bool panelOpen: OverlayManager.isOpen("screen-recording")
   onPanelOpenChanged: {
     if (panelOpen) {
       refreshFiles()
@@ -137,14 +137,14 @@ Singleton {
     stdout: StdioCollector {}
     onExited: {
       var lines = listScreenshotsProc.stdout.text.trim().split("\n").filter(function(l) { return l.length > 0 })
-      var dir = recordingManager.screenshotDir
+      var dir = screenRecordingManager.screenshotDir
       var result = []
       for (var i = 0; i < lines.length; i++) {
         result.push(dir + "/" + lines[i])
       }
-      recordingManager.screenshots = result
-      recordingManager.screenshotCount = result.length
-      recordingManager.filesRefreshed()
+      screenRecordingManager.screenshots = result
+      screenRecordingManager.screenshotCount = result.length
+      screenRecordingManager.filesRefreshed()
     }
   }
 
@@ -153,14 +153,14 @@ Singleton {
     stdout: StdioCollector {}
     onExited: {
       var lines = listScreencastsProc.stdout.text.trim().split("\n").filter(function(l) { return l.length > 0 })
-      var dir = recordingManager.screencastDir
+      var dir = screenRecordingManager.screencastDir
       var result = []
       for (var i = 0; i < lines.length; i++) {
         result.push(dir + "/" + lines[i])
       }
-      recordingManager.screencasts = result
-      recordingManager.screencastCount = result.length
-      recordingManager.filesRefreshed()
+      screenRecordingManager.screencasts = result
+      screenRecordingManager.screencastCount = result.length
+      screenRecordingManager.filesRefreshed()
     }
   }
 
@@ -188,7 +188,7 @@ Singleton {
     property string thumbPath: ""
     onExited: function(exitCode) {
       if (exitCode === 0) {
-        recordingManager.detailThumbnailReady(videoPath, thumbPath)
+        screenRecordingManager.detailThumbnailReady(videoPath, thumbPath)
       }
     }
   }
@@ -221,7 +221,7 @@ Singleton {
       var formatted = h > 0
         ? h + ":" + (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s
         : m + ":" + (s < 10 ? "0" : "") + s
-      recordingManager.durationReady(videoPath, formatted)
+      screenRecordingManager.durationReady(videoPath, formatted)
     }
   }
 
@@ -246,7 +246,7 @@ Singleton {
 
   Process {
     id: deleteFilesProc
-    onExited: recordingManager.refreshFiles()
+    onExited: screenRecordingManager.refreshFiles()
   }
 
   function deleteAll(type) {
@@ -271,8 +271,8 @@ Singleton {
     property string newPath: ""
     onExited: function(exitCode) {
       if (exitCode === 0) {
-        recordingManager.fileRenamed(oldPath, newPath)
-        recordingManager.refreshFiles()
+        screenRecordingManager.fileRenamed(oldPath, newPath)
+        screenRecordingManager.refreshFiles()
       }
     }
   }
@@ -290,7 +290,7 @@ Singleton {
     var isVideo = /\.(mp4|mkv|webm|avi|mov)$/i.test(filePath)
     var app = isVideo ? videoPreviewer : imagePreviewer
     if (!app) app = "sushi"
-    OverlayManager.close("recording")
+    OverlayManager.close("screen-recording")
     openFileProc.command = [app, filePath]
     openFileProc.running = true
   }
@@ -300,5 +300,5 @@ Singleton {
   }
 
   // IPC handler
-  Component.onCompleted: OverlayManager.register("recording", "Screen recording files panel")
+  Component.onCompleted: OverlayManager.register("screen-recording", "Screen recording files panel")
 }

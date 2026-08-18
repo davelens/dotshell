@@ -8,12 +8,12 @@ import qs
 Singleton {
   id: manager
 
-  readonly property string backendPath: Quickshell.shellDir + "/modules/updates/backends/run"
+  readonly property string backendPath: Quickshell.shellDir + "/modules/system-updates/backends/run"
 
   property alias includeFlatpak: settingsAdapter.includeFlatpak
 
   ModuleConfig {
-    moduleId: "updates"
+    moduleId: "system-updates"
     adapter: JsonAdapter {
       id: settingsAdapter
       property bool includeFlatpak: false
@@ -257,7 +257,7 @@ Singleton {
           manager.systemUpdateDescription = description.systemDescription || "System upgrade"
           manager.systemUpdateRunningDescription = description.runningDescription || "Running system upgrade"
         } catch (error) {
-          console.error("[UpdatesManager] Invalid backend description:", error)
+          console.error("[SystemUpdatesManager] Invalid backend description:", error)
         }
       }
       manager.backendReady = true

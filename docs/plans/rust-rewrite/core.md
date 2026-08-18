@@ -57,7 +57,7 @@ crates/
   ds-wayland/         # sctk plumbing: outputs, seats, layer surfaces, shm
   ds-modules-all/     # GENERATED aggregation crate (see §Module system)
 modules/
-  <id>/               # one crate per module + its module.json + bin/
+  <id>/               # one crate per module + module.json + bin/ + dshell/
 bin/dshell            # stays bash (see §dshell)
 ```
 
@@ -104,10 +104,10 @@ repo and call `dshell` or system tools):
 | --- | --- | --- |
 | `$mod+Shift+s` | `dshell settings toggle` | settings overlay |
 | `$mod+Shift+n` | `dshell notifications toggle` | notification panel |
-| `$mod+Shift+u` | `dshell popup toggle updates` | updates popup (stemless when no button) |
-| `$mod+Shift+b` | `dshell bar focus toggle` | bar focus mode |
+| `$mod+Shift+u` | `dshell system-updates toggle` | system updates popup (stemless when no button) |
+| `$mod+Shift+b` | `dshell status-bar focus toggle` | bar focus mode |
 | `mod4+Shift+p` | `dshell power toggle` | power overlay |
-| `mod4+Shift+s` | `dshell screen-recording files toggle` | recording panel |
+| `mod4+Shift+s` | `dshell screen-recording files toggle` | screen recording panel |
 | `mod4+Shift+w` | `dshell wallpaper browser toggle` | wallpaper panel |
 | `XF86Audio*` ×4 | `pactl` | shell reflects sink/source changes (volume module subscribes) |
 | `XF86MonBrightness*` ×2 | `brightnessctl` | shell reflects backlight changes (brightness module) |
@@ -165,6 +165,9 @@ Hard constraint preserved: core never names module ids. Mechanisms:
 
 `modules/*/bin/` symlinking into `$XDG_BIN_HOME`, with a `~/.local/bin`
 fallback and dangling-link pruning, ports as-is into `ModuleRegistry` startup.
+The Bash CLI extension seam is independent: `bin/dshell` continues to source
+installed `modules/*/dshell/init.sh` files through `$CONFIG_DIR` on each
+invocation and completion, with no manifest declaration or setup integration.
 
 ## State, profiles, theming
 
@@ -210,7 +213,7 @@ offset.
 popup and other overlays; `open(id, context)` payloads; `opened(id)`
 re-fire semantics; single id-addressed IPC target with
 `error: unknown overlay '<id>'` validation. Registered ids come from
-modules (`notifications`, `power`, `recording`, `wallpaper`) and core
+modules (`notifications`, `power`, `screen-recording`, `wallpaper`) and core
 (`settings`).
 
 Transport: unix socket `$XDG_RUNTIME_DIR/dotshell/ipc.sock`,
@@ -256,9 +259,12 @@ device-provided values never interpolated into `sh -c` strings.
 
 ## dshell
 
-`bin/dshell` stays bash and keeps its exact `COMMANDS` registry,
-grammar, completion, and `json_get` state reads (ADR-0003 —
-reads must work with the shell down). Changes:
+`bin/dshell` stays bash and keeps its distributed registry, grammar,
+completion, and `json_get` state reads (ADR-0003 — reads must work with the
+shell down). It continues to own core registrations, dispatch/usage/completion,
+and registration helpers; installed module crates retain side-effect-free
+`dshell/init.sh` registrations and local CLI functions. Removing a module
+removes its CLI, with no compatibility alias. Changes:
 
 1. `ipc()` helper: `qs -p "$CONFIG_DIR" ipc call "$@"` →
    `dotshell ipc call "$@"`. The client exits non-zero on `error:`
@@ -266,9 +272,9 @@ reads must work with the shell down). Changes:
    behavior is identical either way.
 2. The display popup's "Configure" action remains a direct in-process
    settings-overlay open with the `display` category context.
-3. No row, verb, or completion-source changes. `wallpaper
-   set/restore`, `theme *`, `profile list/current` stay local fns on
-   `json_get`.
+3. No registration, verb, or completion-source changes. `wallpaper
+   set/restore` stays in its module extension; `theme *` and `profile
+   list/current` stay core local functions on `json_get`.
 4. `setup/init.sh` and the systemd user service switch the started
    binary from `quickshell -p …` to `dotshell`; symlinks and the rest
    of setup unchanged.
@@ -286,10 +292,10 @@ parity per surface.
    IPC).
 3. `ds-ui` focus widgets + PopupBase + bar focus mode; volume +
    brightness popups (proves popups, sliders, event subscriptions).
-4. battery, media, idle-inhibitor, updates, wireless, bluetooth (zbus
+4. battery, media, idle-inhibitor, system-updates, wireless, bluetooth (zbus
    + subprocess patterns).
 5. PanelBase + settings panel + profiles.
-6. Panels: power, wallpaper, recording.
+6. Panels: power, wallpaper, screen-recording.
 7. Notifications last (biggest single module; daemon takeover needs
    the rest stable).
 8. Flip `dshell`/service defaults, retire quickshell, update wiki.

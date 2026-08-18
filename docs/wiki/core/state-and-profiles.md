@@ -19,12 +19,13 @@ switched at runtime.
 
 ## Readiness (two stages)
 
-DataManager bootstraps in two gated stages: `dataDirReady` (data +
-themes dirs exist) → GeneralSettings loads `general.json` and calls
-`setActiveProfile(dir)` → profile dir created → `ready`. Profile-scoped
-`ModuleConfig`s wait on `ready`; general-scoped on `dataDirReady`.
-Switching profiles cycles `ready` false → true, which reloads every
-profile-scoped config.
+DataManager bootstraps in two gated stages: data + themes dirs created →
+manifest aliases migrate general state → `dataDirReady` → GeneralSettings loads
+`general.json` and calls `setActiveProfile(dir)` → profile dir created and its
+aliased state migrated → `ready`. Profile-scoped `ModuleConfig`s wait on
+`ready`; general-scoped ones wait on `dataDirReady`, so neither can create a
+new default file before legacy state is moved. Switching profiles cycles
+`ready` false → true, which reloads every profile-scoped config.
 
 ## ModuleConfig
 

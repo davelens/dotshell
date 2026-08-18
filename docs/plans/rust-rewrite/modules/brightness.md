@@ -15,8 +15,8 @@ monitors.
   addressing.
 - Popup: one slider per detected display, current percentages loaded
   on open.
-- Bar button opens the popup; `dshell popup toggle brightness` works
-  bar-button or not (stemless fallback anchor).
+- Bar button opens the popup; `dshell brightness toggle` works bar-button or
+  not through the internal `popup` target (stemless fallback anchor).
 
 ## Stack
 

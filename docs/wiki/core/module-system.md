@@ -31,7 +31,8 @@ model.
 
 | Field | Meaning |
 | --- | --- |
-| `id` | stable module id (state file name, IPC/CLI references) |
+| `id` | current module id (state file name, IPC/CLI references) |
+| `formerlyKnownAs` | optional old ids migrated to `id` |
 | `name` | display name (settings sidebar, logs) |
 | `icon` | nerd-font glyph for the settings sidebar |
 | `order` | sort key for settings categories and unlisted ordering |
@@ -43,6 +44,25 @@ model.
 | `rootComponents` | files instantiated once at shell root (panels, popup windows) |
 | `skipBarFocus` | exclude from bar keyboard navigation |
 | `requiresHostWindow` | inject the containing bar window into a bar component as `hostWindow` |
+
+Before exposing its readiness gates, `DataManager` moves general state
+(`<old>-general.json`) and active-profile state (`<old>.json`) to the current id
+unless the current file already exists. The same manifest aliases rewrite saved
+statusbar items and settings category order, so existing profiles retain their
+configuration after a module rename.
+
+## CLI extensions
+
+The QML manifest registry and the `dshell` command registry are separate.
+`bin/dshell` owns core registrations, dispatch, usage, completion, and the
+registration helpers. On every invocation and completion it discovers
+`$CONFIG_DIR/modules/<module-id>/dshell/init.sh`, infers the module id from the
+path, and sources the file. Extensions are side-effect-free registrations and
+local CLI function definitions only.
+
+There is no `module.json` field or setup step for CLI commands. Removing the
+module directory therefore removes its command group as well as its QML
+components and binaries. Removed command names have no compatibility aliases.
 
 ## Loading (`shell.qml`)
 
@@ -59,4 +79,6 @@ isolated singleton set.
 Create `modules/<dir>/module.json` with an `id` and the components that
 apply. Discovery, bar placement (auto-prepended disabled to the right
 section), settings page, popup wiring, and bin symlinking all follow
-from the manifest — no core edits.
+from the manifest — no core edits. If the module exposes CLI commands, add a
+side-effect-free `modules/<dir>/dshell/init.sh` that registers them; `dshell`
+discovers it directly, without a manifest declaration or setup change.

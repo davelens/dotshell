@@ -34,10 +34,10 @@ SettingsPage {
       }
 
       FocusTextInput {
-        text: RecordingManager.processName
+        text: ScreenRecordingManager.processName
         placeholderText: "e.g. gpu-screen-recorder"
         onEditingFinished: function(value) {
-          if (value) RecordingManager.processName = value
+          if (value) ScreenRecordingManager.processName = value
         }
       }
 
@@ -77,10 +77,10 @@ SettingsPage {
       }
 
       FocusTextInput {
-        text: RecordingManager.screenshotDir
+        text: ScreenRecordingManager.screenshotDir
         placeholderText: "e.g. ~/Pictures/screenshots"
         onEditingFinished: function(value) {
-          if (value) RecordingManager.screenshotDir = value
+          if (value) ScreenRecordingManager.screenshotDir = value
         }
       }
     }
@@ -113,10 +113,10 @@ SettingsPage {
       }
 
       FocusTextInput {
-        text: RecordingManager.screencastDir
+        text: ScreenRecordingManager.screencastDir
         placeholderText: "e.g. ~/Videos/screencasts"
         onEditingFinished: function(value) {
-          if (value) RecordingManager.screencastDir = value
+          if (value) ScreenRecordingManager.screencastDir = value
         }
       }
     }
@@ -149,10 +149,10 @@ SettingsPage {
       }
 
       FocusTextInput {
-        text: RecordingManager.imagePreviewer
+        text: ScreenRecordingManager.imagePreviewer
         placeholderText: "sushi"
         onEditingFinished: function(value) {
-          if (value) RecordingManager.imagePreviewer = value
+          if (value) ScreenRecordingManager.imagePreviewer = value
         }
       }
     }
@@ -185,10 +185,10 @@ SettingsPage {
       }
 
       FocusTextInput {
-        text: RecordingManager.videoPreviewer
+        text: ScreenRecordingManager.videoPreviewer
         placeholderText: "sushi"
         onEditingFinished: function(value) {
-          if (value) RecordingManager.videoPreviewer = value
+          if (value) ScreenRecordingManager.videoPreviewer = value
         }
       }
     }
