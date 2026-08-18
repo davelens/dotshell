@@ -7,7 +7,7 @@ import qs.core.components
 ModulePopup {
   id: bluetoothPopup
 
-  // Start/stop scan when popup opens/closes
+  // Opening clears prior connection errors without auto-scanning; closing stops a user-started scan.
   onIsOpenChanged: {
     if (isOpen) {
       BluetoothManager.connectError = ""
