@@ -5,7 +5,7 @@ import qs
 
 // Shared PanelWindow base for popup modules. Provides layer shell config,
 // ESC/ctrl+[ key handling, click-outside close, and a positioned content
-// rectangle with a bordered Column inside. A narrow stem connector
+// rectangle with a scrollable Column inside. A narrow stem connector
 // attaches the popup to the bar for a visually "connected" look.
 //
 // Usage: place content items directly inside PopupBase — they become
@@ -108,31 +108,45 @@ PanelWindow {
   // Popup content rectangle
   Rectangle {
     id: popupRect
-    x: {
+    readonly property real computedX: {
       if (popupBase.popupRightMargin >= 0)
         return popupBase.width - width - popupBase.popupRightMargin
       var ideal = PopupManager.anchorRight - width
       if (ideal < 0) return popupBase.width - width - 24
       return ideal
     }
+    x: Math.max(0, Math.min(computedX, popupBase.width - width))
     y: popupBase.contentOffset + (popupBase.showStem ? popupBase.stemHeight : 0)
-    width: popupBase.popupWidth
-    height: popupBase.popupHeight > 0
-      ? popupBase.popupHeight
-      : contentColumn.implicitHeight + 48
+    width: Math.max(0, Math.min(
+      popupBase.popupWidth,
+      popupBase.width - Math.min(24, popupBase.width / 2)))
+    height: Math.max(0, Math.min(
+      popupBase.popupHeight > 0
+        ? popupBase.popupHeight
+        : contentColumn.implicitHeight + 48,
+      popupBase.height - y - 24))
     radius: 5
     topRightRadius: popupBase.showStem ? 0 : 5
     color: Theme.bgBase
     border.width: 1
     border.color: Theme.bgBorder
 
-    Column {
-      id: contentColumn
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.top: parent.top
-      anchors.margins: 24
-      spacing: popupBase.contentSpacing
+    Flickable {
+      id: contentViewport
+      x: Math.min(24, popupRect.width / 4)
+      y: Math.min(24, popupRect.height / 4)
+      width: Math.max(0, popupRect.width - 2 * x)
+      height: Math.max(0, popupRect.height - 2 * y)
+      contentWidth: width
+      contentHeight: contentColumn.implicitHeight
+      clip: true
+      boundsBehavior: Flickable.StopAtBounds
+
+      Column {
+        id: contentColumn
+        width: contentViewport.width
+        spacing: popupBase.contentSpacing
+      }
     }
   }
 
