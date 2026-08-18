@@ -52,6 +52,11 @@ These are internal names, not public command groups. For example,
 toggle`, `dshell volume toggle`, and `dshell wireless toggle` map to
 `popup.toggle(name)`.
 
+Popup names are validated against modules whose manifests declare a popup
+component (`ModuleRegistry.getPopupModuleIds()`). An unknown name returns
+`error: unknown popup '<name>'` without closing an overlay or changing popup
+state.
+
 Bluetooth is module-specific: opening its popup clears prior connection errors
 without auto-scanning; closing it stops a scan explicitly started by the user.
 

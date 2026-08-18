@@ -61,6 +61,9 @@ Singleton {
     target: "popup"
 
     function toggle(name: string): string {
+      if (ModuleRegistry.getPopupModuleIds().indexOf(name) === -1) {
+        return "error: unknown popup '" + name + "'"
+      }
       if (popupManager.activePopup === name) {
         popupManager.close()
         return "Popup '" + name + "' closed"
