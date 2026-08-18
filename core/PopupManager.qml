@@ -9,9 +9,6 @@ Singleton {
 
   property string activePopup: ""
 
-  // Screen that opened the popup
-  property var activePopupScreen: null
-
   // Anchor position for popup placement (screen-space X of the button's right edge)
   property real anchorRight: 0
 
@@ -23,9 +20,6 @@ Singleton {
   // Registered button references per popup (for IPC toggle anchor computation)
   property var registeredButtons: ({})
 
-  // Legacy stored anchors (kept as fallback)
-  property var storedAnchors: ({})
-
   // Register a button for a popup (called from BarButton)
   function registerButton(name: string, buttonRef: var): void {
     var buttons = Object.assign({}, registeredButtons)
@@ -36,22 +30,19 @@ Singleton {
   // Compute anchor position from a registered button
   function getButtonAnchor(name: string): var {
     var btn = registeredButtons[name]
-    if (btn && btn.screen) {
+    if (btn) {
       var mapped = btn.mapToItem(null, btn.width, 0)
-      if (mapped.x > btn.width) {
-        return { screen: btn.screen, right: mapped.x }
-      }
+      if (mapped.x > btn.width) return mapped.x
     }
     return null
   }
 
-  function toggle(name: string, screen: var, buttonRight: real): void {
-    if (activePopup === name && activePopupScreen === screen) {
+  function toggle(name: string, buttonRight: real): void {
+    if (activePopup === name) {
       close()
     } else {
       OverlayManager.close("")
       activePopup = name
-      activePopupScreen = screen
       anchorRight = buttonRight
       anchoredToButton = true
     }
@@ -59,7 +50,6 @@ Singleton {
 
   function close(): void {
     activePopup = ""
-    activePopupScreen = null
   }
 
   function isOpen(name: string): bool {
@@ -78,14 +68,12 @@ Singleton {
       OverlayManager.close("")
       // Compute anchor from the registered button at toggle time
       var anchor = popupManager.getButtonAnchor(name)
-      if (anchor) {
+      if (anchor !== null) {
         popupManager.activePopup = name
-        popupManager.activePopupScreen = anchor.screen
-        popupManager.anchorRight = anchor.right
+        popupManager.anchorRight = anchor
         popupManager.anchoredToButton = true
       } else if (ScreenManager.primaryScreen) {
         popupManager.activePopup = name
-        popupManager.activePopupScreen = ScreenManager.primaryScreen
         // Right margin matches the 20px gap between statusbar and popup top
         popupManager.anchorRight = ScreenManager.primaryScreen.width - 20
         popupManager.anchoredToButton = false

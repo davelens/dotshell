@@ -94,7 +94,7 @@ Rectangle {
     onClicked: {
       if (button.popupId !== "" && button.popupManager) {
         var mapped = button.mapToItem(null, button.width, 0)
-        button.popupManager.toggle(button.popupId, button.screen, mapped.x)
+        button.popupManager.toggle(button.popupId, mapped.x)
       } else {
         button.clicked()
       }

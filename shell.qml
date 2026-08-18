@@ -232,7 +232,7 @@ ShellRoot {
         }
 
         if (panel.popupModules.indexOf(moduleId) !== -1) {
-          PopupManager.toggle(moduleId, panel.modelData, anchorRight)
+          PopupManager.toggle(moduleId, anchorRight)
           return
         }
 
