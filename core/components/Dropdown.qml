@@ -72,12 +72,19 @@ Item {
     return item === currentItem
   }
 
+  function selectItem(item) {
+    itemSelected(item)
+    expanded = false
+    highlightIndex = -1
+    toggled(false)
+  }
+
   // Keyboard navigation
   Keys.onPressed: function(event) {
     if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
       if (expanded && highlightIndex >= 0 && highlightIndex < items.length) {
         // Select the highlighted item
-        itemSelected(items[highlightIndex])
+        dropdown.selectItem(dropdown.items[dropdown.highlightIndex])
       } else {
         // Toggle expand/collapse
         expanded = !expanded
@@ -251,7 +258,7 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: dropdown.itemSelected(modelData)
+            onClicked: dropdown.selectItem(modelData)
           }
         }
       }
@@ -376,7 +383,7 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: dropdown.itemSelected(modelData)
+            onClicked: dropdown.selectItem(modelData)
           }
         }
       }
