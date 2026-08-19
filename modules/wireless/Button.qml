@@ -18,23 +18,19 @@ BarButton {
   TooltipBase {
     anchorItem: button
     visible: button.hovered && WirelessManager.connectedNetwork && !button.popupManager.isOpen(button.popupId)
-    fixedWidth: 260
-
     Column {
-      spacing: 2
+      spacing: 4
 
       Text {
         text: "Connected to " + (WirelessManager.connectedNetwork ? WirelessManager.connectedNetwork.ssid : "")
         color: Theme.textPrimary
-        font.pixelSize: 13
-        elide: Text.ElideRight
-        width: parent.width
+        font.pixelSize: 14
       }
 
       Text {
         text: "Uptime: " + WirelessManager.getConnectionDurationLong()
-        color: Theme.textMuted
-        font.pixelSize: 12
+        color: Theme.textPrimary
+        font.pixelSize: 14
       }
 
       Row {
@@ -42,14 +38,14 @@ BarButton {
 
         Text {
           text: "Down: " + WirelessManager.formatSpeed(WirelessManager.downloadSpeed)
-          color: Theme.textMuted
-          font.pixelSize: 12
+          color: Theme.textPrimary
+          font.pixelSize: 14
         }
 
         Text {
           text: "Up: " + WirelessManager.formatSpeed(WirelessManager.uploadSpeed)
-          color: Theme.textMuted
-          font.pixelSize: 12
+          color: Theme.textPrimary
+          font.pixelSize: 14
         }
       }
     }
