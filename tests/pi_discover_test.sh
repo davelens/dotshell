@@ -50,3 +50,17 @@ status=$(PI_SESSIONS_DIR="$sessions" "$DISCOVER" | awk -F '\t' -v cwd="$work" '$
 }
 
 echo 'ok - blank Pi instance ignores stale session state'
+
+session="$sessions/$slug/current.jsonl"
+printf '%s\n' \
+  '{"type":"session","id":"current"}' \
+  '{"type":"message","timestamp":"2026-01-01T00:00:00Z","message":{"role":"toolResult","toolName":"read","content":[{"type":"text","text":"done"}]}}' \
+  '{"type":"message","timestamp":"2026-01-01T00:00:01Z","message":{"role":"assistant","stopReason":"toolUse","content":[{"type":"toolCall","id":"question-1","name":"ask_user_question","arguments":{}}]}}' \
+  >"$session"
+status=$(PI_SESSIONS_DIR="$sessions" "$DISCOVER" | awk -F '\t' -v cwd="$work" '$2 == cwd { print $4 }')
+[ "$status" = input ] || {
+  printf 'not ok - pending Pi question: expected input, got %s\n' "${status:-missing}" >&2
+  exit 1
+}
+
+echo 'ok - pending Pi question reports input'

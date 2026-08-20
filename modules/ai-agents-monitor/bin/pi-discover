@@ -12,8 +12,8 @@
 #            non-empty errorMessage, with no later user/toolResult message.
 #   - busy:  last user/toolResult message is newer than the last assistant
 #            message with stopReason == "stop".
-#   - input: last assistant stop message is newer than the last user/toolResult
-#            and appears to ask for user input.
+#   - input: an unanswered ask_user_question tool call is pending, or the last
+#            assistant stop is newer than the last user/toolResult and asks for input.
 #   - idle:  otherwise (last assistant has stopReason == "stop", or session
 #            has no messages yet).
 #
@@ -115,9 +115,9 @@ for cwd in "${!cwd_pid[@]}"; do
       gsub("[[:space:]]+$"; "")
       | test("\\?$|(?im)(^|\\n)\\s*(pick|choose|select|run|proceed|continue|which|want me to|should i|shall i|ok to|okay to|approve|confirm)\\b.*\\?\\s*$");
 
-    # Walk events in order; track last assistant stop/error, its text, and last user/toolResult.
+    # Walk events in order; track assistant state and the last user/toolResult.
     reduce .[] as $e (
-      {lastAssistantStop: null, lastAssistantStopText: "", lastAssistantError: null, lastUserOrTool: null};
+      {lastAssistantStop: null, lastAssistantStopText: "", lastAssistantError: null, lastInputRequest: null, lastUserOrTool: null};
       if $e.type == "message" then
         if $e.message.role == "assistant" then
           (if ($e.message.stopReason == "stop") then
@@ -128,6 +128,9 @@ for cwd in "${!cwd_pid[@]}"; do
                 or (($e.message.errorMessage // "") != "") then
             .lastAssistantError = $e.timestamp
           else . end)
+          | (if any($e.message.content[]?; .type == "toolCall" and .name == "ask_user_question") then
+            .lastInputRequest = $e.timestamp
+          else . end)
         elif ($e.message.role == "user") or ($e.message.role == "toolResult") then
           .lastUserOrTool = $e.timestamp
         else . end
@@ -136,6 +139,9 @@ for cwd in "${!cwd_pid[@]}"; do
     | if (.lastAssistantError != null)
         and ((.lastUserOrTool == null) or (.lastUserOrTool < .lastAssistantError))
       then "error"
+      elif (.lastInputRequest != null)
+        and ((.lastUserOrTool == null) or (.lastUserOrTool < .lastInputRequest))
+      then "input"
       elif (.lastUserOrTool != null)
         and ((.lastAssistantStop == null) or (.lastUserOrTool > .lastAssistantStop))
       then "busy"
