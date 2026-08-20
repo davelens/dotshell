@@ -28,6 +28,11 @@ Singleton {
   readonly property real _defaultFontSizeBody: 14
   property string fontFamily: _defaultFontFamily
   property real fontSizeBody: _defaultFontSizeBody
+  property real fontScale: 1.0
+
+  function scaledFontSize(pixelSize) {
+    return pixelSize * theme.fontScale
+  }
 
   // Semantic
   property color accent

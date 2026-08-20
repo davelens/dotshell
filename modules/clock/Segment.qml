@@ -16,7 +16,7 @@ Item {
     text: Time.time
     color: Theme.textPrimary
     font.family: Theme.fontFamily
-    font.pixelSize: 14
+    font.pixelSize: Theme.scaledFontSize(14)
   }
 
   MouseArea {

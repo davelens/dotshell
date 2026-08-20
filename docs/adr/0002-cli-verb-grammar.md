@@ -22,8 +22,8 @@ across `dshell` subcommands. Historical examples included bare `bar focus`,
   names the shell already knows.
 - **Module-owned command groups.** Executable names use module ids:
   `ai-agents-monitor`, `idle-inhibitor`, `screen-recording`, and `wireless`.
-  Popup modules expose their own `toggle` command (`bluetooth`, `brightness`,
-  `display`, `system-updates`, `volume`, `wireless`) instead of a public generic
+  Popup modules expose their own `toggle` command (`bluetooth`, `display`,
+  `system-updates`, `volume`, `wireless`) instead of a public generic
   popup command. Internal IPC target names remain independent of this vocabulary.
 - **No compat aliases.** Historical verbs and command groups (`profile
   enable`, `wallpaper browse`, bare `bar focus`, `bar`, `agents`, `idle`,

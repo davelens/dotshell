@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+size="${1:-}"
+if [[ ! $size =~ ^[0-9]+$ ]] || ((size < 9 || size > 20)); then
+  echo "error: text size must be an integer between 9 and 20" >&2
+  exit 1
+fi
+
+config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+readonly gtk_schema="org.gnome.desktop.interface"
+readonly shell_default_px=14
+readonly terminal_default_pt=9
+
+gtk_font_pt() {
+  local name pt
+  name="$(gsettings get "$gtk_schema" font-name 2>/dev/null || true)"
+  name="${name%\'}"
+  name="${name#\'}"
+  pt="${name##* }"
+  if [[ $pt =~ ^[0-9]+([.][0-9]+)?$ ]]; then printf '%s\n' "$pt"; else printf '11\n'; fi
+}
+
+factor="$(awk -v size="$size" -v base="$shell_default_px" -v font="$(gtk_font_pt)" \
+  'BEGIN { printf "%.4f", int(font * size / base + 0.5) / font }')"
+gsettings set "$gtk_schema" text-scaling-factor "$factor" 2>/dev/null || true
+
+terminal_pt="$(awk -v size="$size" -v base="$shell_default_px" -v point="$terminal_default_pt" \
+  'BEGIN { printf "%d", int(size * point / base + 0.5) }')"
+
+alacritty="$config_home/alacritty/alacritty.toml"
+kitty="$config_home/kitty/kitty.conf"
+ghostty="$config_home/ghostty/config"
+foot="$config_home/foot/foot.ini"
+
+[[ ! -f $alacritty ]] || sed -i -E "s/^size[[:space:]]*=.*/size = $terminal_pt/" "$alacritty"
+if [[ -f $kitty ]]; then
+  sed -i -E "s/^font_size[[:space:]]+.*/font_size $terminal_pt.0/" "$kitty"
+  pkill -USR1 kitty 2>/dev/null || true
+fi
+if [[ -f $ghostty ]]; then
+  sed -i -E "s/^font-size = .*/font-size = $terminal_pt/" "$ghostty"
+  pkill -SIGUSR2 ghostty 2>/dev/null || true
+fi
+if [[ -f $foot ]]; then
+  sed -i -E "s/(:size=)[0-9.]+/\1$terminal_pt/" "$foot"
+  if pgrep -x foot >/dev/null 2>&1 && command -v notify-send >/dev/null 2>&1; then
+    runtime_dir="${XDG_RUNTIME_DIR:-/tmp}/dotshell-display-text-size"
+    id_file="$runtime_dir/foot-notification-id"
+    previous_id=""
+    mkdir -p "$runtime_dir"
+    [[ ! -r $id_file ]] || read -r previous_id <"$id_file" || true
+    replace=()
+    [[ ! $previous_id =~ ^[0-9]+$ ]] || replace=(-r "$previous_id")
+    new_id="$(notify-send -p "${replace[@]}" "Dotshell" \
+      "Restart Foot to apply the new terminal font size" 2>/dev/null || true)"
+    [[ ! $new_id =~ ^[0-9]+$ ]] || printf '%s\n' "$new_id" >"$id_file"
+  fi
+fi

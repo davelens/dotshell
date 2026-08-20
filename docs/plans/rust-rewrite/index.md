@@ -22,7 +22,6 @@ Per module (one plan each):
 - [ai-agents-monitor](modules/ai-agents-monitor.md)
 - [battery](modules/battery.md)
 - [bluetooth](modules/bluetooth.md)
-- [brightness](modules/brightness.md)
 - [clock](modules/clock.md)
 - [display](modules/display.md)
 - [idle-inhibitor](modules/idle-inhibitor.md)

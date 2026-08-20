@@ -1,10 +1,11 @@
 {
   "id": "display",
-  "name": "Displays",
+  "name": "Display",
   "icon": "󰍹",
   "order": 40,
-  "keywords": "monitor screen resolution",
+  "keywords": "monitor screen layout scale brightness backlight text size",
   "components": {
+    "manager": "Manager.qml",
     "button": "Button.qml",
     "popup": "Popup.qml",
     "settings": "Settings.qml"

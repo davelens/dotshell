@@ -19,7 +19,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: ""
       color: Theme.textPrimary
-      font.pixelSize: 16
+      font.pixelSize: Theme.scaledFontSize(16)
       font.family: "Symbols Nerd Font"
     }
 
@@ -28,14 +28,14 @@ Item {
       text: SystemLoadManager.cpuPercent + "%"
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
     }
 
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: "󰧑"
       color: Theme.textPrimary
-      font.pixelSize: 16
+      font.pixelSize: Theme.scaledFontSize(16)
       font.family: "Symbols Nerd Font"
       leftPadding: 6
     }
@@ -45,7 +45,7 @@ Item {
       text: SystemLoadManager.ramPercent + "%"
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
     }
   }
 

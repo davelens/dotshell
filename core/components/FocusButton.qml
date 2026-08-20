@@ -56,7 +56,7 @@ Item {
       text: button.text
       color: button.hovered ? button.textHoverColor : button.textColor
       font.family: Theme.fontFamily
-      font.pixelSize: button.fontSize
+      font.pixelSize: Theme.scaledFontSize(button.fontSize)
     }
   }
 

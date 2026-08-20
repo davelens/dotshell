@@ -42,7 +42,7 @@ SettingsPage {
           text: "Include Flatpak in system update"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
       }
 

@@ -151,7 +151,7 @@ Item {
           anchors.verticalCenter: parent.verticalCenter
           text: dropdown.headerIcon
           color: Theme.accent
-          font.pixelSize: 16
+          font.pixelSize: Theme.scaledFontSize(16)
           font.family: "Symbols Nerd Font"
           visible: dropdown.headerIcon
         }
@@ -168,7 +168,7 @@ Item {
           text: dropdown.getItemText(dropdown.currentItem, false)
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 15
+          font.pixelSize: Theme.scaledFontSize(15)
           elide: Text.ElideRight
           width: {
             var used = chevronNormal.width + 24
@@ -186,7 +186,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: dropdown.expanded ? "\uf106" : "\uf107"
         color: Theme.textMuted
-        font.pixelSize: 16
+        font.pixelSize: Theme.scaledFontSize(16)
         font.family: "Symbols Nerd Font"
       }
 
@@ -240,7 +240,7 @@ Item {
               anchors.verticalCenter: parent.verticalCenter
               text: isSelected ? dropdown.selectedIcon : (dropdown.itemIcon || dropdown.headerIcon)
               color: isSelected ? Theme.success : (isHighlighted ? Theme.accent : Theme.textMuted)
-              font.pixelSize: 16
+              font.pixelSize: Theme.scaledFontSize(16)
               font.family: "Symbols Nerd Font"
             }
 
@@ -249,7 +249,7 @@ Item {
               text: dropdown.getItemText(modelData, false)
               color: (isSelected || isHighlighted) ? Theme.textPrimary : Theme.textSecondary
               font.family: Theme.fontFamily
-              font.pixelSize: 15
+              font.pixelSize: Theme.scaledFontSize(15)
               elide: Text.ElideRight
               width: parent.width - 40
             }
@@ -303,7 +303,7 @@ Item {
         text: dropdown.getItemText(dropdown.currentItem, true)
         color: Theme.textPrimary
         font.family: Theme.fontFamily
-        font.pixelSize: 12
+        font.pixelSize: Theme.scaledFontSize(12)
         elide: Text.ElideRight
         width: parent.width - 20
       }
@@ -312,7 +312,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: dropdown.expanded ? "\uf106" : "\uf107"
         color: Theme.textMuted
-        font.pixelSize: 10
+        font.pixelSize: Theme.scaledFontSize(10)
         font.family: "Symbols Nerd Font"
       }
     }
@@ -379,7 +379,7 @@ Item {
             text: dropdown.getItemText(modelData, true)
             color: isSelected ? Theme.textPrimary : Theme.textSecondary
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Theme.scaledFontSize(12)
           }
 
           MouseArea {

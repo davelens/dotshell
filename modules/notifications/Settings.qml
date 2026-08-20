@@ -129,7 +129,7 @@ SettingsPage {
             text: "Auto-dismiss timeout"
             color: Theme.textTertiary
             font.family: Theme.fontFamily
-            font.pixelSize: 15
+            font.pixelSize: Theme.scaledFontSize(15)
           }
 
           Text {
@@ -138,7 +138,7 @@ SettingsPage {
             text: (NotificationManager.popupTimeout / 1000) + "s"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 15
+            font.pixelSize: Theme.scaledFontSize(15)
           }
         }
 
@@ -189,7 +189,7 @@ SettingsPage {
             text: "Maximum history size"
             color: Theme.textTertiary
             font.family: Theme.fontFamily
-            font.pixelSize: 15
+            font.pixelSize: Theme.scaledFontSize(15)
           }
 
           Text {
@@ -198,7 +198,7 @@ SettingsPage {
             text: NotificationManager.maxHistorySize + " notifications"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 15
+            font.pixelSize: Theme.scaledFontSize(15)
           }
         }
 
@@ -260,7 +260,7 @@ SettingsPage {
           text: "Enable DND schedule"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
       }
 
@@ -279,7 +279,7 @@ SettingsPage {
             text: "Start time"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Theme.scaledFontSize(14)
             anchors.verticalCenter: parent.verticalCenter
           }
 
@@ -300,7 +300,7 @@ SettingsPage {
             text: "End time"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Theme.scaledFontSize(14)
             anchors.verticalCenter: parent.verticalCenter
           }
 
@@ -360,7 +360,7 @@ SettingsPage {
             text: "Critical notifications bypass DND"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Theme.scaledFontSize(14)
           }
 
           HelpText {

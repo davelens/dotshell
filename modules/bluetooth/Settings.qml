@@ -18,7 +18,7 @@ SettingsPage {
       text: "Bluetooth"
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 24
+      font.pixelSize: Theme.scaledFontSize(24)
       font.bold: true
     }
 
@@ -62,7 +62,7 @@ SettingsPage {
             anchors.verticalCenter: parent.verticalCenter
             text: "󰂱"
             color: Theme.accent
-            font.pixelSize: 18
+            font.pixelSize: Theme.scaledFontSize(18)
             font.family: "Symbols Nerd Font"
           }
 
@@ -74,7 +74,7 @@ SettingsPage {
               text: modelData.name
               color: Theme.textPrimary
               font.family: Theme.fontFamily
-              font.pixelSize: 14
+              font.pixelSize: Theme.scaledFontSize(14)
             }
 
             Text {
@@ -82,7 +82,7 @@ SettingsPage {
               textFormat: Text.RichText
               color: Theme.success
               font.family: Theme.fontFamily
-              font.pixelSize: 12
+              font.pixelSize: Theme.scaledFontSize(12)
             }
           }
         }
@@ -160,7 +160,7 @@ SettingsPage {
             text: BluetoothManager.connectError
             color: Theme.danger
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Theme.scaledFontSize(12)
             leftPadding: 10
             topPadding: 4
             wrapMode: Text.WordWrap

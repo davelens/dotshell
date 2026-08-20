@@ -373,7 +373,7 @@ Scope {
                   text: modelData.label
                   color: panel.activeTab === modelData.id ? Theme.textPrimary : Theme.textSecondary
                   font.family: Theme.fontFamily
-                  font.pixelSize: 15
+                  font.pixelSize: Theme.scaledFontSize(15)
                   font.bold: panel.activeTab === modelData.id
                 }
 
@@ -415,7 +415,7 @@ Scope {
               anchors.verticalCenter: parent.verticalCenter
               text: "󰍉"
               font.family: "Symbols Nerd Font"
-              font.pixelSize: 14
+              font.pixelSize: Theme.scaledFontSize(14)
               color: Theme.textMuted
             }
 
@@ -429,7 +429,7 @@ Scope {
               height: parent.height
               color: Theme.textPrimary
               font.family: Theme.fontFamily
-              font.pixelSize: 14
+              font.pixelSize: Theme.scaledFontSize(14)
               verticalAlignment: TextInput.AlignVCenter
               activeFocusOnTab: true
               selectByMouse: true
@@ -443,7 +443,7 @@ Scope {
                 text: "Search files..."
                 color: Theme.textMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: 14
+                font.pixelSize: Theme.scaledFontSize(14)
                 verticalAlignment: Text.AlignVCenter
                 visible: !searchInput.text && !searchInput.activeFocus
               }
@@ -620,7 +620,7 @@ Scope {
                       anchors.centerIn: parent
                       text: "\uf04b"
                       font.family: "Symbols Nerd Font"
-                      font.pixelSize: 24
+                      font.pixelSize: Theme.scaledFontSize(24)
                       color: Theme.textPrimary
                       opacity: 0.8
                       visible: panel.activeTab === "screencasts"
@@ -641,7 +641,7 @@ Scope {
                       anchors.centerIn: parent
                       text: panel.activeTab === "screenshots" ? "\uf03e" : "\uf03d"
                       font.family: "Symbols Nerd Font"
-                      font.pixelSize: 28
+                      font.pixelSize: Theme.scaledFontSize(28)
                       color: Theme.textMuted
                       visible: {
                         if (panel.activeTab === "screenshots")
@@ -669,7 +669,7 @@ Scope {
                         }
                         color: Theme.textSecondary
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.scaledFontSize(10)
                         elide: Text.ElideMiddle
                         verticalAlignment: Text.AlignVCenter
                       }
@@ -702,7 +702,7 @@ Scope {
                     : (panel.activeTab === "screenshots" ? "No screenshots found" : "No screencasts found")
                   color: Theme.textMuted
                   font.family: Theme.fontFamily
-                  font.pixelSize: 15
+                  font.pixelSize: Theme.scaledFontSize(15)
                   visible: panel.filteredCount === 0
                 }
               }
@@ -718,7 +718,7 @@ Scope {
                   text: panel.selectedCount + " item" + (panel.selectedCount > 1 ? "s" : "") + " selected (press "
                   color: Theme.textSecondary
                   font.family: Theme.fontFamily
-                  font.pixelSize: 13
+                  font.pixelSize: Theme.scaledFontSize(13)
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -731,7 +731,7 @@ Scope {
                   text: " or "
                   color: Theme.textSecondary
                   font.family: Theme.fontFamily
-                  font.pixelSize: 13
+                  font.pixelSize: Theme.scaledFontSize(13)
                   anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -744,7 +744,7 @@ Scope {
                   text: " to cancel)"
                   color: Theme.textSecondary
                   font.family: Theme.fontFamily
-                  font.pixelSize: 13
+                  font.pixelSize: Theme.scaledFontSize(13)
                   anchors.verticalCenter: parent.verticalCenter
                 }
               }
@@ -763,7 +763,7 @@ Scope {
                   text: "Are you sure?"
                   color: Theme.danger
                   font.family: Theme.fontFamily
-                  font.pixelSize: 13
+                  font.pixelSize: Theme.scaledFontSize(13)
                   anchors.verticalCenter: parent.verticalCenter
                   visible: deleteAllRow.confirmDelete
                 }
@@ -922,7 +922,7 @@ Scope {
                         anchors.centerIn: parent
                         text: "󰍉"
                         font.family: "Symbols Nerd Font"
-                        font.pixelSize: 28
+                        font.pixelSize: Theme.scaledFontSize(28)
                         color: Theme.textPrimary
                       }
                     }
@@ -1012,7 +1012,7 @@ Scope {
                         anchors.centerIn: parent
                         text: "\uf04b"
                         font.family: "Symbols Nerd Font"
-                        font.pixelSize: 28
+                        font.pixelSize: Theme.scaledFontSize(28)
                         color: Theme.textPrimary
                       }
                     }
@@ -1037,7 +1037,7 @@ Scope {
                     text: "Loading..."
                     color: Theme.textMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: 15
+                    font.pixelSize: Theme.scaledFontSize(15)
                     visible: {
                       if (detailContainer.isVideo) return false
                       return detailImage.status === Image.Loading
@@ -1054,7 +1054,7 @@ Scope {
                     text: "Name:"
                     color: Theme.textSecondary
                     font.family: Theme.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: Theme.scaledFontSize(14)
                     anchors.verticalCenter: parent.verticalCenter
                   }
 
@@ -1074,7 +1074,7 @@ Scope {
                     text: detailContainer.extension
                     color: Theme.textMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: Theme.scaledFontSize(14)
                     anchors.verticalCenter: parent.verticalCenter
                   }
 
@@ -1082,7 +1082,7 @@ Scope {
                     text: "(" + detailContainer.detailDuration + ")"
                     color: Theme.textMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: Theme.scaledFontSize(14)
                     anchors.verticalCenter: parent.verticalCenter
                     visible: detailContainer.isVideo && detailContainer.detailDuration !== ""
                   }
@@ -1146,7 +1146,7 @@ Scope {
                   text: panel.detailPath
                   color: Theme.textMuted
                   font.family: Theme.fontFamily
-                  font.pixelSize: 11
+                  font.pixelSize: Theme.scaledFontSize(11)
                   elide: Text.ElideLeft
                   width: parent.width
                 }

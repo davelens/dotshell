@@ -46,7 +46,7 @@ Item {
     text: link.text
     color: link.hovered || link.focused ? link.hoverColor : link.textColor
     font.family: Theme.fontFamily
-    font.pixelSize: link.fontSize
+    font.pixelSize: Theme.scaledFontSize(link.fontSize)
   }
 
   MouseArea {

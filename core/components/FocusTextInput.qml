@@ -46,7 +46,7 @@ Item {
       anchors.margins: 8
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
       verticalAlignment: TextInput.AlignVCenter
       selectByMouse: true
 
@@ -56,7 +56,7 @@ Item {
         text: input.placeholderText
         color: Theme.textMuted
         font.family: Theme.fontFamily
-        font.pixelSize: 14
+        font.pixelSize: Theme.scaledFontSize(14)
         verticalAlignment: Text.AlignVCenter
         visible: input.placeholderText && !textField.text && !textField.activeFocus
       }

@@ -39,6 +39,7 @@ Only verbs that genuinely belong to a module keep their own target:
 | --- | --- |
 | `notifications` | `dismiss(id)`, `clearAll()` |
 | `wallpaper` | `set(path)` |
+| `display` | `setTextSize(px)`, `currentTextSize()` |
 | `settings` | `showCategory(categoryId)` |
 | `idle` | `enable/disable/toggle/state` |
 | `bar` | `enable/disable/toggle/state` (focus mode, `shell.qml`) |
@@ -48,9 +49,9 @@ Only verbs that genuinely belong to a module keep their own target:
 These are internal names, not public command groups. For example,
 `dshell status-bar focus toggle` maps to the `bar` target,
 `dshell idle-inhibitor toggle` maps to `idle`, and `dshell bluetooth toggle`,
-`dshell brightness toggle`, `dshell display toggle`, `dshell system-updates
-toggle`, `dshell volume toggle`, and `dshell wireless toggle` map to
-`popup.toggle(name)`.
+`dshell display toggle`, `dshell system-updates toggle`, `dshell volume toggle`,
+and `dshell wireless toggle` map to `popup.toggle(name)`. `dshell display
+text-size [px]` queries or mutates the display target directly.
 
 Popup names are validated against modules whose manifests declare a popup
 component (`ModuleRegistry.getPopupModuleIds()`). An unknown name returns

@@ -20,6 +20,6 @@ Rectangle {
     text: tag.text
     color: Theme.textPrimary
     font.family: "Hack Nerd Font"
-    font.pixelSize: tag.fontSize
+    font.pixelSize: Theme.scaledFontSize(tag.fontSize)
   }
 }

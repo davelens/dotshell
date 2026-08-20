@@ -125,7 +125,7 @@ SettingsPage {
             text: "General"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Theme.scaledFontSize(14)
             anchors.verticalCenter: parent.verticalCenter
           }
         }
@@ -144,7 +144,7 @@ SettingsPage {
             text: "Anime"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Theme.scaledFontSize(14)
             anchors.verticalCenter: parent.verticalCenter
           }
         }
@@ -163,7 +163,7 @@ SettingsPage {
             text: "People"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Theme.scaledFontSize(14)
             anchors.verticalCenter: parent.verticalCenter
           }
         }
@@ -215,7 +215,7 @@ SettingsPage {
             text: "SFW"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Theme.scaledFontSize(14)
             anchors.verticalCenter: parent.verticalCenter
           }
         }
@@ -234,7 +234,7 @@ SettingsPage {
             text: "Sketchy"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Theme.scaledFontSize(14)
             anchors.verticalCenter: parent.verticalCenter
           }
         }
@@ -253,7 +253,7 @@ SettingsPage {
             text: "NSFW"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Theme.scaledFontSize(14)
             anchors.verticalCenter: parent.verticalCenter
           }
         }

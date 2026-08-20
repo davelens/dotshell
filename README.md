@@ -31,9 +31,8 @@ A custom, keyboard-driven shell featuring a modular status bar and settings pane
   - ai-agents-monitor - Status indicator for OpenCode, Claude Code, and interactive Pi sessions
   - battery - Charge level and AC adapter status
   - bluetooth - Device pairing and connection management
-  - brightness - Backlight control for laptop and external monitors
   - clock - Date and time display
-  - display - Monitor layout and scaling settings
+  - display - Monitor layout, scaling, text size, and laptop/external brightness controls
   - idle-inhibitor - Toggle to prevent the system from going idle/sleeping
   - media - Play/pause toggles for music
   - notifications - Desktop notification history and management
@@ -89,10 +88,10 @@ Though I dare say most of them are common, and widely used.
 | Dependency | Packages | Reason |
 |---|---|---|
 | Quickshell | `quickshell` | The core runtime |
-| Compositor | `sway` or `niri` | Workspace detection |
+| Compositor | `sway` or `niri` | Workspace and display control |
 | Bluetooth tools | `bluez`, `bluez-utils` | GUI connection management |
 | Network management | `networkmanager` | GUI connection management |
-| Brightness tools | `brightnessctl`, `ddcutil` | Backlight control via slider |
+| Display tools | `brightnessctl`, `ddcutil`, GLib (`gsettings`) | Display brightness and text scaling |
 | Audio stack | `pipewire`, `wireplumber` | Volume/audio integration |
 | Fonts | `otf-commit-mono-nerd`, `ttf-dejavu` | Font + nerd icons used in panels |
 | Notifications CLI | `libnotify` | Catch and display notifications |
@@ -181,8 +180,8 @@ dshell <command> <subcommand> [args]
 | `ai-agents-monitor` | `listen` | Stream local AI agent snapshots |
 | `status-bar` | `focus <verb>` | Status bar focus mode: `toggle`, `enable`, `disable`, `state` |
 | `bluetooth` | `toggle` | Toggle Bluetooth popup |
-| `brightness` | `toggle` | Toggle brightness popup |
 | `display` | `toggle` | Toggle display popup |
+| `display` | `text-size [px]` | Show or set display text size (9–20px) |
 | `idle-inhibitor` | `enable` | Enable idle inhibitor |
 | `idle-inhibitor` | `disable` | Disable idle inhibitor |
 | `idle-inhibitor` | `toggle` | Toggle idle inhibitor |

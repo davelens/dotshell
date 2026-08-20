@@ -43,7 +43,7 @@ SettingsPage {
           text: "Lock"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
 
         FocusTextInput {
@@ -64,7 +64,7 @@ SettingsPage {
           text: "Suspend"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
 
         FocusTextInput {
@@ -85,7 +85,7 @@ SettingsPage {
           text: "Logout"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
 
         FocusTextInput {
@@ -106,7 +106,7 @@ SettingsPage {
           text: "Reboot"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
 
         FocusTextInput {
@@ -127,7 +127,7 @@ SettingsPage {
           text: "Shutdown"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
 
         FocusTextInput {

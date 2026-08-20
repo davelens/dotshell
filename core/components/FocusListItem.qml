@@ -75,7 +75,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: item.icon
         color: item.iconColor
-        font.pixelSize: item.iconSize
+        font.pixelSize: Theme.scaledFontSize(item.iconSize)
         font.family: "Symbols Nerd Font"
         visible: item.icon !== ""
       }
@@ -88,14 +88,14 @@ Item {
           text: item.text
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: item.fontSize
+          font.pixelSize: Theme.scaledFontSize(item.fontSize)
         }
 
         Text {
           text: item.subtitle
           color: item.subtitleColor
           font.family: Theme.fontFamily
-          font.pixelSize: item.subtitleFontSize
+          font.pixelSize: Theme.scaledFontSize(item.subtitleFontSize)
           visible: item.subtitle !== ""
         }
       }
@@ -107,7 +107,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: item.rightIcon
       color: item.hovered || item.focused ? item.rightIconHoverColor : item.rightIconColor
-      font.pixelSize: item.iconSize
+      font.pixelSize: Theme.scaledFontSize(item.iconSize)
       font.family: "Symbols Nerd Font"
       visible: item.rightIcon !== ""
     }

@@ -50,7 +50,7 @@ ModulePopup {
           anchors.verticalCenter: parent.verticalCenter
           text: SystemUpdatesManager.getIcon()
           color: SystemUpdatesManager.totalCount > 0 ? Theme.success : Theme.textMuted
-          font.pixelSize: 20
+          font.pixelSize: Theme.scaledFontSize(20)
           font.family: "Symbols Nerd Font"
         }
 
@@ -59,7 +59,7 @@ ModulePopup {
           text: "System Updates"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 16
+          font.pixelSize: Theme.scaledFontSize(16)
         }
       }
 
@@ -72,7 +72,7 @@ ModulePopup {
           anchors.verticalCenter: parent.verticalCenter
           text: "󰑐"
           color: refreshArea.containsMouse ? Theme.accent : Theme.textMuted
-          font.pixelSize: 16
+          font.pixelSize: Theme.scaledFontSize(16)
           font.family: "Symbols Nerd Font"
           visible: !SystemUpdatesManager.checking
 
@@ -89,7 +89,7 @@ ModulePopup {
           anchors.verticalCenter: parent.verticalCenter
           text: "󰔿"
           color: Theme.accent
-          font.pixelSize: 16
+          font.pixelSize: Theme.scaledFontSize(16)
           font.family: "Symbols Nerd Font"
           visible: SystemUpdatesManager.checking
 
@@ -130,7 +130,7 @@ ModulePopup {
           + (SystemUpdatesManager.includeFlatpak ? " + Flatpak" : "")
         color: Theme.textMuted
         font.family: Theme.fontFamily
-        font.pixelSize: 12
+        font.pixelSize: Theme.scaledFontSize(12)
         visible: !SystemUpdatesManager.systemUpdating
       }
 
@@ -143,7 +143,7 @@ ModulePopup {
           + "... All other updates are blocked."
         color: Theme.warning
         font.family: Theme.fontFamily
-        font.pixelSize: 12
+        font.pixelSize: Theme.scaledFontSize(12)
         visible: SystemUpdatesManager.systemUpdating
       }
     }
@@ -164,7 +164,7 @@ ModulePopup {
         text: "Checking for updates..."
         color: Theme.textMuted
         font.family: Theme.fontFamily
-        font.pixelSize: 14
+        font.pixelSize: Theme.scaledFontSize(14)
       }
     }
 
@@ -178,7 +178,7 @@ ModulePopup {
         text: SystemUpdatesManager.backendSupported ? "System is up to date" : "No supported system package backend"
         color: Theme.textMuted
         font.family: Theme.fontFamily
-        font.pixelSize: 15
+        font.pixelSize: Theme.scaledFontSize(15)
         horizontalAlignment: Text.AlignHCenter
         topPadding: 8
       }
@@ -190,7 +190,7 @@ ModulePopup {
           : "Flatpak updates remain available when Flatpak is installed"
         color: Theme.textSubtle
         font.family: Theme.fontFamily
-        font.pixelSize: 13
+        font.pixelSize: Theme.scaledFontSize(13)
         horizontalAlignment: Text.AlignHCenter
         bottomPadding: 8
       }

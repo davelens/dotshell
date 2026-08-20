@@ -30,7 +30,7 @@ BarButton {
       text: NotificationManager.unreadCount > 99 ? "99+" : NotificationManager.unreadCount.toString()
       color: Theme.bgDeep
       font.family: Theme.fontFamily
-      font.pixelSize: 9
+      font.pixelSize: Theme.scaledFontSize(9)
       font.bold: true
     }
   }

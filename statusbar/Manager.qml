@@ -47,7 +47,6 @@ Singleton {
       { id: "wireless", enabled: true, marginLeft: 0, marginRight: 10 },
       { id: "bluetooth", enabled: true, marginLeft: 0, marginRight: 10 },
       { id: "display", enabled: true, marginLeft: 0, marginRight: 10 },
-      { id: "brightness", enabled: true, marginLeft: 0, marginRight: 10 },
       { id: "volume", enabled: true, marginLeft: 0, marginRight: 16 },
       { id: "battery", enabled: true, marginLeft: 0, marginRight: 16 },
       { id: "clock", enabled: true, marginLeft: 0, marginRight: 16 },

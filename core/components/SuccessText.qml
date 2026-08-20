@@ -4,5 +4,5 @@ import qs
 Text {
   color: Theme.success
   font.family: Theme.fontFamily
-  font.pixelSize: 12
+  font.pixelSize: Theme.scaledFontSize(12)
 }

@@ -10,6 +10,7 @@ platform_install_packages() {
     bluez bluez-utils \
     brightnessctl \
     ddcutil \
+    glib2 \
     networkmanager \
     pipewire wireplumber \
     pacman-contrib \

@@ -120,7 +120,7 @@ ModulePopup {
         text: Math.round(parent.volume * 100) + "%"
         color: Theme.accent
         font.family: Theme.fontFamily
-        font.pixelSize: 16
+        font.pixelSize: Theme.scaledFontSize(16)
         width: 44
         horizontalAlignment: Text.AlignRight
       }

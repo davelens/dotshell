@@ -43,6 +43,7 @@ filename completion). `GROUP_DESCRIPTIONS` supplies the top-level usage lines.
   status bar focus).
 - Overlays/panels: `toggle | open | close`.
 - Named selections: `list | current | set <name>` (theme, profile).
+- Optional query/mutation argument: `display text-size [px]`.
 - Facet + verb when a bare verb would mislead: `status-bar focus toggle`,
   `screen-recording files toggle`, `wallpaper browser toggle`.
 

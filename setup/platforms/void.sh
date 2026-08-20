@@ -11,6 +11,7 @@ platform_install_packages() {
     bluez libspa-bluetooth \
     brightnessctl \
     ddcutil \
+    glib \
     NetworkManager \
     pipewire wireplumber \
     gpu-screen-recorder \

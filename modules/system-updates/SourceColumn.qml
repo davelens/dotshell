@@ -75,7 +75,7 @@ Column {
               text: packageRow.modelData.name
               color: packageRow.updating ? Theme.textMuted : Theme.textPrimary
               font.family: Theme.fontFamily
-              font.pixelSize: 13
+              font.pixelSize: Theme.scaledFontSize(13)
               elide: Text.ElideRight
             }
 
@@ -86,7 +86,7 @@ Column {
                 : packageRow.modelData.currentVersion + " → " + packageRow.modelData.newVersion
               color: packageRow.updating ? Theme.textSubtle : Theme.textMuted
               font.family: Theme.fontFamily
-              font.pixelSize: 10
+              font.pixelSize: Theme.scaledFontSize(10)
               elide: Text.ElideMiddle
             }
           }
@@ -102,7 +102,7 @@ Column {
               if (packageRow.updating) return Theme.textMuted
               return packageMouse.containsMouse ? Theme.success : Theme.textMuted
             }
-            font.pixelSize: 13
+            font.pixelSize: Theme.scaledFontSize(13)
             font.family: "Symbols Nerd Font"
 
             RotationAnimation on rotation {
@@ -133,7 +133,7 @@ Column {
         text: "No updates"
         color: Theme.textMuted
         font.family: Theme.fontFamily
-        font.pixelSize: 12
+        font.pixelSize: Theme.scaledFontSize(12)
         topPadding: 4
       }
     }

@@ -393,7 +393,7 @@ Scope {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "󰍉"
                 color: Theme.textMuted
-                font.pixelSize: 18
+                font.pixelSize: Theme.scaledFontSize(18)
                 font.family: "Symbols Nerd Font"
               }
 
@@ -403,7 +403,7 @@ Scope {
                 width: parent.width - 40
                 color: Theme.textPrimary
                 font.family: Theme.fontFamily
-                font.pixelSize: 14
+                font.pixelSize: Theme.scaledFontSize(14)
                 clip: true
                 focus: true
                 Component.onCompleted: root.searchInputRef = searchInput
@@ -419,7 +419,7 @@ Scope {
                   text: "Search settings..."
                   color: Theme.textMuted
                   font.family: Theme.fontFamily
-                  font.pixelSize: 14
+                  font.pixelSize: Theme.scaledFontSize(14)
                   visible: !searchInput.text && !searchInput.activeFocus
                 }
 
@@ -520,7 +520,7 @@ Scope {
                           anchors.verticalCenter: parent.verticalCenter
                           text: modelData.icon
                           color: root.activeCategory === modelData.id ? Theme.accent : Theme.textPrimary
-                          font.pixelSize: 16
+                          font.pixelSize: Theme.scaledFontSize(16)
                           font.family: "Symbols Nerd Font"
                           horizontalAlignment: Text.AlignHCenter
                         }
@@ -530,7 +530,7 @@ Scope {
                           text: modelData.name
                           color: root.activeCategory === modelData.id ? Theme.textPrimary : Theme.textSecondary
                           font.family: Theme.fontFamily
-                          font.pixelSize: 14
+                          font.pixelSize: Theme.scaledFontSize(14)
                         }
                       }
 
@@ -579,7 +579,7 @@ Scope {
                   text: "Profile: " + GeneralSettings.activeProfileName
                   color: Theme.textSecondary
                   font.family: Theme.fontFamily
-                  font.pixelSize: 11
+                  font.pixelSize: Theme.scaledFontSize(11)
                   visible: GeneralSettings.activeProfileName !== ""
                 }
 
@@ -693,7 +693,7 @@ Scope {
                 text: ModuleRegistry.ready ? "Select a category" : "Loading modules..."
                 color: Theme.textMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: 14
+                font.pixelSize: Theme.scaledFontSize(14)
                 visible: !contentLoader.source || contentLoader.status !== Loader.Ready
               }
             }
@@ -773,7 +773,7 @@ Scope {
               Row {
                 spacing: 4
                 KeyboardTag { text: "Ctrl+N"; fontSize: 11; anchors.verticalCenter: parent.verticalCenter }
-                Text { text: "/"; color: Theme.textMuted; font.family: Theme.fontFamily; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                Text { text: "/"; color: Theme.textMuted; font.family: Theme.fontFamily; font.pixelSize: Theme.scaledFontSize(11); anchors.verticalCenter: parent.verticalCenter }
                 KeyboardTag { text: "Ctrl+P"; fontSize: 11; anchors.verticalCenter: parent.verticalCenter }
                 AnnotationText { text: "Navigate inputs"; anchors.verticalCenter: parent.verticalCenter }
               }

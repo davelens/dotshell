@@ -108,7 +108,7 @@ Scope {
             text: PowerManager.username
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 16
+            font.pixelSize: Theme.scaledFontSize(16)
             font.bold: true
           }
 
@@ -116,7 +116,7 @@ Scope {
             text: PowerManager.uptime
             color: Theme.textSecondary
             font.family: Theme.fontFamily
-            font.pixelSize: 13
+            font.pixelSize: Theme.scaledFontSize(13)
           }
         }
 
@@ -198,7 +198,7 @@ Scope {
                     anchors.verticalCenter: parent.verticalCenter
                     text: actionItem.modelData.icon
                     color: Theme.textSecondary
-                    font.pixelSize: 18
+                    font.pixelSize: Theme.scaledFontSize(18)
                     font.family: "Symbols Nerd Font"
                   }
 
@@ -207,7 +207,7 @@ Scope {
                     text: actionItem.modelData.label
                     color: Theme.textPrimary
                     font.family: Theme.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: Theme.scaledFontSize(14)
                   }
                 }
               }
@@ -245,7 +245,7 @@ Scope {
             text: "Are you sure?"
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 18
+            font.pixelSize: Theme.scaledFontSize(18)
             font.bold: true
             horizontalAlignment: Text.AlignHCenter
           }
@@ -259,7 +259,7 @@ Scope {
             }
             color: Theme.textSecondary
             font.family: Theme.fontFamily
-            font.pixelSize: 13
+            font.pixelSize: Theme.scaledFontSize(13)
             horizontalAlignment: Text.AlignHCenter
           }
 

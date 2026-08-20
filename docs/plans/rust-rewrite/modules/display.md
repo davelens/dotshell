@@ -1,44 +1,52 @@
 # display — Rust rewrite plan
 
-Ports `modules/display/` (Button + Popup + Settings, ~692 lines QML).
-Monitor layout and primary-display selection.
+Ports the consolidated `modules/display/` manager, button, popup, scripts, and
+existing monitor-layout settings page.
 
 ## Feature parity
 
-- Popup: connected displays, primary-display selection, and a
-  "Configure" link that directly calls
-  `OverlayManager.open("settings", { category: "display" })` in process.
-- Settings: fetch connected outputs through the core `Compositor`
-  abstraction, edit and apply per-output positions, and select the primary
-  display.
-- Primary selection calls `ScreenManager::set_primary` (core-owned
-  `screens.json`, stable id `model:serialNumber`) — bar, settings panel,
-  and popup fallback anchor follow it, exactly as documented in the
-  compositor wiki page.
-- Settings page preserved as-is.
+- One bar button and popup for connected-output selection, output enable/disable,
+  selected-output brightness, text size, and render scale presets.
+- Normalize sway output arrays and niri output maps into one model. Output
+  position, scale, and power mutations stay behind the core compositor trait.
+- Keep the existing monitor-layout settings canvas and primary-display
+  selection. Selecting an active output calls `ScreenManager::set_primary`, so
+  the bar and popup anchor follow it.
+- Never disable the final active output.
+- Internal brightness uses the preferred kernel backlight; external brightness
+  maps DRM connectors to DDC I2C buses, caches detection/ranges, converts the
+  monitor's VCP range, and coalesces writes to one trailing value.
+- General-scoped `display-general.json` owns integer `textSize` (default 14,
+  range 9–20). It scales shell text and updates GTK plus existing Alacritty,
+  Kitty, Ghostty, and Foot configs without creating terminal configs.
 
 ## Stack
 
-- Module crate with button + popup + settings; no module-owned persisted
-  configuration.
-- Compositor operations go through the core trait (`apply_position`,
-  `fetch_outputs`) — sway via `swayipc-async`, niri via its JSON socket.
-  The module contains zero `swaymsg`/`niri` strings (same rule as today).
+- Module crate with manager + button + popup + settings.
+- Core compositor operations: `apply_position`, `apply_scale`,
+  `set_output_active`, and `fetch_outputs`; sway and niri use their native IPC
+  implementations.
+- Brightness and external text-size behavior remain narrow executable adapters
+  invoked with argv arrays.
 
 ## IPC
 
-- No module-owned verbs. The popup's settings jump is an in-process overlay
-  call, not settings IPC.
+- `display currentTextSize` and `display setTextSize <px>` preserve
+  `dshell display text-size [px]`.
+- Popup toggle remains the module's standard popup registration.
 
 ## Keymaps
 
-- Popup: `PopupBase` standard set (`Escape`/`q`/`Ctrl+[`,
-  `Ctrl+n`/`Ctrl+p`); the Configure link and output rows are focus-ring
-  widgets activated with `Space`/`Return`/`Enter`.
+- `PopupBase` standard close/navigation keys.
+- Focus controls cover output selection/power, brightness, text-size notches,
+  and scale presets. Button wheel changes selected brightness by 5%, or 1% at
+  and below 5%.
 
 ## Verification
 
-- Open Configure from the popup and confirm settings opens directly on the
-  display category; reposition an external monitor on sway and on niri;
-  change primary and confirm the bar migrates screens live; verify
-  `screens.json` content is identical to the quickshell version's output.
+- Exercise internal and DDC brightness adapters with command/sysfs fakes.
+- Toggle and scale outputs on sway and niri; confirm successful mutations
+  refetch state and the last active output cannot be disabled.
+- Reposition monitors in Settings and move primary display live.
+- Set/query text size through the popup and `dshell`; verify shell, GTK, and
+  existing terminal configs update without changing font families.

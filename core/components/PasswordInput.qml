@@ -54,7 +54,7 @@ Item {
         width: parent.width - toggleVisibility.width - submitBtn.width - 12
         color: Theme.textPrimary
         font.family: Theme.fontFamily
-        font.pixelSize: 14
+        font.pixelSize: Theme.scaledFontSize(14)
         clip: true
         echoMode: TextInput.Password
 
@@ -64,7 +64,7 @@ Item {
           text: root.placeholderText
           color: Theme.textMuted
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
           visible: !passwordField.text
         }
 
@@ -83,7 +83,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: passwordField.echoMode === TextInput.Password ? "󰈈" : "󰈉"
         color: toggleMouse.containsMouse ? Theme.textPrimary : Theme.textMuted
-        font.pixelSize: 16
+        font.pixelSize: Theme.scaledFontSize(16)
         font.family: "Symbols Nerd Font"
         width: 28
         horizontalAlignment: Text.AlignHCenter
@@ -117,7 +117,7 @@ Item {
           color: passwordField.text
             ? (submitMouse.containsMouse ? Theme.bgBase : Theme.accent)
             : Theme.bgBorder
-          font.pixelSize: 16
+          font.pixelSize: Theme.scaledFontSize(16)
           font.family: "Symbols Nerd Font"
         }
 

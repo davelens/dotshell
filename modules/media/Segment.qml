@@ -59,7 +59,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: root.activePlayer && root.activePlayer.isPlaying ? "󰐊" : "󰏤"
       color: Theme.accent
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
       font.family: "Symbols Nerd Font"
     }
 
@@ -69,7 +69,7 @@ Item {
       text: root.getSourceName()
       color: Theme.textMuted
       font.family: Theme.fontFamily
-      font.pixelSize: 12
+      font.pixelSize: Theme.scaledFontSize(12)
     }
 
     // Artist - Title (truncated to 30% of screen width)
@@ -85,7 +85,7 @@ Item {
       }
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 13
+      font.pixelSize: Theme.scaledFontSize(13)
       elide: Text.ElideRight
       width: Math.min(implicitWidth, root.screen.width * 0.3)
     }

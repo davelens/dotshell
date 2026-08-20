@@ -110,7 +110,7 @@ repo and call `dshell` or system tools):
 | `mod4+Shift+s` | `dshell screen-recording files toggle` | screen recording panel |
 | `mod4+Shift+w` | `dshell wallpaper browser toggle` | wallpaper panel |
 | `XF86Audio*` ×4 | `pactl` | shell reflects sink/source changes (volume module subscribes) |
-| `XF86MonBrightness*` ×2 | `brightnessctl` | shell reflects backlight changes (brightness module) |
+| `XF86MonBrightness*` ×2 | `brightnessctl` | shell reflects backlight changes (display module) |
 
 Bar focus mode (owned by the bar surface, ports `shell.qml`):
 `Escape`/`q`/`Ctrl+[` dismiss, `Space`/`Return`/`Enter` activate item
@@ -218,7 +218,7 @@ modules (`notifications`, `power`, `screen-recording`, `wallpaper`) and core
 
 Transport: unix socket `$XDG_RUNTIME_DIR/dotshell/ipc.sock`,
 JSON-lines request `{target, function, args}` → reply string. Targets
-identical to today: `overlay`, `popup`, `bar`, `idle`,
+identical to today: `overlay`, `popup`, `bar`, `display`, `idle`,
 `notifications`, `wallpaper`, `settings`, `theme`, `profile`. Reply
 strings keep the feedback conventions: human sentence per mutation,
 bare values for `state` queries, `error:` prefix for failures.
@@ -272,9 +272,9 @@ removes its CLI, with no compatibility alias. Changes:
    behavior is identical either way.
 2. The display popup's "Configure" action remains a direct in-process
    settings-overlay open with the `display` category context.
-3. No registration, verb, or completion-source changes. `wallpaper
-   set/restore` stays in its module extension; `theme *` and `profile
-   list/current` stay core local functions on `json_get`.
+3. Module registrations, including `display text-size [px]`, stay in their
+   module extensions. `wallpaper set/restore` stays in its module extension;
+   `theme *` and `profile list/current` stay core local functions on `json_get`.
 4. `setup/init.sh` and the systemd user service switch the started
    binary from `quickshell -p …` to `dotshell`; symlinks and the rest
    of setup unchanged.
@@ -291,7 +291,7 @@ parity per surface.
    workspaces + system-load segments (proves render, timers, sway/niri
    IPC).
 3. `ds-ui` focus widgets + PopupBase + bar focus mode; volume +
-   brightness popups (proves popups, sliders, event subscriptions).
+   display popups (proves popups, sliders, event subscriptions).
 4. battery, media, idle-inhibitor, system-updates, wireless, bluetooth (zbus
    + subprocess patterns).
 5. PanelBase + settings panel + profiles.

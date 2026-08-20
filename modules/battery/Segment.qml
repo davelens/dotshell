@@ -67,7 +67,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: battery.getBatteryIcon(battery.percentage, battery.charging, battery.fullyCharged)
       color: battery.getBatteryColor(battery.percentage, battery.charging, battery.fullyCharged)
-      font.pixelSize: 18
+      font.pixelSize: Theme.scaledFontSize(18)
       font.family: "Symbols Nerd Font"
     }
 
@@ -76,7 +76,7 @@ Item {
       text: Math.round(battery.percentage) + "%"
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
     }
   }
 

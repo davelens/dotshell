@@ -38,8 +38,10 @@ Singleton {
   // Emitted when fetchOutputs() completes with JSON output data
   signal outputsFetched(string json)
 
-  // Emitted when applyPosition() finishes (success or failure)
+  // Emitted when output mutations finish (success or failure)
   signal positionApplied(bool success)
+  signal scaleApplied(string name, bool success)
+  signal outputPowerApplied(string name, bool success)
 
   // Focus a window by app_id / desktop entry
   function focusWindow(appId) {
@@ -71,6 +73,34 @@ Singleton {
     }
   }
 
+  // Set one output's render scale.
+  function applyScale(name, scale) {
+    if (!name) return
+    if (_skip("applyScale")) {
+      compositor.scaleApplied(name, false)
+      return
+    }
+    scaleProc.outputName = name
+    scaleProc.command = resolvedBackend === "niri"
+      ? ["niri", "msg", "output", name, "scale", String(scale)]
+      : ["swaymsg", "output", name, "scale", String(scale)]
+    scaleProc.running = true
+  }
+
+  // Enable or disable one output.
+  function setOutputActive(name, active) {
+    if (!name) return
+    if (_skip("setOutputActive")) {
+      compositor.outputPowerApplied(name, false)
+      return
+    }
+    outputPowerProc.outputName = name
+    outputPowerProc.command = resolvedBackend === "niri"
+      ? ["niri", "msg", "output", name, active ? "on" : "off"]
+      : ["swaymsg", "output", name, active ? "enable" : "disable"]
+    outputPowerProc.running = true
+  }
+
   // Fetch all outputs (async). Result delivered via outputsFetched signal.
   function fetchOutputs() {
     if (_skip("fetchOutputs")) {
@@ -81,6 +111,26 @@ Singleton {
       niriFetchProc.running = true
     } else {
       swayFetchProc.running = true
+    }
+  }
+
+  Process {
+    id: scaleProc
+    property string outputName: ""
+    onExited: exitCode => {
+      var success = exitCode === 0
+      compositor.scaleApplied(outputName, success)
+      if (success) compositor.fetchOutputs()
+    }
+  }
+
+  Process {
+    id: outputPowerProc
+    property string outputName: ""
+    onExited: exitCode => {
+      var success = exitCode === 0
+      compositor.outputPowerApplied(outputName, success)
+      if (success) compositor.fetchOutputs()
     }
   }
 

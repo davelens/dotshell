@@ -114,7 +114,7 @@ Rectangle {
         visible: appIcon === ""
         text: "󰀄"
         color: Theme.textMuted
-        font.pixelSize: 16
+        font.pixelSize: Theme.scaledFontSize(16)
         font.family: "Symbols Nerd Font"
         anchors.verticalCenter: parent.verticalCenter
       }
@@ -123,7 +123,7 @@ Rectangle {
         text: appName
         color: Theme.textSubtle
         font.family: Theme.fontFamily
-        font.pixelSize: 14
+        font.pixelSize: Theme.scaledFontSize(14)
         anchors.verticalCenter: parent.verticalCenter
       }
     }
@@ -134,7 +134,7 @@ Rectangle {
       text: summary
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 15
+      font.pixelSize: Theme.scaledFontSize(15)
       font.bold: true
       elide: Text.ElideRight
       maximumLineCount: 1
@@ -147,7 +147,7 @@ Rectangle {
       text: body
       color: Theme.textSecondary
       font.family: Theme.fontFamily
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
       wrapMode: Text.WordWrap
       readOnly: true
       selectByMouse: true
@@ -208,7 +208,7 @@ Rectangle {
             text: modelData.text
             color: Theme.accent
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Theme.scaledFontSize(12)
           }
 
           MouseArea {
@@ -245,7 +245,7 @@ Rectangle {
       text: summary
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 13
+      font.pixelSize: Theme.scaledFontSize(13)
       elide: Text.ElideRight
       maximumLineCount: 1
     }
@@ -256,7 +256,7 @@ Rectangle {
       text: body
       color: Theme.textSecondary
       font.family: Theme.fontFamily
-      font.pixelSize: 12
+      font.pixelSize: Theme.scaledFontSize(12)
       wrapMode: Text.WordWrap
       readOnly: true
       selectByMouse: true
@@ -273,7 +273,7 @@ Rectangle {
         timestamp.toDateString() === new Date().toDateString() ? "HH:mm" : "yyyy-MM-dd HH:mm") : ""
       color: Theme.textMuted
       font.family: Theme.fontFamily
-      font.pixelSize: 10
+      font.pixelSize: Theme.scaledFontSize(10)
     }
   }
 

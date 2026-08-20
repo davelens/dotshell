@@ -117,7 +117,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: settingsRoot.draggedItemIcon
         color: Theme.accent
-        font.pixelSize: 18
+        font.pixelSize: Theme.scaledFontSize(18)
         font.family: "Symbols Nerd Font"
         width: 24
         horizontalAlignment: Text.AlignHCenter
@@ -128,7 +128,7 @@ Item {
         text: settingsRoot.draggedItemName
         color: Theme.textPrimary
         font.family: Theme.fontFamily
-        font.pixelSize: 14
+        font.pixelSize: Theme.scaledFontSize(14)
       }
     }
   }
@@ -158,7 +158,7 @@ Item {
         text: "Status Bar"
         color: Theme.textPrimary
         font.family: Theme.fontFamily
-        font.pixelSize: 24
+        font.pixelSize: Theme.scaledFontSize(24)
         font.bold: true
       }
 
@@ -200,7 +200,7 @@ Item {
           textFormat: Text.RichText
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
 
         SwitchToggle {
@@ -278,7 +278,7 @@ Item {
       text: marginControl.label + ":"
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 13
+      font.pixelSize: Theme.scaledFontSize(13)
     }
 
     SpinBox {
@@ -301,7 +301,7 @@ Item {
         text: marginSpin.textFromValue(marginSpin.value, marginSpin.locale)
         color: Theme.textPrimary
         font.family: Theme.fontFamily
-        font.pixelSize: 13
+        font.pixelSize: Theme.scaledFontSize(13)
         horizontalAlignment: Qt.AlignHCenter
         verticalAlignment: Qt.AlignVCenter
         anchors.left: parent.left
@@ -325,7 +325,7 @@ Item {
           text: "+"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
       }
 
@@ -341,7 +341,7 @@ Item {
           text: "-"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
       }
     }
@@ -414,7 +414,7 @@ Item {
       text: settingsRoot.isDragging ? "Drop here" : ("No items in " + sectionName + " section")
       color: Theme.textMuted
       font.family: Theme.fontFamily
-      font.pixelSize: 13
+      font.pixelSize: Theme.scaledFontSize(13)
     }
   }
 
@@ -491,7 +491,7 @@ Item {
           anchors.centerIn: parent
           text: "󰇙"
           color: dragArea.pressed ? Theme.accent : (dragArea.containsMouse ? Theme.textPrimary : Theme.textMuted)
-          font.pixelSize: 16
+          font.pixelSize: Theme.scaledFontSize(16)
           font.family: "Symbols Nerd Font"
         }
 
@@ -530,7 +530,7 @@ Item {
           return mod ? mod.icon : "?"
         }
         color: item.enabled ? Theme.accent : Theme.textMuted
-        font.pixelSize: 18
+        font.pixelSize: Theme.scaledFontSize(18)
         font.family: "Symbols Nerd Font"
         width: 24
         horizontalAlignment: Text.AlignHCenter
@@ -545,7 +545,7 @@ Item {
         }
         color: item.enabled ? Theme.textPrimary : Theme.textMuted
         font.family: Theme.fontFamily
-        font.pixelSize: 14
+        font.pixelSize: Theme.scaledFontSize(14)
         width: 120
       }
 
@@ -559,7 +559,7 @@ Item {
           text: "L:"
           color: Theme.textMuted
           font.family: Theme.fontFamily
-          font.pixelSize: 11
+          font.pixelSize: Theme.scaledFontSize(11)
         }
 
         Rectangle {
@@ -577,7 +577,7 @@ Item {
             text: item.marginLeft
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Theme.scaledFontSize(12)
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             activeFocusOnTab: true
@@ -597,7 +597,7 @@ Item {
           text: "R:"
           color: Theme.textMuted
           font.family: Theme.fontFamily
-          font.pixelSize: 11
+          font.pixelSize: Theme.scaledFontSize(11)
         }
 
         Rectangle {
@@ -615,7 +615,7 @@ Item {
             text: item.marginRight
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Theme.scaledFontSize(12)
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             activeFocusOnTab: true

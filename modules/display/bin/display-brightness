@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+command_name="${1:-}"
+connector="${2:-}"
+backlight_path="${DISPLAY_BRIGHTNESS_BACKLIGHT_PATH:-/sys/class/backlight}"
+cache_dir="${XDG_RUNTIME_DIR:-/tmp}/dotshell-display-brightness"
+
+[[ $command_name == get || $command_name == set ]] || exit 2
+[[ -n $connector ]] || exit 2
+
+is_internal() {
+  [[ $connector =~ ^(eDP|LVDS|DSI)- ]]
+}
+
+backlight_device() {
+  local candidate device=""
+  for candidate in \
+    "$backlight_path/gmux_backlight" \
+    "$backlight_path"/amdgpu_bl* \
+    "$backlight_path/intel_backlight" \
+    "$backlight_path/nvidia_wmi_ec_backlight"; do
+    if [[ -e $candidate ]]; then
+      printf '%s\n' "${candidate##*/}"
+      return
+    fi
+  done
+
+  if [[ -d $backlight_path ]]; then
+    for candidate in "$backlight_path"/*; do
+      [[ -e $candidate ]] || continue
+      device="${candidate##*/}"
+      [[ $device == appletb_backlight ]] || { printf '%s\n' "$device"; return; }
+    done
+  fi
+  return 1
+}
+
+read_internal() {
+  local device
+  device="$(backlight_device)" || return 1
+  brightnessctl -d "$device" -m 2>/dev/null | awk -F, '
+    {
+      gsub("%", "", $4)
+      if ($4 ~ /^[0-9]+$/) {
+        value = $4 + 0
+        if (value < 1) value = 1
+        if (value > 100) value = 100
+        print value
+        found = 1
+        exit
+      }
+    }
+    END { exit !found }
+  '
+}
+
+cache_file() {
+  local safe="${connector//[^[:alnum:]_.-]/_}"
+  printf '%s/%s.bus\n' "$cache_dir" "$safe"
+}
+
+cache_unavailable() {
+  mkdir -p "$cache_dir"
+  printf 'unavailable %s\n' "$(date +%s)" >"$(cache_file)"
+}
+
+detect_bus() {
+  ddcutil --skip-ddc-checks detect --brief 2>/dev/null | awk -v wanted="$connector" '
+    /I2C bus:/ {
+      bus = $NF
+      sub(/^.*\/i2c-/, "", bus)
+    }
+    /DRM connector:/ {
+      name = $NF
+      sub(/^card[0-9]+-/, "", name)
+      if (name == wanted && bus ~ /^[0-9]+$/) { print bus; exit }
+      bus = ""
+    }
+  '
+}
+
+find_bus() {
+  local file bus="" cached="" now
+  file="$(cache_file)"
+  if [[ -r $file ]]; then
+    read -r bus cached _ <"$file" || true
+  fi
+  if [[ $bus == unavailable ]]; then
+    now="$(date +%s)"
+    if [[ $cached =~ ^[0-9]+$ ]] && ((now - cached < 60)); then
+      return 1
+    fi
+    bus=""
+    rm -f "$file"
+  fi
+  if [[ ! $bus =~ ^[0-9]+$ ]]; then
+    bus="$(detect_bus)" || true
+    if [[ ! $bus =~ ^[0-9]+$ ]]; then
+      cache_unavailable
+      return 1
+    fi
+    mkdir -p "$cache_dir"
+    printf '%s\n' "$bus" >"$file"
+  fi
+  printf '%s\n' "$bus"
+}
+
+read_vcp() {
+  ddcutil --bus "$1" --skip-ddc-checks getvcp 10 --brief 2>/dev/null | awk '
+    $1 == "VCP" && toupper($2) == "10" && $3 == "C" &&
+      $4 ~ /^[0-9]+$/ && $5 ~ /^[0-9]+$/ && $5 > 0 {
+        print $4, $5
+        found = 1
+        exit
+      }
+    END { exit !found }
+  '
+}
+
+read_external() {
+  local file bus values current maximum
+  file="$(cache_file)"
+  bus="$(find_bus)" || return 1
+  values="$(read_vcp "$bus")" || { rm -f "$file"; return 1; }
+  read -r current maximum <<<"$values"
+  mkdir -p "$cache_dir"
+  printf '%s %s %s\n' "$bus" "$maximum" "$(date +%s)" >"$file"
+  local percent=$(( (current * 100 + maximum / 2) / maximum ))
+  ((percent < 1)) && percent=1
+  ((percent > 100)) && percent=100
+  printf '%s\n' "$percent"
+}
+
+if [[ $command_name == get ]]; then
+  if is_internal; then read_internal; else read_external; fi
+  exit
+fi
+
+percent="${3:-}"
+[[ $percent =~ ^[0-9]+$ ]] || exit 2
+((percent < 1)) && percent=1
+((percent > 100)) && percent=100
+
+mkdir -p "$cache_dir"
+exec {lock_fd}>"$cache_dir/write.lock"
+flock "$lock_fd"
+
+if is_internal; then
+  device="$(backlight_device)" || exit 1
+  brightnessctl -d "$device" set "$percent%" >/dev/null
+else
+  file="$(cache_file)"
+  bus="" maximum="" cached_at=""
+  if [[ -r $file ]]; then
+    read -r bus maximum cached_at <"$file" || true
+  fi
+  now="$(date +%s)"
+  if [[ ! $bus =~ ^[0-9]+$ || ! $maximum =~ ^[0-9]+$ || ! $cached_at =~ ^[0-9]+$ ]] \
+      || ((maximum <= 0 || cached_at > now || now - cached_at >= 10)); then
+    bus="$(find_bus)" || exit 1
+    values="$(read_vcp "$bus")" || { rm -f "$file"; exit 1; }
+    maximum="${values##* }"
+    printf '%s %s %s\n' "$bus" "$maximum" "$now" >"$file"
+  fi
+  raw_target=$(( (percent * maximum + 50) / 100 ))
+  ((raw_target < 1)) && raw_target=1
+  if ! ddcutil --bus "$bus" --skip-ddc-checks --noverify setvcp 10 "$raw_target" >/dev/null 2>&1; then
+    rm -f "$file"
+    exit 1
+  fi
+fi
+
+printf '%s\n' "$percent"

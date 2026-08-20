@@ -31,7 +31,7 @@ Row {
       text: modelData.toString().padStart(2, '0')
       color: Tumbler.displacement === 0 ? Theme.textPrimary : Theme.textMuted
       font.family: Theme.fontFamily
-      font.pixelSize: Tumbler.displacement === 0 ? 18 : 14
+      font.pixelSize: Theme.scaledFontSize(Tumbler.displacement === 0 ? 18 : 14)
       font.bold: Tumbler.displacement === 0
       opacity: 1.0 - Math.abs(Tumbler.displacement) / 2
       horizontalAlignment: Text.AlignHCenter
@@ -58,7 +58,7 @@ Row {
     text: ":"
     color: Theme.textPrimary
     font.family: Theme.fontFamily
-    font.pixelSize: 18
+    font.pixelSize: Theme.scaledFontSize(18)
     font.bold: true
     anchors.verticalCenter: parent.verticalCenter
   }
@@ -84,7 +84,7 @@ Row {
       text: modelData
       color: Tumbler.displacement === 0 ? Theme.textPrimary : Theme.textMuted
       font.family: Theme.fontFamily
-      font.pixelSize: Tumbler.displacement === 0 ? 18 : 14
+      font.pixelSize: Theme.scaledFontSize(Tumbler.displacement === 0 ? 18 : 14)
       font.bold: Tumbler.displacement === 0
       opacity: 1.0 - Math.abs(Tumbler.displacement) / 2
       horizontalAlignment: Text.AlignHCenter

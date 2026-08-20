@@ -6,8 +6,8 @@
 and service:
 
 - Shared module dependencies include Bluetooth, brightness and DDC tools,
-  NetworkManager, PipeWire/WirePlumber, screen recorders, fonts, libnotify,
-  ffmpeg, `jq`, and desktop-file-utils.
+  GLib's `gsettings`, NetworkManager, PipeWire/WirePlumber, screen recorders,
+  fonts, libnotify, ffmpeg, `jq`, and desktop-file-utils.
 - Arch uses `pacman` for repository packages, `paru` for the Quickshell
   runtime, and the `setup/dotshell.service` systemd user unit.
 - Void uses XBPS (the Quickshell runtime is in the official repository),

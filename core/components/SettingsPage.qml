@@ -36,7 +36,7 @@ ScrollView {
       text: page.title
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 24
+      font.pixelSize: Theme.scaledFontSize(24)
       font.bold: true
     }
   }

@@ -21,7 +21,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: "󰚩"
       color: Theme.textPrimary
-      font.pixelSize: 16
+      font.pixelSize: Theme.scaledFontSize(16)
       font.family: "Symbols Nerd Font"
     }
 
@@ -30,7 +30,7 @@ Item {
       text: AiAgentsMonitorManager.idleCount
       color: Theme.success
       font.family: Theme.fontFamily
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
     }
 
     Text {
@@ -38,7 +38,7 @@ Item {
       text: "/"
       color: Theme.textMuted
       font.family: Theme.fontFamily
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
     }
 
     Text {
@@ -46,7 +46,7 @@ Item {
       text: AiAgentsMonitorManager.busyCount
       color: Theme.warning
       font.family: Theme.fontFamily
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
     }
 
     Text {
@@ -54,7 +54,7 @@ Item {
       text: "/"
       color: Theme.textMuted
       font.family: Theme.fontFamily
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
     }
 
     Text {
@@ -62,7 +62,7 @@ Item {
       text: AiAgentsMonitorManager.errorCount + AiAgentsMonitorManager.questionCount
       color: Theme.danger
       font.family: Theme.fontFamily
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
     }
   }
 
@@ -135,7 +135,7 @@ Item {
                 return "??"
               }
               color: Theme.textMuted
-              font.pixelSize: 12
+              font.pixelSize: Theme.scaledFontSize(12)
             }
 
             TooltipText {
@@ -167,7 +167,7 @@ Item {
             visible: modelData.sessionTitle !== ""
             text: modelData.sessionTitle
             color: Theme.textSecondary
-            font.pixelSize: 12
+            font.pixelSize: Theme.scaledFontSize(12)
             textFormat: Text.PlainText
             elide: Text.ElideRight
             width: parent.width
@@ -184,7 +184,7 @@ Item {
             ? ": connecting\u2026"
             : ": unavailable")
         color: Theme.textMuted
-        font.pixelSize: 12
+        font.pixelSize: Theme.scaledFontSize(12)
         textFormat: Text.PlainText
         elide: Text.ElideRight
         width: parent.width

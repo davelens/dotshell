@@ -348,7 +348,7 @@ Scope {
                   text: modelData.label
                   color: panel.activeTab === modelData.id ? Theme.textPrimary : Theme.textSecondary
                   font.family: Theme.fontFamily
-                  font.pixelSize: 15
+                  font.pixelSize: Theme.scaledFontSize(15)
                   font.bold: panel.activeTab === modelData.id
                 }
 
@@ -396,7 +396,7 @@ Scope {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "󰍉"
                 font.family: "Symbols Nerd Font"
-                font.pixelSize: 14
+                font.pixelSize: Theme.scaledFontSize(14)
                 color: Theme.textMuted
               }
 
@@ -410,7 +410,7 @@ Scope {
                 height: parent.height
                 color: Theme.textPrimary
                 font.family: Theme.fontFamily
-                font.pixelSize: 14
+                font.pixelSize: Theme.scaledFontSize(14)
                 verticalAlignment: TextInput.AlignVCenter
                 activeFocusOnTab: true
                 selectByMouse: true
@@ -424,7 +424,7 @@ Scope {
                   text: panel.activeTab === "local" ? "Search local files..." : "Search wallhaven..."
                   color: Theme.textMuted
                   font.family: Theme.fontFamily
-                  font.pixelSize: 14
+                  font.pixelSize: Theme.scaledFontSize(14)
                   verticalAlignment: Text.AlignVCenter
                   visible: !searchInput.text && !searchInput.activeFocus
                 }
@@ -487,14 +487,14 @@ Scope {
                   }
                   color: Theme.textPrimary
                   font.family: Theme.fontFamily
-                  font.pixelSize: 14
+                  font.pixelSize: Theme.scaledFontSize(14)
                 }
 
                 Text {
                   text: sortMenu.visible ? "▲" : "▼"
                   color: Theme.textMuted
                   font.family: Theme.fontFamily
-                  font.pixelSize: 10
+                  font.pixelSize: Theme.scaledFontSize(10)
                   anchors.verticalCenter: parent.verticalCenter
                 }
               }
@@ -546,7 +546,7 @@ Scope {
                         text: modelData.label
                         color: panel.browseSorting === modelData.value ? Theme.accent : Theme.textPrimary
                         font.family: Theme.fontFamily
-                        font.pixelSize: 14
+                        font.pixelSize: Theme.scaledFontSize(14)
                         font.bold: panel.browseSorting === modelData.value
                       }
 
@@ -658,7 +658,7 @@ Scope {
                         anchors.centerIn: parent
                         text: "󰄬"
                         font.family: "Symbols Nerd Font"
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.scaledFontSize(12)
                         color: Theme.bgDeep
                       }
                     }
@@ -709,7 +709,7 @@ Scope {
                         }
                         color: Theme.textSecondary
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.scaledFontSize(10)
                         elide: Text.ElideMiddle
                         verticalAlignment: Text.AlignVCenter
                       }
@@ -736,7 +736,7 @@ Scope {
                   text: panel.searchQuery ? "No matching files" : "No wallpapers found"
                   color: Theme.textMuted
                   font.family: Theme.fontFamily
-                  font.pixelSize: 15
+                  font.pixelSize: Theme.scaledFontSize(15)
                   visible: panel.displayCount === 0
                 }
               }
@@ -834,7 +834,7 @@ Scope {
                       anchors.centerIn: parent
                       text: "󰋩"
                       font.family: "Symbols Nerd Font"
-                      font.pixelSize: 28
+                      font.pixelSize: Theme.scaledFontSize(28)
                       color: Theme.textMuted
                       visible: !browseCell.itemData
                     }
@@ -855,7 +855,7 @@ Scope {
                         text: browseCell.itemData ? browseCell.itemData.resolution : ""
                         color: Theme.textSecondary
                         font.family: Theme.fontFamily
-                        font.pixelSize: 10
+                        font.pixelSize: Theme.scaledFontSize(10)
                         elide: Text.ElideRight
                         verticalAlignment: Text.AlignVCenter
                       }
@@ -878,7 +878,7 @@ Scope {
                         anchors.centerIn: parent
                         text: "󰇚"
                         font.family: "Symbols Nerd Font"
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.scaledFontSize(12)
                         color: Theme.bgDeep
                       }
                     }
@@ -909,7 +909,7 @@ Scope {
                     text: "Search wallhaven.cc for wallpapers"
                     color: Theme.textMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: 15
+                    font.pixelSize: Theme.scaledFontSize(15)
                   }
 
                   HelpText {
@@ -924,7 +924,7 @@ Scope {
                   text: "Searching..."
                   color: Theme.textMuted
                   font.family: Theme.fontFamily
-                  font.pixelSize: 15
+                  font.pixelSize: Theme.scaledFontSize(15)
                   visible: WallpaperManager.searching
                 }
               }
@@ -958,7 +958,7 @@ Scope {
                     text: WallpaperManager.currentPage + " / " + WallpaperManager.lastPage
                     color: Theme.textSecondary
                     font.family: Theme.fontFamily
-                    font.pixelSize: 13
+                    font.pixelSize: Theme.scaledFontSize(13)
                     anchors.verticalCenter: parent.verticalCenter
                   }
 
@@ -991,7 +991,7 @@ Scope {
                   Row {
                     spacing: 4
                     KeyboardTag { text: "n"; anchors.verticalCenter: parent.verticalCenter }
-                    Text { text: "/"; color: Theme.textMuted; font.family: Theme.fontFamily; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                    Text { text: "/"; color: Theme.textMuted; font.family: Theme.fontFamily; font.pixelSize: Theme.scaledFontSize(12); anchors.verticalCenter: parent.verticalCenter }
                     KeyboardTag { text: "p"; anchors.verticalCenter: parent.verticalCenter }
                     AnnotationText { text: "Page"; anchors.verticalCenter: parent.verticalCenter }
                   }
@@ -1078,7 +1078,7 @@ Scope {
                     text: panel.previewItem ? (panel.previewItem.resolution + "  |  " + panel.previewItem.category) : ""
                     color: Theme.textSecondary
                     font.family: Theme.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: Theme.scaledFontSize(14)
                     anchors.verticalCenter: parent.verticalCenter
                   }
                 }
@@ -1110,7 +1110,7 @@ Scope {
                     text: "Loading..."
                     color: Theme.textMuted
                     font.family: Theme.fontFamily
-                    font.pixelSize: 15
+                    font.pixelSize: Theme.scaledFontSize(15)
                     visible: previewImage.status === Image.Loading
                   }
                 }

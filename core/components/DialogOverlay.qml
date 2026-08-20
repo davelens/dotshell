@@ -57,7 +57,7 @@ FocusScope {
         text: overlay.title
         color: Theme.textPrimary
         font.family: Theme.fontFamily
-        font.pixelSize: 20
+        font.pixelSize: Theme.scaledFontSize(20)
         font.bold: true
       }
 
@@ -67,7 +67,7 @@ FocusScope {
         text: "✕"
         color: closeHover.containsMouse ? Theme.textPrimary : Theme.textMuted
         font.family: Theme.fontFamily
-        font.pixelSize: 16
+        font.pixelSize: Theme.scaledFontSize(16)
 
         MouseArea {
           id: closeHover

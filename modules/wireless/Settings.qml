@@ -15,7 +15,7 @@ SettingsPage {
       text: "Wireless"
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 24
+      font.pixelSize: Theme.scaledFontSize(24)
       font.bold: true
     }
 
@@ -52,7 +52,7 @@ SettingsPage {
           text: WirelessManager.connectedNetwork ? WirelessManager.connectedNetwork.ssid : ""
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 16
+          font.pixelSize: Theme.scaledFontSize(16)
         }
 
         Text {
@@ -60,7 +60,7 @@ SettingsPage {
           textFormat: Text.RichText
           color: Theme.success
           font.family: Theme.fontFamily
-          font.pixelSize: 12
+          font.pixelSize: Theme.scaledFontSize(12)
         }
 
         Row {
@@ -70,14 +70,14 @@ SettingsPage {
             text: "Down: " + WirelessManager.formatSpeed(WirelessManager.downloadSpeed)
             color: Theme.textMuted
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Theme.scaledFontSize(12)
           }
 
           Text {
             text: "Up: " + WirelessManager.formatSpeed(WirelessManager.uploadSpeed)
             color: Theme.textMuted
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Theme.scaledFontSize(12)
           }
         }
       }
@@ -165,7 +165,7 @@ SettingsPage {
               text: "Password required for " + modelData.ssid
               color: Theme.textSecondary
               font.family: Theme.fontFamily
-              font.pixelSize: 12
+              font.pixelSize: Theme.scaledFontSize(12)
               leftPadding: 2
             }
 
@@ -183,7 +183,7 @@ SettingsPage {
               text: WirelessManager.connectError
               color: Theme.danger
               font.family: Theme.fontFamily
-              font.pixelSize: 12
+              font.pixelSize: Theme.scaledFontSize(12)
               leftPadding: 10
               wrapMode: Text.WordWrap
               visible: WirelessManager.connectError !== ""

@@ -29,7 +29,7 @@ DialogOverlay {
       text: "Available profiles"
       color: Theme.textTertiary
       font.family: Theme.fontFamily
-      font.pixelSize: 12
+      font.pixelSize: Theme.scaledFontSize(12)
       font.bold: true
     }
 
@@ -96,7 +96,7 @@ DialogOverlay {
               anchors.verticalCenter: parent.verticalCenter
               text: ""
               color: Theme.accent
-              font.pixelSize: 14
+              font.pixelSize: Theme.scaledFontSize(14)
               font.family: "Symbols Nerd Font"
               visible: rowItem.modelData.dir === GeneralSettings.activeProfile
             }
@@ -106,7 +106,7 @@ DialogOverlay {
               text: rowItem.modelData.name
               color: rowItem.modelData.dir === GeneralSettings.activeProfile ? Theme.textPrimary : Theme.textSecondary
               font.family: Theme.fontFamily
-              font.pixelSize: 14
+              font.pixelSize: Theme.scaledFontSize(14)
             }
           }
 
@@ -162,7 +162,7 @@ DialogOverlay {
               if (deleteBtn.activeFocus || deleteHover.containsMouse) return Theme.danger
               return Theme.textMuted
             }
-            font.pixelSize: switcher.confirmDeleteDir === rowItem.modelData.dir ? 16 : 14
+            font.pixelSize: Theme.scaledFontSize(switcher.confirmDeleteDir === rowItem.modelData.dir ? 16 : 14)
             font.family: switcher.confirmDeleteDir === rowItem.modelData.dir ? Theme.fontFamily : "Symbols Nerd Font"
             font.bold: switcher.confirmDeleteDir === rowItem.modelData.dir
           }

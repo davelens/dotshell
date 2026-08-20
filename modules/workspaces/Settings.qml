@@ -90,7 +90,7 @@ SettingsPage {
           text: "Detect active workspaces"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
       }
     }
@@ -173,7 +173,7 @@ SettingsPage {
           text: "Count:"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 13
+          font.pixelSize: Theme.scaledFontSize(13)
         }
 
         SpinBox {
@@ -199,7 +199,7 @@ SettingsPage {
             text: countSpin.textFromValue(countSpin.value, countSpin.locale)
             color: Theme.textPrimary
             font.family: Theme.fontFamily
-            font.pixelSize: 13
+            font.pixelSize: Theme.scaledFontSize(13)
             horizontalAlignment: Qt.AlignHCenter
             verticalAlignment: Qt.AlignVCenter
             anchors.left: parent.left
@@ -223,7 +223,7 @@ SettingsPage {
               text: "+"
               color: Theme.textPrimary
               font.family: Theme.fontFamily
-              font.pixelSize: 14
+              font.pixelSize: Theme.scaledFontSize(14)
             }
           }
 
@@ -239,7 +239,7 @@ SettingsPage {
               text: "-"
               color: Theme.textPrimary
               font.family: Theme.fontFamily
-              font.pixelSize: 14
+              font.pixelSize: Theme.scaledFontSize(14)
             }
           }
         }
@@ -290,7 +290,7 @@ SettingsPage {
               text: "Workspace " + (index + 1)
               color: Theme.textPrimary
               font.family: Theme.fontFamily
-              font.pixelSize: 13
+              font.pixelSize: Theme.scaledFontSize(13)
               width: 100
             }
 
@@ -308,7 +308,7 @@ SettingsPage {
                 anchors.margins: 4
                 text: WorkspacesManager.icons[String(index + 1)] || ""
                 color: Theme.textPrimary
-                font.pixelSize: 18
+                font.pixelSize: Theme.scaledFontSize(18)
                 font.family: "Symbols Nerd Font"
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
@@ -331,7 +331,7 @@ SettingsPage {
                 return icon ? icon : String(index + 1)
               }
               color: Theme.textMuted
-              font.pixelSize: 18
+              font.pixelSize: Theme.scaledFontSize(18)
               font.family: "Symbols Nerd Font"
             }
           }

@@ -72,7 +72,7 @@ Rectangle {
     anchors.centerIn: parent
     text: button.icon
     color: button.iconColorOnHover && mouseArea.containsMouse ? button.iconColorHover : button.iconColor
-    font.pixelSize: button.iconSize
+    font.pixelSize: Theme.scaledFontSize(button.iconSize)
     font.family: "Symbols Nerd Font"
   }
 

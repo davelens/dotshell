@@ -7,8 +7,8 @@ import qs.core.components
 SettingsPage {
   id: settingsRoot
 
-  // All outputs from sway (including disabled)
-  property var outputs: []
+  // Normalized compositor outputs (including disabled)
+  property var outputs: DisplayManager.outputs
 
   // Layout positions being edited
   // Each entry: { name, x, y, width, height, active, make, model, scale }
@@ -48,30 +48,21 @@ SettingsPage {
     }
   }
 
-  // Parse swaymsg output JSON
-  function parseOutputs(json) {
-    try {
-      var list = JSON.parse(json)
-      outputs = list
-      buildLayoutItems()
-    } catch(e) {
-      console.log("display settings: failed to parse outputs:", e)
-    }
-  }
+  onOutputsChanged: buildLayoutItems()
 
-  // Build editable layout items from sway outputs
+  // Build editable layout items from normalized outputs
   function buildLayoutItems() {
     var items = []
     for (var i = 0; i < outputs.length; i++) {
       var o = outputs[i]
       if (!o.active) continue
 
-      var mode = o.current_mode || (o.modes && o.modes.length > 0 ? o.modes[0] : null)
+      var mode = o.mode
       var w = mode ? mode.width : 1920
       var h = mode ? mode.height : 1080
       var scale = o.scale || 1.0
-      var posX = o.rect ? o.rect.x : 0
-      var posY = o.rect ? o.rect.y : 0
+      var posX = o.x || 0
+      var posY = o.y || 0
       var logicalW = Math.round(w / scale)
       var logicalH = Math.round(h / scale)
 
@@ -252,7 +243,10 @@ SettingsPage {
   }
 
   // Fetch outputs on load and when screens change
-  Component.onCompleted: Compositor.fetchOutputs()
+  Component.onCompleted: {
+    buildLayoutItems()
+    Compositor.fetchOutputs()
+  }
 
   Connections {
     target: Quickshell
@@ -261,7 +255,6 @@ SettingsPage {
 
   Connections {
     target: Compositor
-    function onOutputsFetched(json) { settingsRoot.parseOutputs(json) }
     function onPositionApplied(success) {
       settingsRoot.pendingApplyCount--
       if (settingsRoot.pendingApplyCount <= 0) {
@@ -282,7 +275,7 @@ SettingsPage {
       text: "Displays"
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 24
+      font.pixelSize: Theme.scaledFontSize(24)
       font.bold: true
     }
 
@@ -452,7 +445,7 @@ SettingsPage {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: monitorData ? (monitorData.name.startsWith("eDP") ? "󰌢" : "󰍹") : ""
                 color: monitorData && monitorData.active ? Theme.textPrimary : Theme.textMuted
-                font.pixelSize: Math.min(16, monitorRect.height * 0.3)
+                font.pixelSize: Theme.scaledFontSize(Math.min(16, monitorRect.height * 0.3))
                 font.family: "Symbols Nerd Font"
               }
 
@@ -461,7 +454,7 @@ SettingsPage {
                 text: monitorData ? monitorData.friendlyName : ""
                 color: monitorData && monitorData.active ? Theme.textPrimary : Theme.textMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Math.min(11, monitorRect.height * 0.18)
+                font.pixelSize: Theme.scaledFontSize(Math.min(11, monitorRect.height * 0.18))
                 elide: Text.ElideRight
                 width: monitorRect.width - 8
                 horizontalAlignment: Text.AlignHCenter
@@ -472,7 +465,7 @@ SettingsPage {
                 text: monitorData ? monitorData.rawWidth + "x" + monitorData.rawHeight : ""
                 color: Theme.textMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: Math.min(9, monitorRect.height * 0.14)
+                font.pixelSize: Theme.scaledFontSize(Math.min(9, monitorRect.height * 0.14))
               }
             }
           }
@@ -559,7 +552,7 @@ SettingsPage {
       FocusButton {
         text: "Reset"
         backgroundColor: Theme.bgBorder
-        onClicked: fetchProc.running = true
+        onClicked: Compositor.fetchOutputs()
       }
     }
 

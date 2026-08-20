@@ -67,7 +67,7 @@ ModulePopup {
           anchors.verticalCenter: parent.verticalCenter
           text: WirelessManager.getIcon()
           color: WirelessManager.enabled ? Theme.accent : Theme.textMuted
-          font.pixelSize: 20
+          font.pixelSize: Theme.scaledFontSize(20)
           font.family: "Symbols Nerd Font"
         }
 
@@ -76,7 +76,7 @@ ModulePopup {
           text: "Wi-Fi"
           color: Theme.textPrimary
           font.family: Theme.fontFamily
-          font.pixelSize: 16
+          font.pixelSize: Theme.scaledFontSize(16)
         }
       }
 
@@ -133,14 +133,14 @@ ModulePopup {
           text: "Uptime: " + WirelessManager.getConnectionDurationLong()
           color: Theme.textMuted
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
 
         Text {
           text: "Down: " + WirelessManager.formatSpeed(WirelessManager.downloadSpeed) + "  Up: " + WirelessManager.formatSpeed(WirelessManager.uploadSpeed)
           color: Theme.textMuted
           font.family: Theme.fontFamily
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
         }
       }
     }
@@ -172,7 +172,7 @@ ModulePopup {
           anchors.verticalCenter: parent.verticalCenter
           text: "󰔟"
           color: Theme.accent
-          font.pixelSize: 14
+          font.pixelSize: Theme.scaledFontSize(14)
           font.family: "Symbols Nerd Font"
           visible: WirelessManager.scanning
 
@@ -279,7 +279,7 @@ ModulePopup {
                 text: WirelessManager.connectError
                 color: Theme.danger
                 font.family: Theme.fontFamily
-                font.pixelSize: 12
+                font.pixelSize: Theme.scaledFontSize(12)
                 leftPadding: 10
                 wrapMode: Text.WordWrap
                 visible: WirelessManager.connectError !== ""
@@ -311,7 +311,7 @@ ModulePopup {
         text: "Wi-Fi is off"
         color: Theme.textMuted
         font.family: Theme.fontFamily
-        font.pixelSize: 15
+        font.pixelSize: Theme.scaledFontSize(15)
         horizontalAlignment: Text.AlignHCenter
         topPadding: 8
       }
@@ -321,7 +321,7 @@ ModulePopup {
         text: "Toggle the switch above to enable"
         color: Theme.textSubtle
         font.family: Theme.fontFamily
-        font.pixelSize: 13
+        font.pixelSize: Theme.scaledFontSize(13)
         horizontalAlignment: Text.AlignHCenter
         bottomPadding: 8
       }

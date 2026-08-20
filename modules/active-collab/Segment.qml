@@ -21,7 +21,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: ""
       color: Theme.textPrimary
-      font.pixelSize: 16
+      font.pixelSize: Theme.scaledFontSize(16)
       font.family: "Symbols Nerd Font"
     }
 
@@ -30,7 +30,7 @@ Item {
       text: ActiveCollabManager.totalCount
       color: Theme.textPrimary
       font.family: Theme.fontFamily
-      font.pixelSize: 14
+      font.pixelSize: Theme.scaledFontSize(14)
     }
   }
 
@@ -91,7 +91,7 @@ Item {
             visible: modelData.sessionDescription !== ""
             text: modelData.sessionDescription
             color: Theme.textSecondary
-            font.pixelSize: 12
+            font.pixelSize: Theme.scaledFontSize(12)
             elide: Text.ElideRight
             width: parent.width
           }

@@ -166,7 +166,7 @@ Scope {
               text: "Notifications"
               color: Theme.textPrimary
               font.family: Theme.fontFamily
-              font.pixelSize: 20
+              font.pixelSize: Theme.scaledFontSize(20)
               font.bold: true
             }
 
@@ -220,7 +220,7 @@ Scope {
                       text: "Do Not Disturb"
                       color: Theme.textPrimary
                       font.family: Theme.fontFamily
-                      font.pixelSize: 14
+                      font.pixelSize: Theme.scaledFontSize(14)
                     }
 
                     Text {
@@ -229,7 +229,7 @@ Scope {
                         : NotificationManager.dndScheduleText
                       color: Theme.textMuted
                       font.family: Theme.fontFamily
-                      font.pixelSize: 12
+                      font.pixelSize: Theme.scaledFontSize(12)
                     }
                   }
                 }
@@ -262,7 +262,7 @@ Scope {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "󰂚"
                 color: Theme.textMuted
-                font.pixelSize: 48
+                font.pixelSize: Theme.scaledFontSize(48)
                 font.family: "Symbols Nerd Font"
               }
 
@@ -271,7 +271,7 @@ Scope {
                 text: "All caught up!"
                 color: Theme.textMuted
                 font.family: Theme.fontFamily
-                font.pixelSize: 14
+                font.pixelSize: Theme.scaledFontSize(14)
               }
             }
 

@@ -65,7 +65,7 @@ Row {
           return WorkspacesManager.icons[workspaceRect.modelData] || workspaceRect.modelData
         }
         color: workspaceRect.isFocused ? Theme.accent : (workspaceRect.hasWindows ? Theme.textPrimary : Theme.textMuted)
-        font.pixelSize: WorkspacesManager.displayMode === "dots" ? 12 : 18
+        font.pixelSize: Theme.scaledFontSize(WorkspacesManager.displayMode === "dots" ? 12 : 18)
         font.family: "Symbols Nerd Font"
       }
 

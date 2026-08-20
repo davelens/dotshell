@@ -62,10 +62,20 @@ else
   fail 'sourcing module extensions has no command side effects'
 fi
 
-OUTPUT="$(QS_OUTPUT=toggled "$DSHELL" brightness toggle)"
-assert_eq 'toggled' "$OUTPUT" 'module command dispatches through the merged registry'
-assert_eq $'popup\ntoggle\nbrightness' "$(tail -n 3 "$QS_ARGS")" \
-  'module command preserves its IPC target and function'
+OUTPUT="$(QS_OUTPUT=toggled "$DSHELL" display toggle)"
+assert_eq 'toggled' "$OUTPUT" 'display command dispatches through the merged registry'
+assert_eq $'popup\ntoggle\ndisplay' "$(tail -n 3 "$QS_ARGS")" \
+  'display toggle preserves its IPC target and function'
+assert_not_contains "$HELP" 'brightness' 'display is the only brightness/display command group'
+
+OUTPUT="$(QS_OUTPUT=14 "$DSHELL" display text-size)"
+assert_eq '14' "$OUTPUT" 'display text-size queries current state'
+assert_eq $'display\ncurrentTextSize' "$(tail -n 2 "$QS_ARGS")" \
+  'display text-size query uses display IPC'
+OUTPUT="$(QS_OUTPUT='Text size set to 16 px' "$DSHELL" display text-size 16)"
+assert_eq 'Text size set to 16 px' "$OUTPUT" 'display text-size dispatches a new value'
+assert_eq $'display\nsetTextSize\n16' "$(tail -n 3 "$QS_ARGS")" \
+  'display text-size mutation uses display IPC'
 assert_eq 'wifi active wlan0' "$($DSHELL wireless status)" \
   'module-local function handlers dispatch'
 QS_OUTPUT=toggled "$DSHELL" system-updates toggle >/dev/null
@@ -100,8 +110,8 @@ completion_candidates() {
 }
 assert_eq 'ai-agents-monitor' "$(completion_candidates dshell ai-)" \
   'bash completion finds renamed module groups'
-assert_eq 'toggle' "$(completion_candidates dshell brightness t)" \
-  'bash completion finds module subcommands'
+assert_eq 'toggle' "$(completion_candidates dshell display to)" \
+  'bash completion finds display subcommands'
 assert_eq 'open' "$(completion_candidates dshell screen-recording files o)" \
   'bash completion follows nested renamed module paths'
 
@@ -126,16 +136,16 @@ else
   fail 'renamed command groups have no compatibility aliases'
 fi
 
-rm "$CONFIG_DIR/modules/brightness/dshell/init.sh"
+rm "$CONFIG_DIR/modules/display/dshell/init.sh"
 HELP="$($DSHELL --help)"
-assert_not_contains "$HELP" 'brightness' 'removing a module extension removes it from help'
-if ! "$DSHELL" --complete | grep -qx brightness; then
+assert_not_contains "$HELP" 'display' 'removing a module extension removes it from help'
+if ! "$DSHELL" --complete | grep -qx display; then
   pass 'removing a module extension removes it from completion'
 else
   fail 'removing a module extension removes it from completion'
 fi
 status=0
-"$DSHELL" brightness toggle >/dev/null 2>&1 || status=$?
+"$DSHELL" display toggle >/dev/null 2>&1 || status=$?
 assert_eq 1 "$status" 'removing a module extension removes its dispatch'
 
 printf '1..%d\n' "$TESTS"
