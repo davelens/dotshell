@@ -122,6 +122,7 @@ Rectangle {
       Text {
         text: appName
         color: Theme.textSubtle
+        font.family: Theme.fontFamily
         font.pixelSize: 14
         anchors.verticalCenter: parent.verticalCenter
       }
@@ -132,6 +133,7 @@ Rectangle {
       width: parent.width
       text: summary
       color: Theme.textPrimary
+      font.family: Theme.fontFamily
       font.pixelSize: 15
       font.bold: true
       elide: Text.ElideRight
@@ -144,6 +146,7 @@ Rectangle {
       height: Math.min(implicitHeight, 36)  // ~2 lines at 14px
       text: body
       color: Theme.textSecondary
+      font.family: Theme.fontFamily
       font.pixelSize: 14
       wrapMode: Text.WordWrap
       readOnly: true
@@ -204,6 +207,7 @@ Rectangle {
             anchors.centerIn: parent
             text: modelData.text
             color: Theme.accent
+            font.family: Theme.fontFamily
             font.pixelSize: 12
           }
 
@@ -240,6 +244,7 @@ Rectangle {
       width: parent.width
       text: summary
       color: Theme.textPrimary
+      font.family: Theme.fontFamily
       font.pixelSize: 13
       elide: Text.ElideRight
       maximumLineCount: 1
@@ -250,6 +255,7 @@ Rectangle {
       width: parent.width
       text: body
       color: Theme.textSecondary
+      font.family: Theme.fontFamily
       font.pixelSize: 12
       wrapMode: Text.WordWrap
       readOnly: true
@@ -266,6 +272,7 @@ Rectangle {
       text: timestamp ? Qt.formatDateTime(timestamp,
         timestamp.toDateString() === new Date().toDateString() ? "HH:mm" : "yyyy-MM-dd HH:mm") : ""
       color: Theme.textMuted
+      font.family: Theme.fontFamily
       font.pixelSize: 10
     }
   }

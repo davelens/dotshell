@@ -56,6 +56,7 @@ FocusScope {
         anchors.verticalCenter: parent.verticalCenter
         text: overlay.title
         color: Theme.textPrimary
+        font.family: Theme.fontFamily
         font.pixelSize: 20
         font.bold: true
       }
@@ -65,6 +66,7 @@ FocusScope {
         anchors.verticalCenter: parent.verticalCenter
         text: "✕"
         color: closeHover.containsMouse ? Theme.textPrimary : Theme.textMuted
+        font.family: Theme.fontFamily
         font.pixelSize: 16
 
         MouseArea {

@@ -119,6 +119,7 @@ ModulePopup {
         anchors.verticalCenter: parent.verticalCenter
         text: Math.round(parent.volume * 100) + "%"
         color: Theme.accent
+        font.family: Theme.fontFamily
         font.pixelSize: 16
         width: 44
         horizontalAlignment: Text.AlignRight

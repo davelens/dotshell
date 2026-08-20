@@ -17,6 +17,7 @@ SettingsPage {
     Text {
       text: "Bluetooth"
       color: Theme.textPrimary
+      font.family: Theme.fontFamily
       font.pixelSize: 24
       font.bold: true
     }
@@ -72,6 +73,7 @@ SettingsPage {
             Text {
               text: modelData.name
               color: Theme.textPrimary
+              font.family: Theme.fontFamily
               font.pixelSize: 14
             }
 
@@ -79,6 +81,7 @@ SettingsPage {
               text: settingsRoot.highlightText("Connected", settingsRoot.searchQuery)
               textFormat: Text.RichText
               color: Theme.success
+              font.family: Theme.fontFamily
               font.pixelSize: 12
             }
           }
@@ -156,6 +159,7 @@ SettingsPage {
             width: parent.width
             text: BluetoothManager.connectError
             color: Theme.danger
+            font.family: Theme.fontFamily
             font.pixelSize: 12
             leftPadding: 10
             topPadding: 4

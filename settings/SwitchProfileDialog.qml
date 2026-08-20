@@ -28,6 +28,7 @@ DialogOverlay {
     Text {
       text: "Available profiles"
       color: Theme.textTertiary
+      font.family: Theme.fontFamily
       font.pixelSize: 12
       font.bold: true
     }
@@ -104,6 +105,7 @@ DialogOverlay {
               anchors.verticalCenter: parent.verticalCenter
               text: rowItem.modelData.name
               color: rowItem.modelData.dir === GeneralSettings.activeProfile ? Theme.textPrimary : Theme.textSecondary
+              font.family: Theme.fontFamily
               font.pixelSize: 14
             }
           }
@@ -161,7 +163,7 @@ DialogOverlay {
               return Theme.textMuted
             }
             font.pixelSize: switcher.confirmDeleteDir === rowItem.modelData.dir ? 16 : 14
-            font.family: switcher.confirmDeleteDir === rowItem.modelData.dir ? undefined : "Symbols Nerd Font"
+            font.family: switcher.confirmDeleteDir === rowItem.modelData.dir ? Theme.fontFamily : "Symbols Nerd Font"
             font.bold: switcher.confirmDeleteDir === rowItem.modelData.dir
           }
 

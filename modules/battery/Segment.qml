@@ -75,6 +75,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: Math.round(battery.percentage) + "%"
       color: Theme.textPrimary
+      font.family: Theme.fontFamily
       font.pixelSize: 14
     }
   }

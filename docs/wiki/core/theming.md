@@ -16,10 +16,11 @@ text `textPrimary textSecondary textTertiary textMuted textSubtle` ·
 semantic `accent success warning danger focusRing activeIndicator
 overlay knob`.
 
-Typography defaults to `fontFamily: "sans-serif"` and `fontSizeBody: 14`.
-The generic `sans-serif` family preserves the current fontconfig-driven
-font choice. These typography tokens are currently consumed by
-`TooltipText` only.
+Typography defaults to `fontFamily: "Hack Nerd Font"` and
+`fontSizeBody: 14`. `fontFamily` applies throughout dotshell, including
+notifications; `fontSizeBody` remains consumed by `TooltipText` only.
+`Symbols Nerd Font` glyph renderers and `KeyboardTag`'s special font are
+deliberate exceptions.
 
 ## Resolution
 

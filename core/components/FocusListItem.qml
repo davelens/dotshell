@@ -87,12 +87,14 @@ Item {
         Text {
           text: item.text
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: item.fontSize
         }
 
         Text {
           text: item.subtitle
           color: item.subtitleColor
+          font.family: Theme.fontFamily
           font.pixelSize: item.subtitleFontSize
           visible: item.subtitle !== ""
         }

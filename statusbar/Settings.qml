@@ -127,6 +127,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: settingsRoot.draggedItemName
         color: Theme.textPrimary
+        font.family: Theme.fontFamily
         font.pixelSize: 14
       }
     }
@@ -156,6 +157,7 @@ Item {
       Text {
         text: "Status Bar"
         color: Theme.textPrimary
+        font.family: Theme.fontFamily
         font.pixelSize: 24
         font.bold: true
       }
@@ -197,6 +199,7 @@ Item {
           text: settingsRoot.highlightText("Popup stem connector", settingsRoot.searchQuery)
           textFormat: Text.RichText
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 14
         }
 
@@ -274,6 +277,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: marginControl.label + ":"
       color: Theme.textPrimary
+      font.family: Theme.fontFamily
       font.pixelSize: 13
     }
 
@@ -296,6 +300,7 @@ Item {
         z: 2
         text: marginSpin.textFromValue(marginSpin.value, marginSpin.locale)
         color: Theme.textPrimary
+        font.family: Theme.fontFamily
         font.pixelSize: 13
         horizontalAlignment: Qt.AlignHCenter
         verticalAlignment: Qt.AlignVCenter
@@ -319,6 +324,7 @@ Item {
           anchors.centerIn: parent
           text: "+"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 14
         }
       }
@@ -334,6 +340,7 @@ Item {
           anchors.centerIn: parent
           text: "-"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 14
         }
       }
@@ -406,6 +413,7 @@ Item {
       anchors.centerIn: parent
       text: settingsRoot.isDragging ? "Drop here" : ("No items in " + sectionName + " section")
       color: Theme.textMuted
+      font.family: Theme.fontFamily
       font.pixelSize: 13
     }
   }
@@ -536,6 +544,7 @@ Item {
           return mod ? mod.name : item.id
         }
         color: item.enabled ? Theme.textPrimary : Theme.textMuted
+        font.family: Theme.fontFamily
         font.pixelSize: 14
         width: 120
       }
@@ -549,6 +558,7 @@ Item {
           anchors.verticalCenter: parent.verticalCenter
           text: "L:"
           color: Theme.textMuted
+          font.family: Theme.fontFamily
           font.pixelSize: 11
         }
 
@@ -566,6 +576,7 @@ Item {
             anchors.margins: 4
             text: item.marginLeft
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 12
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
@@ -585,6 +596,7 @@ Item {
           anchors.verticalCenter: parent.verticalCenter
           text: "R:"
           color: Theme.textMuted
+          font.family: Theme.fontFamily
           font.pixelSize: 11
         }
 
@@ -602,6 +614,7 @@ Item {
             anchors.margins: 4
             text: item.marginRight
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 12
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter

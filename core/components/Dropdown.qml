@@ -167,6 +167,7 @@ Item {
           anchors.verticalCenter: parent.verticalCenter
           text: dropdown.getItemText(dropdown.currentItem, false)
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 15
           elide: Text.ElideRight
           width: {
@@ -247,6 +248,7 @@ Item {
               anchors.verticalCenter: parent.verticalCenter
               text: dropdown.getItemText(modelData, false)
               color: (isSelected || isHighlighted) ? Theme.textPrimary : Theme.textSecondary
+              font.family: Theme.fontFamily
               font.pixelSize: 15
               elide: Text.ElideRight
               width: parent.width - 40
@@ -300,6 +302,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: dropdown.getItemText(dropdown.currentItem, true)
         color: Theme.textPrimary
+        font.family: Theme.fontFamily
         font.pixelSize: 12
         elide: Text.ElideRight
         width: parent.width - 20
@@ -375,6 +378,7 @@ Item {
             anchors.centerIn: parent
             text: dropdown.getItemText(modelData, true)
             color: isSelected ? Theme.textPrimary : Theme.textSecondary
+            font.family: Theme.fontFamily
             font.pixelSize: 12
           }
 

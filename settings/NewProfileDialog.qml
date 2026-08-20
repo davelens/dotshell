@@ -9,6 +9,7 @@ DialogOverlay {
   Text {
     text: "Create a new profile from your current settings."
     color: Theme.textSecondary
+    font.family: Theme.fontFamily
     font.pixelSize: 13
     width: parent.width
     wrapMode: Text.WordWrap
@@ -22,6 +23,7 @@ DialogOverlay {
     Text {
       text: "Profile name"
       color: Theme.textTertiary
+      font.family: Theme.fontFamily
       font.pixelSize: 12
     }
 
@@ -38,6 +40,7 @@ DialogOverlay {
         anchors.fill: parent
         anchors.margins: 8
         color: Theme.textPrimary
+        font.family: Theme.fontFamily
         font.pixelSize: 14
         clip: true
         focus: true
@@ -48,6 +51,7 @@ DialogOverlay {
           anchors.fill: parent
           text: "My Profile"
           color: Theme.textMuted
+          font.family: Theme.fontFamily
           font.pixelSize: 14
           visible: !nameInput.text && !nameInput.activeFocus
         }
@@ -67,6 +71,7 @@ DialogOverlay {
     Text {
       text: nameInput.text.trim() ? "Folder: " + previewSanitized(nameInput.text.trim()) : ""
       color: Theme.textMuted
+      font.family: Theme.fontFamily
       font.pixelSize: 11
       visible: nameInput.text.trim() !== ""
     }

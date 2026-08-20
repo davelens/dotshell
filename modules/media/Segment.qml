@@ -68,6 +68,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: root.getSourceName()
       color: Theme.textMuted
+      font.family: Theme.fontFamily
       font.pixelSize: 12
     }
 
@@ -83,6 +84,7 @@ Item {
         return title || artist
       }
       color: Theme.textPrimary
+      font.family: Theme.fontFamily
       font.pixelSize: 13
       elide: Text.ElideRight
       width: Math.min(implicitWidth, root.screen.width * 0.3)

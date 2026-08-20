@@ -24,7 +24,7 @@ Singleton {
   property color textSubtle
 
   // Typography
-  readonly property string _defaultFontFamily: "sans-serif"
+  readonly property string _defaultFontFamily: "Hack Nerd Font"
   readonly property real _defaultFontSizeBody: 14
   property string fontFamily: _defaultFontFamily
   property real fontSizeBody: _defaultFontSizeBody

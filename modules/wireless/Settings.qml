@@ -14,6 +14,7 @@ SettingsPage {
     Text {
       text: "Wireless"
       color: Theme.textPrimary
+      font.family: Theme.fontFamily
       font.pixelSize: 24
       font.bold: true
     }
@@ -50,6 +51,7 @@ SettingsPage {
         Text {
           text: WirelessManager.connectedNetwork ? WirelessManager.connectedNetwork.ssid : ""
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 16
         }
 
@@ -57,6 +59,7 @@ SettingsPage {
           text: settingsRoot.highlightText("Connected", settingsRoot.searchQuery)
           textFormat: Text.RichText
           color: Theme.success
+          font.family: Theme.fontFamily
           font.pixelSize: 12
         }
 
@@ -66,12 +69,14 @@ SettingsPage {
           Text {
             text: "Down: " + WirelessManager.formatSpeed(WirelessManager.downloadSpeed)
             color: Theme.textMuted
+            font.family: Theme.fontFamily
             font.pixelSize: 12
           }
 
           Text {
             text: "Up: " + WirelessManager.formatSpeed(WirelessManager.uploadSpeed)
             color: Theme.textMuted
+            font.family: Theme.fontFamily
             font.pixelSize: 12
           }
         }
@@ -159,6 +164,7 @@ SettingsPage {
             Text {
               text: "Password required for " + modelData.ssid
               color: Theme.textSecondary
+              font.family: Theme.fontFamily
               font.pixelSize: 12
               leftPadding: 2
             }
@@ -176,6 +182,7 @@ SettingsPage {
               width: parent.width
               text: WirelessManager.connectError
               color: Theme.danger
+              font.family: Theme.fontFamily
               font.pixelSize: 12
               leftPadding: 10
               wrapMode: Text.WordWrap

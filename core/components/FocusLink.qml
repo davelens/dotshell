@@ -45,6 +45,7 @@ Item {
     id: label
     text: link.text
     color: link.hovered || link.focused ? link.hoverColor : link.textColor
+    font.family: Theme.fontFamily
     font.pixelSize: link.fontSize
   }
 

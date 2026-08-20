@@ -73,6 +73,7 @@ ModulePopup {
           anchors.verticalCenter: parent.verticalCenter
           text: "Bluetooth"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 16
         }
       }
@@ -229,6 +230,7 @@ ModulePopup {
               width: parent.width
               text: BluetoothManager.connectError
               color: Theme.danger
+              font.family: Theme.fontFamily
               font.pixelSize: 12
               leftPadding: 10
               topPadding: 4
@@ -261,6 +263,7 @@ ModulePopup {
         width: parent.width
         text: "Bluetooth is off"
         color: Theme.textMuted
+        font.family: Theme.fontFamily
         font.pixelSize: 15
         horizontalAlignment: Text.AlignHCenter
         topPadding: 8
@@ -270,6 +273,7 @@ ModulePopup {
         width: parent.width
         text: "Toggle the switch above to enable"
         color: Theme.textSubtle
+        font.family: Theme.fontFamily
         font.pixelSize: 13
         horizontalAlignment: Text.AlignHCenter
         bottomPadding: 8

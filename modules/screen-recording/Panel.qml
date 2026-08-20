@@ -372,6 +372,7 @@ Scope {
                   anchors.centerIn: parent
                   text: modelData.label
                   color: panel.activeTab === modelData.id ? Theme.textPrimary : Theme.textSecondary
+                  font.family: Theme.fontFamily
                   font.pixelSize: 15
                   font.bold: panel.activeTab === modelData.id
                 }
@@ -427,6 +428,7 @@ Scope {
               anchors.verticalCenter: parent.verticalCenter
               height: parent.height
               color: Theme.textPrimary
+              font.family: Theme.fontFamily
               font.pixelSize: 14
               verticalAlignment: TextInput.AlignVCenter
               activeFocusOnTab: true
@@ -440,6 +442,7 @@ Scope {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "Search files..."
                 color: Theme.textMuted
+                font.family: Theme.fontFamily
                 font.pixelSize: 14
                 verticalAlignment: Text.AlignVCenter
                 visible: !searchInput.text && !searchInput.activeFocus
@@ -665,6 +668,7 @@ Scope {
                           return cellRect.filePath.substring(cellRect.filePath.lastIndexOf("/") + 1)
                         }
                         color: Theme.textSecondary
+                        font.family: Theme.fontFamily
                         font.pixelSize: 10
                         elide: Text.ElideMiddle
                         verticalAlignment: Text.AlignVCenter
@@ -697,6 +701,7 @@ Scope {
                     ? "No matching files"
                     : (panel.activeTab === "screenshots" ? "No screenshots found" : "No screencasts found")
                   color: Theme.textMuted
+                  font.family: Theme.fontFamily
                   font.pixelSize: 15
                   visible: panel.filteredCount === 0
                 }
@@ -712,6 +717,7 @@ Scope {
                 Text {
                   text: panel.selectedCount + " item" + (panel.selectedCount > 1 ? "s" : "") + " selected (press "
                   color: Theme.textSecondary
+                  font.family: Theme.fontFamily
                   font.pixelSize: 13
                   anchors.verticalCenter: parent.verticalCenter
                 }
@@ -724,6 +730,7 @@ Scope {
                 Text {
                   text: " or "
                   color: Theme.textSecondary
+                  font.family: Theme.fontFamily
                   font.pixelSize: 13
                   anchors.verticalCenter: parent.verticalCenter
                 }
@@ -736,6 +743,7 @@ Scope {
                 Text {
                   text: " to cancel)"
                   color: Theme.textSecondary
+                  font.family: Theme.fontFamily
                   font.pixelSize: 13
                   anchors.verticalCenter: parent.verticalCenter
                 }
@@ -754,6 +762,7 @@ Scope {
                 Text {
                   text: "Are you sure?"
                   color: Theme.danger
+                  font.family: Theme.fontFamily
                   font.pixelSize: 13
                   anchors.verticalCenter: parent.verticalCenter
                   visible: deleteAllRow.confirmDelete
@@ -1027,6 +1036,7 @@ Scope {
                     anchors.centerIn: parent
                     text: "Loading..."
                     color: Theme.textMuted
+                    font.family: Theme.fontFamily
                     font.pixelSize: 15
                     visible: {
                       if (detailContainer.isVideo) return false
@@ -1043,6 +1053,7 @@ Scope {
                   Text {
                     text: "Name:"
                     color: Theme.textSecondary
+                    font.family: Theme.fontFamily
                     font.pixelSize: 14
                     anchors.verticalCenter: parent.verticalCenter
                   }
@@ -1062,6 +1073,7 @@ Scope {
                   Text {
                     text: detailContainer.extension
                     color: Theme.textMuted
+                    font.family: Theme.fontFamily
                     font.pixelSize: 14
                     anchors.verticalCenter: parent.verticalCenter
                   }
@@ -1069,6 +1081,7 @@ Scope {
                   Text {
                     text: "(" + detailContainer.detailDuration + ")"
                     color: Theme.textMuted
+                    font.family: Theme.fontFamily
                     font.pixelSize: 14
                     anchors.verticalCenter: parent.verticalCenter
                     visible: detailContainer.isVideo && detailContainer.detailDuration !== ""
@@ -1132,6 +1145,7 @@ Scope {
                 Text {
                   text: panel.detailPath
                   color: Theme.textMuted
+                  font.family: Theme.fontFamily
                   font.pixelSize: 11
                   elide: Text.ElideLeft
                   width: parent.width

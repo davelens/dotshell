@@ -53,6 +53,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width - toggleVisibility.width - submitBtn.width - 12
         color: Theme.textPrimary
+        font.family: Theme.fontFamily
         font.pixelSize: 14
         clip: true
         echoMode: TextInput.Password
@@ -62,6 +63,7 @@ Item {
           anchors.verticalCenter: parent.verticalCenter
           text: root.placeholderText
           color: Theme.textMuted
+          font.family: Theme.fontFamily
           font.pixelSize: 14
           visible: !passwordField.text
         }

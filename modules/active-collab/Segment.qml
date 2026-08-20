@@ -29,6 +29,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: ActiveCollabManager.totalCount
       color: Theme.textPrimary
+      font.family: Theme.fontFamily
       font.pixelSize: 14
     }
   }

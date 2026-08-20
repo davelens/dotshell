@@ -165,6 +165,7 @@ Scope {
               anchors.verticalCenter: parent.verticalCenter
               text: "Notifications"
               color: Theme.textPrimary
+              font.family: Theme.fontFamily
               font.pixelSize: 20
               font.bold: true
             }
@@ -218,6 +219,7 @@ Scope {
                     Text {
                       text: "Do Not Disturb"
                       color: Theme.textPrimary
+                      font.family: Theme.fontFamily
                       font.pixelSize: 14
                     }
 
@@ -226,6 +228,7 @@ Scope {
                         ? (NotificationManager.dndEnabled ? "Enabled manually" : "Until " + NotificationManager.formatTime(NotificationManager.dndEndHour, NotificationManager.dndEndMinute))
                         : NotificationManager.dndScheduleText
                       color: Theme.textMuted
+                      font.family: Theme.fontFamily
                       font.pixelSize: 12
                     }
                   }
@@ -267,6 +270,7 @@ Scope {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "All caught up!"
                 color: Theme.textMuted
+                font.family: Theme.fontFamily
                 font.pixelSize: 14
               }
             }

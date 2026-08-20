@@ -124,6 +124,7 @@ SettingsPage {
           Text {
             text: "General"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 14
             anchors.verticalCenter: parent.verticalCenter
           }
@@ -142,6 +143,7 @@ SettingsPage {
           Text {
             text: "Anime"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 14
             anchors.verticalCenter: parent.verticalCenter
           }
@@ -160,6 +162,7 @@ SettingsPage {
           Text {
             text: "People"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 14
             anchors.verticalCenter: parent.verticalCenter
           }
@@ -211,6 +214,7 @@ SettingsPage {
           Text {
             text: "SFW"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 14
             anchors.verticalCenter: parent.verticalCenter
           }
@@ -229,6 +233,7 @@ SettingsPage {
           Text {
             text: "Sketchy"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 14
             anchors.verticalCenter: parent.verticalCenter
           }
@@ -247,6 +252,7 @@ SettingsPage {
           Text {
             text: "NSFW"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 14
             anchors.verticalCenter: parent.verticalCenter
           }

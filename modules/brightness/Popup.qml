@@ -60,6 +60,7 @@ ModulePopup {
             anchors.verticalCenter: parent.verticalCenter
             text: Math.round(brightnessSlider.value * 100) + "%"
             color: Theme.warning
+            font.family: Theme.fontFamily
             font.pixelSize: 16
             width: 44
             horizontalAlignment: Text.AlignRight
@@ -78,6 +79,7 @@ ModulePopup {
         width: parent.width
         text: !BrightnessManager.ready ? "Detecting displays..." : "No controllable displays"
         color: Theme.textMuted
+        font.family: Theme.fontFamily
         font.pixelSize: 15
         horizontalAlignment: Text.AlignHCenter
         topPadding: 8
@@ -88,6 +90,7 @@ ModulePopup {
         visible: BrightnessManager.ready
         text: "Your GPU driver may not support DDC/CI"
         color: Theme.textSubtle
+        font.family: Theme.fontFamily
         font.pixelSize: 13
         horizontalAlignment: Text.AlignHCenter
         bottomPadding: 8

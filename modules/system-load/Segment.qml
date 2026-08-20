@@ -27,6 +27,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: SystemLoadManager.cpuPercent + "%"
       color: Theme.textPrimary
+      font.family: Theme.fontFamily
       font.pixelSize: 14
     }
 
@@ -43,6 +44,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: SystemLoadManager.ramPercent + "%"
       color: Theme.textPrimary
+      font.family: Theme.fontFamily
       font.pixelSize: 14
     }
   }

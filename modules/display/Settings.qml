@@ -281,6 +281,7 @@ SettingsPage {
     Text {
       text: "Displays"
       color: Theme.textPrimary
+      font.family: Theme.fontFamily
       font.pixelSize: 24
       font.bold: true
     }
@@ -459,6 +460,7 @@ SettingsPage {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: monitorData ? monitorData.friendlyName : ""
                 color: monitorData && monitorData.active ? Theme.textPrimary : Theme.textMuted
+                font.family: Theme.fontFamily
                 font.pixelSize: Math.min(11, monitorRect.height * 0.18)
                 elide: Text.ElideRight
                 width: monitorRect.width - 8
@@ -469,6 +471,7 @@ SettingsPage {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: monitorData ? monitorData.rawWidth + "x" + monitorData.rawHeight : ""
                 color: Theme.textMuted
+                font.family: Theme.fontFamily
                 font.pixelSize: Math.min(9, monitorRect.height * 0.14)
               }
             }

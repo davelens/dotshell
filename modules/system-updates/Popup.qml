@@ -58,6 +58,7 @@ ModulePopup {
           anchors.verticalCenter: parent.verticalCenter
           text: "System Updates"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 16
         }
       }
@@ -128,6 +129,7 @@ ModulePopup {
         text: SystemUpdatesManager.systemUpdateDescription
           + (SystemUpdatesManager.includeFlatpak ? " + Flatpak" : "")
         color: Theme.textMuted
+        font.family: Theme.fontFamily
         font.pixelSize: 12
         visible: !SystemUpdatesManager.systemUpdating
       }
@@ -140,6 +142,7 @@ ModulePopup {
           + (SystemUpdatesManager.includeFlatpak ? " followed by Flatpak" : "")
           + "... All other updates are blocked."
         color: Theme.warning
+        font.family: Theme.fontFamily
         font.pixelSize: 12
         visible: SystemUpdatesManager.systemUpdating
       }
@@ -160,6 +163,7 @@ ModulePopup {
         anchors.centerIn: parent
         text: "Checking for updates..."
         color: Theme.textMuted
+        font.family: Theme.fontFamily
         font.pixelSize: 14
       }
     }
@@ -173,6 +177,7 @@ ModulePopup {
         width: parent.width
         text: SystemUpdatesManager.backendSupported ? "System is up to date" : "No supported system package backend"
         color: Theme.textMuted
+        font.family: Theme.fontFamily
         font.pixelSize: 15
         horizontalAlignment: Text.AlignHCenter
         topPadding: 8
@@ -184,6 +189,7 @@ ModulePopup {
           ? "No pending updates"
           : "Flatpak updates remain available when Flatpak is installed"
         color: Theme.textSubtle
+        font.family: Theme.fontFamily
         font.pixelSize: 13
         horizontalAlignment: Text.AlignHCenter
         bottomPadding: 8

@@ -74,6 +74,7 @@ Column {
               width: parent.width
               text: packageRow.modelData.name
               color: packageRow.updating ? Theme.textMuted : Theme.textPrimary
+              font.family: Theme.fontFamily
               font.pixelSize: 13
               elide: Text.ElideRight
             }
@@ -84,6 +85,7 @@ Column {
                 ? (packageRow.modelData.newVersion || packageRow.modelData.appId)
                 : packageRow.modelData.currentVersion + " → " + packageRow.modelData.newVersion
               color: packageRow.updating ? Theme.textSubtle : Theme.textMuted
+              font.family: Theme.fontFamily
               font.pixelSize: 10
               elide: Text.ElideMiddle
             }
@@ -130,6 +132,7 @@ Column {
         visible: sourceColumn.updates.length === 0
         text: "No updates"
         color: Theme.textMuted
+        font.family: Theme.fontFamily
         font.pixelSize: 12
         topPadding: 4
       }

@@ -29,6 +29,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: AiAgentsMonitorManager.idleCount
       color: Theme.success
+      font.family: Theme.fontFamily
       font.pixelSize: 14
     }
 
@@ -36,6 +37,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: "/"
       color: Theme.textMuted
+      font.family: Theme.fontFamily
       font.pixelSize: 14
     }
 
@@ -43,6 +45,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: AiAgentsMonitorManager.busyCount
       color: Theme.warning
+      font.family: Theme.fontFamily
       font.pixelSize: 14
     }
 
@@ -50,6 +53,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: "/"
       color: Theme.textMuted
+      font.family: Theme.fontFamily
       font.pixelSize: 14
     }
 
@@ -57,6 +61,7 @@ Item {
       anchors.verticalCenter: parent.verticalCenter
       text: AiAgentsMonitorManager.errorCount + AiAgentsMonitorManager.questionCount
       color: Theme.danger
+      font.family: Theme.fontFamily
       font.pixelSize: 14
     }
   }

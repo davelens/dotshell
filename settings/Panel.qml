@@ -402,6 +402,7 @@ Scope {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 40
                 color: Theme.textPrimary
+                font.family: Theme.fontFamily
                 font.pixelSize: 14
                 clip: true
                 focus: true
@@ -417,6 +418,7 @@ Scope {
                   anchors.fill: parent
                   text: "Search settings..."
                   color: Theme.textMuted
+                  font.family: Theme.fontFamily
                   font.pixelSize: 14
                   visible: !searchInput.text && !searchInput.activeFocus
                 }
@@ -527,6 +529,7 @@ Scope {
                           anchors.verticalCenter: parent.verticalCenter
                           text: modelData.name
                           color: root.activeCategory === modelData.id ? Theme.textPrimary : Theme.textSecondary
+                          font.family: Theme.fontFamily
                           font.pixelSize: 14
                         }
                       }
@@ -575,6 +578,7 @@ Scope {
                   anchors.horizontalCenter: parent.horizontalCenter
                   text: "Profile: " + GeneralSettings.activeProfileName
                   color: Theme.textSecondary
+                  font.family: Theme.fontFamily
                   font.pixelSize: 11
                   visible: GeneralSettings.activeProfileName !== ""
                 }
@@ -688,6 +692,7 @@ Scope {
                 anchors.centerIn: parent
                 text: ModuleRegistry.ready ? "Select a category" : "Loading modules..."
                 color: Theme.textMuted
+                font.family: Theme.fontFamily
                 font.pixelSize: 14
                 visible: !contentLoader.source || contentLoader.status !== Loader.Ready
               }
@@ -768,7 +773,7 @@ Scope {
               Row {
                 spacing: 4
                 KeyboardTag { text: "Ctrl+N"; fontSize: 11; anchors.verticalCenter: parent.verticalCenter }
-                Text { text: "/"; color: Theme.textMuted; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                Text { text: "/"; color: Theme.textMuted; font.family: Theme.fontFamily; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
                 KeyboardTag { text: "Ctrl+P"; fontSize: 11; anchors.verticalCenter: parent.verticalCenter }
                 AnnotationText { text: "Navigate inputs"; anchors.verticalCenter: parent.verticalCenter }
               }

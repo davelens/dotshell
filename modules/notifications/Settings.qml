@@ -128,6 +128,7 @@ SettingsPage {
             anchors.verticalCenter: parent.verticalCenter
             text: "Auto-dismiss timeout"
             color: Theme.textTertiary
+            font.family: Theme.fontFamily
             font.pixelSize: 15
           }
 
@@ -136,6 +137,7 @@ SettingsPage {
             anchors.verticalCenter: parent.verticalCenter
             text: (NotificationManager.popupTimeout / 1000) + "s"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 15
           }
         }
@@ -186,6 +188,7 @@ SettingsPage {
             anchors.verticalCenter: parent.verticalCenter
             text: "Maximum history size"
             color: Theme.textTertiary
+            font.family: Theme.fontFamily
             font.pixelSize: 15
           }
 
@@ -194,6 +197,7 @@ SettingsPage {
             anchors.verticalCenter: parent.verticalCenter
             text: NotificationManager.maxHistorySize + " notifications"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 15
           }
         }
@@ -255,6 +259,7 @@ SettingsPage {
           anchors.verticalCenter: parent.verticalCenter
           text: "Enable DND schedule"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 14
         }
       }
@@ -273,6 +278,7 @@ SettingsPage {
             width: 80
             text: "Start time"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 14
             anchors.verticalCenter: parent.verticalCenter
           }
@@ -293,6 +299,7 @@ SettingsPage {
             width: 80
             text: "End time"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 14
             anchors.verticalCenter: parent.verticalCenter
           }
@@ -352,6 +359,7 @@ SettingsPage {
           Text {
             text: "Critical notifications bypass DND"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 14
           }
 

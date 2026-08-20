@@ -107,6 +107,7 @@ Scope {
           Text {
             text: PowerManager.username
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 16
             font.bold: true
           }
@@ -114,6 +115,7 @@ Scope {
           Text {
             text: PowerManager.uptime
             color: Theme.textSecondary
+            font.family: Theme.fontFamily
             font.pixelSize: 13
           }
         }
@@ -204,6 +206,7 @@ Scope {
                     anchors.verticalCenter: parent.verticalCenter
                     text: actionItem.modelData.label
                     color: Theme.textPrimary
+                    font.family: Theme.fontFamily
                     font.pixelSize: 14
                   }
                 }
@@ -241,6 +244,7 @@ Scope {
             width: parent.width
             text: "Are you sure?"
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 18
             font.bold: true
             horizontalAlignment: Text.AlignHCenter
@@ -254,6 +258,7 @@ Scope {
               return action ? action.description : ""
             }
             color: Theme.textSecondary
+            font.family: Theme.fontFamily
             font.pixelSize: 13
             horizontalAlignment: Text.AlignHCenter
           }

@@ -89,6 +89,7 @@ SettingsPage {
           anchors.verticalCenter: parent.verticalCenter
           text: "Detect active workspaces"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 14
         }
       }
@@ -171,6 +172,7 @@ SettingsPage {
           anchors.verticalCenter: parent.verticalCenter
           text: "Count:"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 13
         }
 
@@ -196,6 +198,7 @@ SettingsPage {
             z: 2
             text: countSpin.textFromValue(countSpin.value, countSpin.locale)
             color: Theme.textPrimary
+            font.family: Theme.fontFamily
             font.pixelSize: 13
             horizontalAlignment: Qt.AlignHCenter
             verticalAlignment: Qt.AlignVCenter
@@ -219,6 +222,7 @@ SettingsPage {
               anchors.centerIn: parent
               text: "+"
               color: Theme.textPrimary
+              font.family: Theme.fontFamily
               font.pixelSize: 14
             }
           }
@@ -234,6 +238,7 @@ SettingsPage {
               anchors.centerIn: parent
               text: "-"
               color: Theme.textPrimary
+              font.family: Theme.fontFamily
               font.pixelSize: 14
             }
           }
@@ -284,6 +289,7 @@ SettingsPage {
               anchors.verticalCenter: parent.verticalCenter
               text: "Workspace " + (index + 1)
               color: Theme.textPrimary
+              font.family: Theme.fontFamily
               font.pixelSize: 13
               width: 100
             }

@@ -18,6 +18,7 @@ ModulePopup {
         anchors.verticalCenter: parent.verticalCenter
         text: "Main display"
         color: Theme.textPrimary
+        font.family: Theme.fontFamily
         font.pixelSize: 16
       }
 

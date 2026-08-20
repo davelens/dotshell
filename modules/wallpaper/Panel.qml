@@ -347,6 +347,7 @@ Scope {
                   anchors.centerIn: parent
                   text: modelData.label
                   color: panel.activeTab === modelData.id ? Theme.textPrimary : Theme.textSecondary
+                  font.family: Theme.fontFamily
                   font.pixelSize: 15
                   font.bold: panel.activeTab === modelData.id
                 }
@@ -408,6 +409,7 @@ Scope {
                 anchors.verticalCenter: parent.verticalCenter
                 height: parent.height
                 color: Theme.textPrimary
+                font.family: Theme.fontFamily
                 font.pixelSize: 14
                 verticalAlignment: TextInput.AlignVCenter
                 activeFocusOnTab: true
@@ -421,6 +423,7 @@ Scope {
                   anchors.verticalCenter: parent.verticalCenter
                   text: panel.activeTab === "local" ? "Search local files..." : "Search wallhaven..."
                   color: Theme.textMuted
+                  font.family: Theme.fontFamily
                   font.pixelSize: 14
                   verticalAlignment: Text.AlignVCenter
                   visible: !searchInput.text && !searchInput.activeFocus
@@ -483,12 +486,14 @@ Scope {
                     return "Top"
                   }
                   color: Theme.textPrimary
+                  font.family: Theme.fontFamily
                   font.pixelSize: 14
                 }
 
                 Text {
                   text: sortMenu.visible ? "▲" : "▼"
                   color: Theme.textMuted
+                  font.family: Theme.fontFamily
                   font.pixelSize: 10
                   anchors.verticalCenter: parent.verticalCenter
                 }
@@ -540,6 +545,7 @@ Scope {
                         anchors.centerIn: parent
                         text: modelData.label
                         color: panel.browseSorting === modelData.value ? Theme.accent : Theme.textPrimary
+                        font.family: Theme.fontFamily
                         font.pixelSize: 14
                         font.bold: panel.browseSorting === modelData.value
                       }
@@ -702,6 +708,7 @@ Scope {
                           return localCell.filePath.substring(localCell.filePath.lastIndexOf("/") + 1)
                         }
                         color: Theme.textSecondary
+                        font.family: Theme.fontFamily
                         font.pixelSize: 10
                         elide: Text.ElideMiddle
                         verticalAlignment: Text.AlignVCenter
@@ -728,6 +735,7 @@ Scope {
                   anchors.centerIn: parent
                   text: panel.searchQuery ? "No matching files" : "No wallpapers found"
                   color: Theme.textMuted
+                  font.family: Theme.fontFamily
                   font.pixelSize: 15
                   visible: panel.displayCount === 0
                 }
@@ -846,6 +854,7 @@ Scope {
                         anchors.rightMargin: 6
                         text: browseCell.itemData ? browseCell.itemData.resolution : ""
                         color: Theme.textSecondary
+                        font.family: Theme.fontFamily
                         font.pixelSize: 10
                         elide: Text.ElideRight
                         verticalAlignment: Text.AlignVCenter
@@ -899,6 +908,7 @@ Scope {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "Search wallhaven.cc for wallpapers"
                     color: Theme.textMuted
+                    font.family: Theme.fontFamily
                     font.pixelSize: 15
                   }
 
@@ -913,6 +923,7 @@ Scope {
                   anchors.centerIn: parent
                   text: "Searching..."
                   color: Theme.textMuted
+                  font.family: Theme.fontFamily
                   font.pixelSize: 15
                   visible: WallpaperManager.searching
                 }
@@ -946,6 +957,7 @@ Scope {
                   Text {
                     text: WallpaperManager.currentPage + " / " + WallpaperManager.lastPage
                     color: Theme.textSecondary
+                    font.family: Theme.fontFamily
                     font.pixelSize: 13
                     anchors.verticalCenter: parent.verticalCenter
                   }
@@ -979,7 +991,7 @@ Scope {
                   Row {
                     spacing: 4
                     KeyboardTag { text: "n"; anchors.verticalCenter: parent.verticalCenter }
-                    Text { text: "/"; color: Theme.textMuted; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                    Text { text: "/"; color: Theme.textMuted; font.family: Theme.fontFamily; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
                     KeyboardTag { text: "p"; anchors.verticalCenter: parent.verticalCenter }
                     AnnotationText { text: "Page"; anchors.verticalCenter: parent.verticalCenter }
                   }
@@ -1065,6 +1077,7 @@ Scope {
                     visible: !panel.previewIsLocal && panel.previewItem
                     text: panel.previewItem ? (panel.previewItem.resolution + "  |  " + panel.previewItem.category) : ""
                     color: Theme.textSecondary
+                    font.family: Theme.fontFamily
                     font.pixelSize: 14
                     anchors.verticalCenter: parent.verticalCenter
                   }
@@ -1096,6 +1109,7 @@ Scope {
                     anchors.centerIn: parent
                     text: "Loading..."
                     color: Theme.textMuted
+                    font.family: Theme.fontFamily
                     font.pixelSize: 15
                     visible: previewImage.status === Image.Loading
                   }

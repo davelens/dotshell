@@ -42,6 +42,7 @@ SettingsPage {
         Text {
           text: "Lock"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 14
         }
 
@@ -62,6 +63,7 @@ SettingsPage {
         Text {
           text: "Suspend"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 14
         }
 
@@ -82,6 +84,7 @@ SettingsPage {
         Text {
           text: "Logout"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 14
         }
 
@@ -102,6 +105,7 @@ SettingsPage {
         Text {
           text: "Reboot"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 14
         }
 
@@ -122,6 +126,7 @@ SettingsPage {
         Text {
           text: "Shutdown"
           color: Theme.textPrimary
+          font.family: Theme.fontFamily
           font.pixelSize: 14
         }
 

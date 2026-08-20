@@ -30,6 +30,7 @@ Row {
     delegate: Text {
       text: modelData.toString().padStart(2, '0')
       color: Tumbler.displacement === 0 ? Theme.textPrimary : Theme.textMuted
+      font.family: Theme.fontFamily
       font.pixelSize: Tumbler.displacement === 0 ? 18 : 14
       font.bold: Tumbler.displacement === 0
       opacity: 1.0 - Math.abs(Tumbler.displacement) / 2
@@ -56,6 +57,7 @@ Row {
   Text {
     text: ":"
     color: Theme.textPrimary
+    font.family: Theme.fontFamily
     font.pixelSize: 18
     font.bold: true
     anchors.verticalCenter: parent.verticalCenter
@@ -81,6 +83,7 @@ Row {
     delegate: Text {
       text: modelData
       color: Tumbler.displacement === 0 ? Theme.textPrimary : Theme.textMuted
+      font.family: Theme.fontFamily
       font.pixelSize: Tumbler.displacement === 0 ? 18 : 14
       font.bold: Tumbler.displacement === 0
       opacity: 1.0 - Math.abs(Tumbler.displacement) / 2
