@@ -9,8 +9,7 @@ fi
 
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 readonly gtk_schema="org.gnome.desktop.interface"
-readonly shell_default_px=14
-readonly terminal_default_pt=9
+readonly gtk_default_px=14
 
 gtk_font_pt() {
   local name pt
@@ -21,12 +20,11 @@ gtk_font_pt() {
   if [[ $pt =~ ^[0-9]+([.][0-9]+)?$ ]]; then printf '%s\n' "$pt"; else printf '11\n'; fi
 }
 
-factor="$(awk -v size="$size" -v base="$shell_default_px" -v font="$(gtk_font_pt)" \
+factor="$(awk -v size="$size" -v base="$gtk_default_px" -v font="$(gtk_font_pt)" \
   'BEGIN { printf "%.4f", int(font * size / base + 0.5) / font }')"
 gsettings set "$gtk_schema" text-scaling-factor "$factor" 2>/dev/null || true
 
-terminal_pt="$(awk -v size="$size" -v base="$shell_default_px" -v point="$terminal_default_pt" \
-  'BEGIN { printf "%d", int(size * point / base + 0.5) }')"
+terminal_pt="$size"
 
 alacritty="$config_home/alacritty/alacritty.toml"
 kitty="$config_home/kitty/kitty.conf"
