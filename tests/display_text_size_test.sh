@@ -40,7 +40,8 @@ assert_terminal_size() {
 for size in 10 11 12 14; do
   assert_terminal_size "$size" 14
 done
-assert_terminal_size 9 9
+assert_terminal_size 9 10
 assert_terminal_size 16 16
+assert_terminal_size 20 18
 
 echo 'display text size conversion tests passed'
