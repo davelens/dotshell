@@ -29,11 +29,18 @@ printf 'font_size 9.0\n' >"$XDG_CONFIG_HOME/kitty/kitty.conf"
 printf 'font-size = 9\n' >"$XDG_CONFIG_HOME/ghostty/config"
 printf 'font=monospace:size=9\n' >"$XDG_CONFIG_HOME/foot/foot.ini"
 
-"$script" 14
+assert_terminal_size() {
+  "$script" "$1"
+  grep -Fxq "size = $2" "$XDG_CONFIG_HOME/alacritty/alacritty.toml"
+  grep -Fxq "font_size $2.0" "$XDG_CONFIG_HOME/kitty/kitty.conf"
+  grep -Fxq "font-size = $2" "$XDG_CONFIG_HOME/ghostty/config"
+  grep -Fxq "font=monospace:size=$2" "$XDG_CONFIG_HOME/foot/foot.ini"
+}
 
-grep -Fxq 'size = 14' "$XDG_CONFIG_HOME/alacritty/alacritty.toml"
-grep -Fxq 'font_size 14.0' "$XDG_CONFIG_HOME/kitty/kitty.conf"
-grep -Fxq 'font-size = 14' "$XDG_CONFIG_HOME/ghostty/config"
-grep -Fxq 'font=monospace:size=14' "$XDG_CONFIG_HOME/foot/foot.ini"
+for size in 10 11 12 14; do
+  assert_terminal_size "$size" 14
+done
+assert_terminal_size 9 9
+assert_terminal_size 16 16
 
 echo 'display text size conversion tests passed'
