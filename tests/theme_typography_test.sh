@@ -9,7 +9,7 @@ focus_button="$repo_root/core/components/FocusButton.qml"
 focus_text_input="$repo_root/core/components/FocusTextInput.qml"
 
 # Defaults and public tokens.
-grep -Fq 'readonly property string _defaultFontFamily: "Hack Nerd Font"' "$theme"
+grep -Fq 'readonly property string _defaultFontFamily: Qt.application.font.family' "$theme"
 grep -Fq 'readonly property real _defaultFontSizeBody: 14' "$theme"
 grep -Fq 'property string fontFamily: _defaultFontFamily' "$theme"
 grep -Fq 'property real fontSizeBody: _defaultFontSizeBody' "$theme"

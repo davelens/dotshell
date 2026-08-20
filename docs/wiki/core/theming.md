@@ -16,8 +16,8 @@ text `textPrimary textSecondary textTertiary textMuted textSubtle` ·
 semantic `accent success warning danger focusRing activeIndicator
 overlay knob`.
 
-Typography defaults to `fontFamily: "Hack Nerd Font"` and
-`fontSizeBody: 14`. `fontFamily` applies throughout dotshell, including
+Typography defaults to Qt's application font family and `fontSizeBody: 14`.
+`fontFamily` applies throughout dotshell, including
 notifications; `fontSizeBody` remains consumed by `TooltipText` only.
 `Symbols Nerd Font` glyph renderers and `KeyboardTag`'s special font are
 deliberate family exceptions. Runtime `Theme.fontScale` defaults to `1.0` and
