@@ -25,7 +25,7 @@ Singleton {
   property string _pendingBrightnessConnector: ""
   property int _pendingBrightnessValue: 50
 
-  readonly property var scalePresets: [1, 1.25, 1.6, 2, 3, 4]
+  readonly property var scalePresets: [1, 1.25, 1.33, 1.6, 2, 3]
   readonly property var textSizeStops: [9, 10, 11, 12, 14, 16, 20]
   readonly property int textSize: Math.max(9, Math.min(20, config.textSize))
   property int _textProcessValue: -1
