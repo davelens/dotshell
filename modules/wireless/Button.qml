@@ -18,13 +18,18 @@ BarButton {
   TooltipBase {
     anchorItem: button
     visible: button.hovered && WirelessManager.connectedNetwork && !button.popupManager.isOpen(button.popupId)
+    fixedWidth: 300
+
     Column {
+      width: parent.width
       spacing: 4
 
       Text {
+        width: parent.width
         text: "Connected to " + (WirelessManager.connectedNetwork ? WirelessManager.connectedNetwork.ssid : "")
         color: Theme.textPrimary
         font.pixelSize: 14
+        elide: Text.ElideRight
       }
 
       Text {
