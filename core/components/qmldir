@@ -24,3 +24,4 @@ SwitchToggle 1.0 SwitchToggle.qml
 TimePicker 1.0 TimePicker.qml
 TitleText 1.0 TitleText.qml
 TooltipBase 1.0 TooltipBase.qml
+TooltipText 1.0 TooltipText.qml

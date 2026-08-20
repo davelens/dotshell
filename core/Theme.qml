@@ -23,6 +23,12 @@ Singleton {
   property color textMuted
   property color textSubtle
 
+  // Typography
+  readonly property string _defaultFontFamily: "sans-serif"
+  readonly property real _defaultFontSizeBody: 14
+  property string fontFamily: _defaultFontFamily
+  property real fontSizeBody: _defaultFontSizeBody
+
   // Semantic
   property color accent
   property color success
@@ -109,6 +115,9 @@ Singleton {
 
     try {
       var t = JSON.parse(text)
+
+      fontFamily = typeof t.fontFamily === "string" && t.fontFamily.trim() !== "" ? t.fontFamily : _defaultFontFamily
+      fontSizeBody = typeof t.fontSizeBody === "number" && isFinite(t.fontSizeBody) && t.fontSizeBody > 0 ? t.fontSizeBody : _defaultFontSizeBody
 
       bgBase = t.bgBase
       bgBaseAlt = t.bgBaseAlt

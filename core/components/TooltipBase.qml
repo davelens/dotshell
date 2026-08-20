@@ -9,7 +9,7 @@ import qs
 //   TooltipBase {
 //     anchorItem: someItem
 //     visible: hoverArea.containsMouse
-//     Text { text: "Hello" }
+//     TooltipText { text: "Hello" }
 //   }
 //
 // Content is placed inside a centered Item. Set fixedWidth for tooltips

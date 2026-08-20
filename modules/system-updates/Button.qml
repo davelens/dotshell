@@ -18,35 +18,27 @@ BarButton {
     Column {
       spacing: 2
 
-      Text {
+      TooltipText {
         visible: SystemUpdatesManager.checking || SystemUpdatesManager.totalCount === 0
         text: SystemUpdatesManager.checking ? "Checking for updates..." : "System up to date"
-        color: Theme.textPrimary
-        font.pixelSize: 13
       }
 
-      Text {
+      TooltipText {
         visible: SystemUpdatesManager.repoUpdates.length > 0
         text: SystemUpdatesManager.repoUpdates.length + " " + SystemUpdatesManager.repoLabel + " update"
           + (SystemUpdatesManager.repoUpdates.length !== 1 ? "s" : "")
-        color: Theme.textPrimary
-        font.pixelSize: 13
       }
 
-      Text {
+      TooltipText {
         visible: SystemUpdatesManager.hasCommunity && SystemUpdatesManager.communityUpdates.length > 0
         text: SystemUpdatesManager.communityUpdates.length + " " + SystemUpdatesManager.communityLabel + " update"
           + (SystemUpdatesManager.communityUpdates.length !== 1 ? "s" : "")
-        color: Theme.textPrimary
-        font.pixelSize: 13
       }
 
-      Text {
+      TooltipText {
         visible: SystemUpdatesManager.flatpakUpdates.length > 0
         text: SystemUpdatesManager.flatpakUpdates.length + " Flatpak update"
           + (SystemUpdatesManager.flatpakUpdates.length !== 1 ? "s" : "")
-        color: Theme.textPrimary
-        font.pixelSize: 13
       }
     }
   }

@@ -48,10 +48,8 @@ Item {
       width: parent.width
       spacing: 8
 
-      Text {
+      TooltipText {
         text: "ActiveCollab Sessions"
-        color: Theme.textPrimary
-        font.pixelSize: 14
       }
 
       Rectangle {
@@ -72,26 +70,23 @@ Item {
             width: parent.width
             spacing: 8
 
-            Text {
+            TooltipText {
               id: projectLabel
               anchors.verticalCenter: parent.verticalCenter
               text: modelData.project
-              color: Theme.textPrimary
-              font.pixelSize: 14
               elide: Text.ElideRight
               width: parent.width - durationLabel.width - 8
             }
 
-            Text {
+            TooltipText {
               id: durationLabel
               anchors.verticalCenter: parent.verticalCenter
               text: modelData.duration
               color: Theme.warning
-              font.pixelSize: 14
             }
           }
 
-          Text {
+          TooltipText {
             visible: modelData.sessionDescription !== ""
             text: modelData.sessionDescription
             color: Theme.textSecondary

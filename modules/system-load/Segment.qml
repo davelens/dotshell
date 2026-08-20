@@ -60,16 +60,12 @@ Item {
     Column {
       spacing: 4
 
-      Text {
+      TooltipText {
         text: "CPU: " + SystemLoadManager.cpuPercent + "%"
-        color: Theme.textPrimary
-        font.pixelSize: 14
       }
 
-      Text {
+      TooltipText {
         text: "Memory: " + SystemLoadManager.ramUsedGb.toFixed(1) + " / " + SystemLoadManager.ramTotalGb.toFixed(1) + " GB (" + SystemLoadManager.ramPercent + "%)"
-        color: Theme.textPrimary
-        font.pixelSize: 14
       }
     }
   }

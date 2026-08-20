@@ -78,10 +78,8 @@ Item {
       width: parent.width
       spacing: 8
 
-      Text {
+      TooltipText {
         text: "AI Agent Sessions"
-        color: Theme.textPrimary
-        font.pixelSize: 14
       }
 
       Rectangle {
@@ -102,7 +100,7 @@ Item {
             width: parent.width
             spacing: 8
 
-            Text {
+            TooltipText {
               id: statusIcon
               anchors.verticalCenter: parent.verticalCenter
               text: {
@@ -117,11 +115,10 @@ Item {
                 if (modelData.status === "error" || modelData.status === "input") return Theme.danger
                 return Theme.textMuted
               }
-              font.pixelSize: 14
               font.family: "Symbols Nerd Font"
             }
 
-            Text {
+            TooltipText {
               id: providerLabel
               anchors.verticalCenter: parent.verticalCenter
               width: 18
@@ -136,19 +133,17 @@ Item {
               font.pixelSize: 12
             }
 
-            Text {
+            TooltipText {
               anchors.verticalCenter: parent.verticalCenter
               text: modelData.remote
                 ? modelData.project + " @" + modelData.source
                 : modelData.project
-              color: Theme.textPrimary
-              font.pixelSize: 14
               textFormat: Text.PlainText
               elide: Text.ElideRight
               width: parent.width - statusIcon.width - providerLabel.width - statusLabel.width - 24
             }
 
-            Text {
+            TooltipText {
               id: statusLabel
               anchors.verticalCenter: parent.verticalCenter
               text: modelData.status
@@ -158,13 +153,12 @@ Item {
                 if (modelData.status === "error" || modelData.status === "input") return Theme.danger
                 return Theme.textMuted
               }
-              font.pixelSize: 14
               width: 38
               horizontalAlignment: Text.AlignRight
             }
           }
 
-          Text {
+          TooltipText {
             visible: modelData.sessionTitle !== ""
             text: modelData.sessionTitle
             color: Theme.textSecondary
@@ -177,7 +171,7 @@ Item {
         }
       }
 
-      Text {
+      TooltipText {
         visible: AiAgentsMonitorManager.remoteConfigured
           && AiAgentsMonitorManager.remoteState !== "connected"
         text: AiAgentsMonitorManager.remoteHost

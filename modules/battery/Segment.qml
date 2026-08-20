@@ -90,10 +90,7 @@ Item {
     anchorItem: battery
     visible: hoverArea.containsMouse || battery.barFocused
 
-    Text {
-      color: Theme.textPrimary
-      font.pixelSize: 14
-
+    TooltipText {
       text: {
         var rate = Math.abs(battery.changeRate)
         var parts = []

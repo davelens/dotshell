@@ -28,10 +28,8 @@ Item {
     anchorItem: clock
     visible: hoverArea.containsMouse || clock.barFocused
 
-    Text {
+    TooltipText {
       text: Time.date
-      color: Theme.textPrimary
-      font.pixelSize: 14
     }
   }
 }

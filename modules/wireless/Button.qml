@@ -24,33 +24,25 @@ BarButton {
       width: parent.width
       spacing: 4
 
-      Text {
+      TooltipText {
         width: parent.width
         text: "Connected to " + (WirelessManager.connectedNetwork ? WirelessManager.connectedNetwork.ssid : "")
-        color: Theme.textPrimary
-        font.pixelSize: 14
         elide: Text.ElideRight
       }
 
-      Text {
+      TooltipText {
         text: "Uptime: " + WirelessManager.getConnectionDurationLong()
-        color: Theme.textPrimary
-        font.pixelSize: 14
       }
 
       Row {
         spacing: 16
 
-        Text {
+        TooltipText {
           text: "Down: " + WirelessManager.formatSpeed(WirelessManager.downloadSpeed)
-          color: Theme.textPrimary
-          font.pixelSize: 14
         }
 
-        Text {
+        TooltipText {
           text: "Up: " + WirelessManager.formatSpeed(WirelessManager.uploadSpeed)
-          color: Theme.textPrimary
-          font.pixelSize: 14
         }
       }
     }

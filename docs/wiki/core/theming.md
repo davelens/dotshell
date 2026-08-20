@@ -2,9 +2,10 @@
 
 # Theming
 
-A theme is a flat JSON map of 19 semantic color tokens. The `Theme`
-singleton exposes them as `property color`s that every component binds
-to, so theme switches repaint live.
+A theme is a flat JSON map with 19 required semantic color tokens and
+optional `fontFamily` and `fontSizeBody` typography tokens. The `Theme`
+singleton exposes them as properties that components bind to, so theme
+switches repaint live.
 
 `core/Theme.qml`
 
@@ -14,6 +15,11 @@ Backgrounds `bgBase bgBaseAlt bgDeep bgCard bgCardHover bgBorder` ·
 text `textPrimary textSecondary textTertiary textMuted textSubtle` ·
 semantic `accent success warning danger focusRing activeIndicator
 overlay knob`.
+
+Typography defaults to `fontFamily: "sans-serif"` and `fontSizeBody: 14`.
+The generic `sans-serif` family preserves the current fontconfig-driven
+font choice. These typography tokens are currently consumed by
+`TooltipText` only.
 
 ## Resolution
 
@@ -38,6 +44,7 @@ run `dshell theme refresh` after).
 
 ## Adding a theme
 
-Drop `<name>.json` with all 19 tokens into either themes dir. No
-registration; `dshell theme list`/completion pick it up from the
-filesystem.
+Drop `<name>.json` with all 19 color tokens into either themes dir.
+Optionally add `fontFamily` as a non-empty string and `fontSizeBody` as a
+positive finite number. No registration; `dshell theme list`/completion
+pick it up from the filesystem.
