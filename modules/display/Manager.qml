@@ -145,21 +145,10 @@ Singleton {
     selectedOutputName = outputs.length > 0 ? outputs[0].name : ""
   }
 
-  function _setPrimaryForOutput(name) {
-    var screens = Quickshell.screens
-    for (var i = 0; i < screens.length; i++) {
-      if (screens[i].name === name) {
-        ScreenManager.setPrimary(screens[i])
-        return
-      }
-    }
-  }
-
   function selectOutput(name) {
     var output = outputByName(name)
     if (!output || !output.active) return
     selectedOutputName = name
-    _setPrimaryForOutput(name)
     refreshBrightness()
   }
 

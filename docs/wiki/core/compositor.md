@@ -47,7 +47,8 @@ keyboard/IPC-opened overlays and popups, falling back to `primaryScreen` when
 unavailable. Niri focus stays current through `WorkspacesChanged` and
 `WorkspaceActivated` event-stream updates. Display settings use
 compositor metadata to label screens when Quickshell reports `Unknown`.
-Selecting an active output in the combined display popup also makes it primary;
+Only the primary-display choice in display settings changes this selection.
+Choosing an output in the status-bar popup merely targets that popup's controls;
 the popup prevents disabling the final active output.
 
 ## Clamshell policy

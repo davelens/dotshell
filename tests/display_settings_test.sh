@@ -26,6 +26,13 @@ if grep -Fq 'pendingApplyCount' "$settings" || grep -Fq 'text: "Apply"' "$settin
   exit 1
 fi
 
+# Popup output selection only targets its controls; primary display changes in settings.
+grep -Fq 'ScreenManager.setPrimary(modelData)' "$settings"
+if grep -Fq 'ScreenManager.setPrimary' "$display_manager"; then
+  echo 'display popup selection must not move the status bar' >&2
+  exit 1
+fi
+
 # The focused workspace can be moved to either compositor's named output.
 grep -Fq 'Compositor.moveFocusedWorkspaceToOutput(modelData.name)' "$settings"
 grep -Fq '["swaymsg", "move", "workspace", "to", "output", name]' "$compositor"
