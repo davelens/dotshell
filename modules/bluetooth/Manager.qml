@@ -1,6 +1,7 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.Bluetooth
 import Quickshell.Io
 import QtQuick
 import qs
@@ -8,99 +9,142 @@ import qs
 Singleton {
   id: bluetoothManager
 
-  // =========================================================================
-  // PUBLIC STATE
-  // =========================================================================
+  // Bluetooth and BlueZ are the source of truth. Process completion never
+  // changes these properties; native notifications update them instead.
+  readonly property var adapter: Bluetooth.defaultAdapter
+  readonly property bool powered: adapter ? adapter.enabled : false
+  readonly property bool scanning: adapter ? adapter.discovering : false
 
-  // Bluetooth adapter power state
-  property bool powered: false
+  readonly property var devices: {
+    var result = []
+    var nativeDevices = Bluetooth.devices.values
+    for (var i = 0; i < nativeDevices.length; i++) {
+      var device = nativeDevices[i]
+      result.push({
+        address: device.address,
+        name: device.deviceName || device.name || device.address,
+        paired: device.paired,
+        bonded: device.bonded,
+        trusted: device.trusted,
+        connected: device.connected
+      })
+    }
+    result.sort(function(a, b) {
+      var aKnown = a.paired || a.bonded || a.trusted
+      var bKnown = b.paired || b.bonded || b.trusted
+      if (a.connected !== b.connected) return a.connected ? -1 : 1
+      if (aKnown !== bKnown) return aKnown ? -1 : 1
+      return a.name.localeCompare(b.name)
+    })
+    return result
+  }
 
-  // Currently scanning for devices
-  property bool scanning: false
+  readonly property var connectedDevices: devices.filter(function(device) {
+    return device.connected
+  })
 
-  // Connected devices list
-  property var connectedDevices: []
-
-  // List of discovered devices
-  // Each: { address: string, name: string, paired: bool, connected: bool }
-  property var devices: []
-
-  // Operation in progress (for UI feedback)
+  property alias powerPreference: powerConfig.powerPreference
   property bool busy: false
-
-  // Address currently being connected to (for UI feedback)
   property string connectingAddress: ""
-
-  // Error message from last failed connection attempt
+  property string deviceAction: ""
+  property string deviceActionAddress: ""
   property string connectError: ""
-
-  // Address of the device that failed to connect (for inline error display)
   property string connectErrorAddress: ""
+  property string connectErrorAction: ""
+  property string globalError: ""
 
-  // Suppress refreshes briefly after disconnect (to prevent overwriting optimistic update)
-  property bool suppressRefresh: false
+  readonly property string deviceHelper:
+    Quickshell.shellDir + "/modules/bluetooth/bin/bluetooth-device"
+
+  property bool _scanRequested: false
+  property bool _continuousScan: false
+  property var _operations: []
+  property var _activeOperation: null
+  property bool _powerOnRequested: false
+  property int _powerFallbackAttempts: 0
+  readonly property int _maxPowerFallbackAttempts: 3
+  property bool _powerPreferenceLoaded: false
+  property bool _powerPreferenceRestored: false
+
+  ModuleConfig {
+    moduleId: "bluetooth"
+    scope: "general"
+    adapter: JsonAdapter {
+      id: powerConfig
+      property string powerPreference: ""
+    }
+    onLoaded: {
+      bluetoothManager._powerPreferenceLoaded = true
+      bluetoothManager._restorePowerPreference()
+    }
+  }
 
   // =========================================================================
   // PUBLIC API
   // =========================================================================
 
+  function clearErrors() {
+    connectError = ""
+    connectErrorAddress = ""
+    connectErrorAction = ""
+    globalError = ""
+  }
+
   function togglePower() {
+    if (busy) return
     if (powered) {
-      // Optimistic update
-      powered = false
-      scanning = false
-      connectedDevices = []
-      devices = []
-      powerOffProc.running = true
+      powerPreference = "off"
+      _powerOnRequested = false
+      powerFallbackTimer.stop()
+      _enqueueOperation("power-off", "", ["rfkill", "block", "bluetooth"])
     } else {
-      // Optimistic update
-      powered = true
-      scanning = true
-      devices = []
-      powerOnProc.running = true
+      if (_powerOnRequested) return
+      powerPreference = "on"
+      _powerOnRequested = true
+      _powerFallbackAttempts = 0
+      _enqueueOperation("power-on", "", ["rfkill", "unblock", "bluetooth"])
     }
   }
 
-  function startScan() {
-    if (!powered || scanning) return
-    scanning = true
-    devices = []
-    scanProc.running = true
+  function _restorePowerPreference() {
+    if (_powerPreferenceRestored || !_powerPreferenceLoaded || !adapter
+        || powerPreference === "") return
+    _powerPreferenceRestored = true
+    if ((powerPreference === "on") !== powered) togglePower()
+  }
+
+  // Continuous scans are used by transient surfaces. The default is a
+  // bounded scan so existing callers cannot leave discovery enabled.
+  function startScan(continuous = false) {
+    // Preserve the request while the adapter is absent or powered off. The
+    // enabled/adapter change handlers apply it when BlueZ becomes ready.
+    _scanRequested = true
+    _continuousScan = continuous === true
+    if (_continuousScan) boundedScanTimer.stop()
+    else boundedScanTimer.restart()
+    _applyScanRequest()
   }
 
   function stopScan() {
-    if (!scanning) return
-    scanStopProc.running = true
+    _scanRequested = false
+    _continuousScan = false
+    boundedScanTimer.stop()
+    scanConfirmationTimer.stop()
+    _setDiscovering(false)
   }
 
   function connect(address) {
-    connectError = ""
-    connectErrorAddress = ""
-    busy = true
-    connectingAddress = address
-    connectProc.command = ["bluetoothctl", "connect", address]
-    connectProc.running = true
+    var device = _nativeDevice(address)
+    var known = device && (device.paired || device.bonded || device.trusted)
+    _enqueueDeviceOperation(known ? "connect" : "pair", address)
   }
 
   function disconnect(address) {
-    busy = true
-    suppressRefresh = true
-    // Optimistic update - remove from connected devices and update devices list
-    connectedDevices = connectedDevices.filter(d => d.address !== address)
-    var updatedDevices = devices.slice()
-    for (var i = 0; i < updatedDevices.length; i++) {
-      if (updatedDevices[i].address === address) {
-        updatedDevices[i].connected = false
-        break
-      }
-    }
-    devices = updatedDevices
-    disconnectProc.address = address
-    disconnectProc.running = true
+    _enqueueDeviceOperation("disconnect", address)
   }
 
-  function refresh() {
-    statusProc.running = true
+  function forget(address) {
+    _enqueueDeviceOperation("forget", address)
   }
 
   // =========================================================================
@@ -120,220 +164,209 @@ Singleton {
   }
 
   // =========================================================================
-  // PROCESSES
+  // OPERATION QUEUE
   // =========================================================================
 
-  // Check bluetooth status
-  Process {
-    id: statusProc
-    command: ["bash", "-c", "echo 'show' | bluetoothctl"]
-    running: true
-    stdout: StdioCollector {}
-    onExited: {
-      var poweredMatch = statusProc.stdout.text.match(/Powered:\s*(yes|no)/)
-      bluetoothManager.powered = poweredMatch && poweredMatch[1] === "yes"
+  function _nativeDevice(address) {
+    var nativeDevices = Bluetooth.devices.values
+    for (var i = 0; i < nativeDevices.length; i++) {
+      if (nativeDevices[i].address.toUpperCase() === address.toUpperCase())
+        return nativeDevices[i]
+    }
+    return null
+  }
 
-      // If powered, check for connected devices
-      if (bluetoothManager.powered) {
-        connectedCheckProc.running = true
-      } else {
-        bluetoothManager.connectedDevices = []
-        bluetoothManager.devices = []
-      }
+  function _enqueueDeviceOperation(operation, address) {
+    if (!address || busy) return
+    connectError = ""
+    connectErrorAddress = ""
+    connectErrorAction = ""
+    _enqueueOperation("device", address, [deviceHelper, operation, address], operation)
+  }
+
+  function _enqueueOperation(kind, address, command, action) {
+    var pending = _operations.slice()
+    pending.push({
+      kind: kind,
+      address: address,
+      action: action || kind,
+      command: command
+    })
+    _operations = pending
+    busy = true
+    _startNextOperation()
+  }
+
+  function _startNextOperation() {
+    if (_activeOperation || operationProc.running) return
+    if (_operations.length === 0) {
+      busy = false
+      connectingAddress = ""
+      deviceAction = ""
+      deviceActionAddress = ""
+      return
+    }
+
+    var pending = _operations.slice()
+    _activeOperation = pending.shift()
+    _operations = pending
+    deviceAction = _activeOperation.kind === "device" ? _activeOperation.action : ""
+    deviceActionAddress = _activeOperation.kind === "device" ? _activeOperation.address : ""
+    connectingAddress = deviceAction === "connect" || deviceAction === "pair"
+      ? deviceActionAddress : ""
+    operationProc.command = _activeOperation.command
+    operationProc.running = true
+  }
+
+  function _errorMessage(operation, output) {
+    var text = output.trim()
+    var message = "Could not connect to this device."
+    if (operation.action === "pair") message = "Could not pair with this device."
+    else if (operation.action === "disconnect") message = "Could not disconnect this device."
+    else if (operation.action === "forget") message = "Could not forget this device."
+    return text ? message + " " + text : message
+  }
+
+  function _globalErrorMessage(operation, output) {
+    var text = output.trim()
+    var message = operation.action === "power-off"
+      ? "Could not disable Bluetooth." : "Could not enable Bluetooth."
+    return text ? message + " " + text : message
+  }
+
+  function _setDiscovering(discovering) {
+    if (!adapter) return
+    try {
+      adapter.discovering = discovering
+    } catch (error) {
+      globalError = discovering ? "Could not start Bluetooth discovery."
+        : "Could not stop Bluetooth discovery."
     }
   }
 
-  // Check for connected devices
-  Process {
-    id: connectedCheckProc
-    command: ["bash", "-c", "echo 'devices Connected' | bluetoothctl"]
-    stdout: StdioCollector {}
-    onExited: {
-      var lines = connectedCheckProc.stdout.text.trim().split("\n").filter(l => l.includes("Device"))
-      var connected = []
-      for (var i = 0; i < lines.length; i++) {
-        var match = lines[i].match(/Device\s+([0-9A-Fa-f:]+)\s+(.+)/)
-        if (match) {
-          connected.push({
-            address: match[1],
-            name: match[2]
-          })
-        }
-      }
-      bluetoothManager.connectedDevices = connected
+  function _applyScanRequest() {
+    if (!_scanRequested || !adapter || !powered) return
+    scanConfirmationTimer.restart()
+    _setDiscovering(true)
+  }
+
+  function _schedulePowerFallback() {
+    if (!_powerOnRequested || powered) return
+    if (_powerFallbackAttempts < _maxPowerFallbackAttempts) {
+      powerFallbackTimer.restart()
+    } else {
+      globalError = "Could not enable Bluetooth."
     }
   }
 
-  // Power on
   Process {
-    id: powerOnProc
-    command: ["bash", "-c", "rfkill unblock bluetooth; sleep 1; bluetoothctl power on"]
-    onExited: {
-      // Delay scan start to allow bluetooth to actually power on
-      powerOnScanTimer.restart()
-    }
-  }
-
-  Timer {
-    id: powerOnScanTimer
-    interval: 500
-    onTriggered: {
-      scanProc.running = true
-    }
-  }
-
-  // Power off
-  Process {
-    id: powerOffProc
-    command: ["bash", "-c", "echo 'power off' | bluetoothctl"]
-    onExited: {
-      bluetoothManager.powered = false
-      bluetoothManager.scanning = false
-      bluetoothManager.connectedDevice = null
-      bluetoothManager.devices = []
-    }
-  }
-
-  // Scan for devices (runs for scanDuration then stops)
-  Process {
-    id: scanProc
-    command: ["bash", "-c", "bluetoothctl --timeout 10 scan on"]
-    onExited: {
-      bluetoothManager.scanning = false
-      // Get final device list
-      deviceListProc.running = true
-    }
-  }
-
-  // Stop scan
-  Process {
-    id: scanStopProc
-    command: ["bash", "-c", "echo 'scan off' | bluetoothctl"]
-    onExited: {
-      bluetoothManager.scanning = false
-    }
-  }
-
-  // Get device list
-  Process {
-    id: deviceListProc
-    command: ["bash", "-c", "echo 'devices' | bluetoothctl"]
-    stdout: StdioCollector {}
-    onExited: {
-      var lines = deviceListProc.stdout.text.trim().split("\n").filter(l => l.includes("Device"))
-      var connectedAddresses = bluetoothManager.connectedDevices.map(d => d.address)
-      var newDevices = []
-      for (var i = 0; i < lines.length; i++) {
-        var match = lines[i].match(/Device\s+([0-9A-Fa-f:]+)\s+(.+)/)
-        if (match) {
-          newDevices.push({
-            address: match[1],
-            name: match[2],
-            paired: false,
-            connected: connectedAddresses.indexOf(match[1]) >= 0
-          })
-        }
-      }
-      bluetoothManager.devices = newDevices
-
-      // Check paired status for each device
-      pairedCheckProc.running = true
-    }
-  }
-
-  // Check paired devices
-  Process {
-    id: pairedCheckProc
-    command: ["bash", "-c", "echo 'devices Paired' | bluetoothctl"]
-    stdout: StdioCollector {}
-    onExited: {
-      var pairedAddresses = []
-      var lines = pairedCheckProc.stdout.text.trim().split("\n").filter(l => l.includes("Device"))
-      for (var i = 0; i < lines.length; i++) {
-        var match = lines[i].match(/Device\s+([0-9A-Fa-f:]+)/)
-        if (match) {
-          pairedAddresses.push(match[1])
-        }
-      }
-
-      // Update devices with paired status
-      var updatedDevices = bluetoothManager.devices.slice()
-      for (var j = 0; j < updatedDevices.length; j++) {
-        updatedDevices[j].paired = pairedAddresses.indexOf(updatedDevices[j].address) >= 0
-      }
-      updatedDevices.sort(function(a, b) {
-        return (a.paired === b.paired) ? 0 : (a.paired ? -1 : 1)
-      })
-      bluetoothManager.devices = updatedDevices
-    }
-  }
-
-  // Connect to device
-  Process {
-    id: connectProc
-    property string errorOutput: ""
+    id: operationProc
     command: []
-    onStarted: errorOutput = ""
-    stdout: SplitParser {
-      onRead: data => {
-        // bluetoothctl writes some errors to stdout
-        if (data.indexOf("Failed") >= 0 || data.indexOf("not available") >= 0) {
-          connectProc.errorOutput += data + "\n"
-        }
-      }
-    }
+    stdout: StdioCollector {}
     stderr: StdioCollector {}
+
     onExited: exitCode => {
-      var failedAddress = bluetoothManager.connectingAddress
-      bluetoothManager.busy = false
-      bluetoothManager.connectingAddress = ""
-      var errMsg = (connectProc.errorOutput + connectProc.stderr.text).trim()
-      if (exitCode !== 0 || errMsg) {
-        bluetoothManager.connectErrorAddress = failedAddress
-        bluetoothManager.connectError = errMsg || "Connection failed."
+      var operation = bluetoothManager._activeOperation
+      if (!operation) return
+
+      var output = (operationProc.stdout.text + "\n" + operationProc.stderr.text).trim()
+      if (operation.kind === "device" && exitCode !== 0) {
+        bluetoothManager.connectErrorAddress = operation.address
+        bluetoothManager.connectErrorAction = operation.action
+        bluetoothManager.connectError = bluetoothManager._errorMessage(operation, output)
+      } else if (operation.kind !== "device" && exitCode !== 0) {
+        var reachedRequestedState = operation.kind === "power-off"
+          ? !bluetoothManager.powered : bluetoothManager.powered
+        if (!reachedRequestedState)
+          bluetoothManager.globalError = bluetoothManager._globalErrorMessage(operation, output)
       }
-      bluetoothManager.refresh()
+
+      if (operation.kind === "power-on" || operation.kind === "power-fallback") {
+        if (bluetoothManager.powered) bluetoothManager.globalError = ""
+        else bluetoothManager._schedulePowerFallback()
+      }
+
+      bluetoothManager._activeOperation = null
+      bluetoothManager.connectingAddress = ""
+      bluetoothManager.deviceAction = ""
+      bluetoothManager.deviceActionAddress = ""
+      bluetoothManager._startNextOperation()
     }
   }
 
-  // Disconnect from device
-  Process {
-    id: disconnectProc
-    property string address: ""
-    command: ["bluetoothctl", "disconnect", address]
-    onExited: {
-      bluetoothManager.busy = false
-      // Delay refresh to allow disconnect to complete
-      disconnectRefreshTimer.restart()
-    }
-  }
-
+  // rfkill normally enables the adapter. BlueZ can lag behind it, so retry a
+  // direct power-on command after a delay, but never indefinitely.
   Timer {
-    id: disconnectRefreshTimer
-    interval: 2000
+    id: powerFallbackTimer
+    interval: 1000
+    repeat: false
     onTriggered: {
-      bluetoothManager.suppressRefresh = false
-      bluetoothManager.refresh()
+      if (!bluetoothManager._powerOnRequested || bluetoothManager.powered
+          || bluetoothManager._powerFallbackAttempts
+            >= bluetoothManager._maxPowerFallbackAttempts) return
+      bluetoothManager._powerFallbackAttempts++
+      bluetoothManager._enqueueOperation("power-fallback", "",
+        ["bluetoothctl", "power", "on"])
     }
   }
 
-  // =========================================================================
-  // TIMERS
-  // =========================================================================
-
-  // Periodic device list refresh during scan
   Timer {
-    interval: 2000
-    running: bluetoothManager.scanning && !bluetoothManager.suppressRefresh
-    repeat: true
-    onTriggered: deviceListProc.running = true
+    id: boundedScanTimer
+    interval: 10000
+    repeat: false
+    onTriggered: bluetoothManager.stopScan()
   }
 
-  // Periodic status refresh
   Timer {
-    interval: 10000
-    running: true
-    repeat: true
-    onTriggered: bluetoothManager.refresh()
+    id: scanConfirmationTimer
+    interval: 1500
+    repeat: false
+    onTriggered: {
+      if (bluetoothManager._scanRequested && bluetoothManager.powered
+          && !bluetoothManager.scanning)
+        bluetoothManager.globalError = "Could not start Bluetooth discovery."
+    }
+  }
+
+  // If a late BlueZ reply enables discovery after stopScan(), turn it back
+  // off. This also covers a popup closing while scan startup is in flight.
+  Connections {
+    target: bluetoothManager.adapter
+    ignoreUnknownSignals: true
+
+    function onDiscoveringChanged() {
+      if (!bluetoothManager.adapter) return
+      if (bluetoothManager.adapter.discovering) {
+        scanConfirmationTimer.stop()
+        if (!bluetoothManager._scanRequested) {
+          bluetoothManager._setDiscovering(false)
+        } else {
+          bluetoothManager.globalError = ""
+        }
+      } else if (bluetoothManager._scanRequested
+          && bluetoothManager._continuousScan && bluetoothManager.powered) {
+        // BlueZ may end discovery on its own. A transient surface's continuous
+        // request remains authoritative until stopScan() is called.
+        bluetoothManager._applyScanRequest()
+      }
+    }
+
+    function onEnabledChanged() {
+      if (!bluetoothManager.adapter) return
+      if (bluetoothManager.adapter.enabled) {
+        bluetoothManager._powerOnRequested = false
+        bluetoothManager._powerFallbackAttempts = 0
+        bluetoothManager.globalError = ""
+        powerFallbackTimer.stop()
+        bluetoothManager._applyScanRequest()
+      }
+    }
+  }
+
+  onAdapterChanged: {
+    if (!adapter) return
+    _restorePowerPreference()
+    if (adapter.discovering && !_scanRequested) _setDiscovering(false)
+    else _applyScanRequest()
   }
 }

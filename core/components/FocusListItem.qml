@@ -22,6 +22,7 @@ Item {
   property color hoverBackgroundColor: Theme.bgCard
   property int bodyMargins: 4
   property int bodyRadius: 6
+  property int contentLeftMargin: 12
 
   // Allow parent to control whether focus ring is shown
   property bool showFocusRing: true
@@ -67,7 +68,7 @@ Item {
 
     Row {
       anchors.left: parent.left
-      anchors.leftMargin: 12
+      anchors.leftMargin: item.contentLeftMargin
       anchors.verticalCenter: parent.verticalCenter
       spacing: 12
 

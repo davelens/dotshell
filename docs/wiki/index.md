@@ -8,3 +8,4 @@ decisions in `../adr/`, durable constraints in `../memory/`.
   statusbar, compositor integration.
 - [API](api/index.md) — the `dshell` CLI and the shell's IPC surface.
 - [Setup and uninstall](setup.md) — install script, service, symlinks.
+- [Bluetooth](bluetooth.md) — discovery, pairing, trust, connections, and radio power.

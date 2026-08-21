@@ -9,11 +9,12 @@ bash -n setup/init.sh setup/uninstall.sh setup/lib/platform.sh setup/platforms/*
   modules/ai-agents-monitor/bin/pi-discover \
   modules/ai-agents-monitor/bin/remote-stream modules/notifications/bin/remote-stream \
   modules/display/bin/display-brightness modules/display/bin/display-text-size \
+  modules/bluetooth/bin/bluetooth-device \
   tests/run.sh tests/setup_test.sh tests/dshell_test.sh tests/module_rename_test.sh \
   tests/pi_discover_test.sh tests/remote_stream_test.sh tests/popup_manager_cleanup_test.sh \
   tests/popup_ipc_test.sh tests/popup_geometry_test.sh tests/dropdown_test.sh \
   tests/focused_screen_test.sh tests/focus_slider_test.sh tests/notification_remote_stream_test.sh \
-  tests/display_brightness_test.sh \
+  tests/display_brightness_test.sh tests/bluetooth_device_test.sh tests/bluetooth_test.sh \
   tests/display_clamshell_test.sh tests/display_settings_test.sh tests/display_text_size_test.sh \
   tests/theme_typography_test.sh tests/theme_font_coverage_test.sh
 
@@ -32,11 +33,12 @@ if command -v shellcheck >/dev/null 2>&1; then
     modules/ai-agents-monitor/bin/pi-discover \
     modules/ai-agents-monitor/bin/remote-stream modules/notifications/bin/remote-stream \
     modules/display/bin/display-brightness modules/display/bin/display-text-size \
+    modules/bluetooth/bin/bluetooth-device \
     tests/run.sh tests/setup_test.sh tests/dshell_test.sh tests/module_rename_test.sh \
     tests/pi_discover_test.sh tests/remote_stream_test.sh tests/popup_manager_cleanup_test.sh \
     tests/popup_ipc_test.sh tests/popup_geometry_test.sh tests/dropdown_test.sh \
     tests/focused_screen_test.sh tests/focus_slider_test.sh tests/notification_remote_stream_test.sh \
-    tests/display_brightness_test.sh \
+    tests/display_brightness_test.sh tests/bluetooth_device_test.sh tests/bluetooth_test.sh \
     tests/display_clamshell_test.sh tests/display_settings_test.sh tests/display_text_size_test.sh \
     tests/theme_typography_test.sh tests/theme_font_coverage_test.sh
 fi
@@ -53,6 +55,8 @@ bash tests/dropdown_test.sh
 bash tests/focused_screen_test.sh
 bash tests/focus_slider_test.sh
 bash tests/display_brightness_test.sh
+bash tests/bluetooth_device_test.sh
+bash tests/bluetooth_test.sh
 bash tests/display_clamshell_test.sh
 bash tests/display_settings_test.sh
 bash tests/display_text_size_test.sh

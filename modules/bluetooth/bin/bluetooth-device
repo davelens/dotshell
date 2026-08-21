@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  printf 'usage: %s {pair|connect|disconnect|forget} XX:XX:XX:XX:XX:XX\n' \
+    "${0##*/}" >&2
+}
+
+if [[ $# -ne 2 ]]; then
+  usage
+  exit 2
+fi
+
+operation="$1"
+address="$2"
+
+case "$operation" in
+  pair|connect|disconnect|forget) ;;
+  *)
+    printf 'error: unsupported Bluetooth operation: %s\n' "$operation" >&2
+    usage
+    exit 2
+    ;;
+esac
+
+if [[ ! $address =~ ^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$ ]]; then
+  printf 'error: invalid Bluetooth address: %s\n' "$address" >&2
+  exit 2
+fi
+
+bluetoothctl_timeout="${BLUETOOTHCTL_TIMEOUT_SECONDS:-30}"
+bluetoothctl_output=""
+
+run_bluetoothctl() {
+  local status=0
+
+  bluetoothctl_output="$(timeout "${bluetoothctl_timeout}s" bluetoothctl "$@" 2>&1)" || status=$?
+  if [[ -n $bluetoothctl_output ]]; then
+    printf '%s\n' "$bluetoothctl_output"
+  elif ((status == 124)); then
+    printf 'error: Bluetooth %s timed out after %ss\n' "$1" "$bluetoothctl_timeout" >&2
+  fi
+
+  ((status == 0)) && [[ $bluetoothctl_output != *Failed* ]]
+}
+
+case "$operation" in
+  pair)
+    run_bluetoothctl pair "$address" || exit $?
+    run_bluetoothctl trust "$address" || exit $?
+    run_bluetoothctl connect "$address" || exit $?
+    ;;
+  connect)
+    run_bluetoothctl trust "$address" || exit $?
+    run_bluetoothctl connect "$address" || exit $?
+    ;;
+  disconnect)
+    run_bluetoothctl disconnect "$address" || exit $?
+    ;;
+  forget)
+    if run_bluetoothctl disconnect "$address"; then
+      :
+    else
+      status=$?
+      if ! grep -Eiq 'not[[:space:]_-]*connected|notconnected' \
+          <<<"$bluetoothctl_output"; then
+        exit "$status"
+      fi
+    fi
+    run_bluetoothctl remove "$address" || exit $?
+    ;;
+esac
