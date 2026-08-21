@@ -42,6 +42,23 @@ settings panel, and popup fallback anchor all follow `primaryScreen`.
 Selecting an active output in the combined display popup also makes it primary;
 the popup prevents disabling the final active output.
 
+## Clamshell policy
+
+The display module's root component keeps its manager active independently of
+the bar button and popup. The manager reads login1's
+`org.freedesktop.login1.Manager.LidClosed` property with an initial system-bus `gdbus call`, then follows
+`PropertiesChanged` events with a long-running `gdbus monitor`. It waits for a
+known lid state before applying policy.
+
+With the lid closed and an active external output, the manager disables the
+internal panel (`eDP-`, `LVDS-`, or `DSI-`). Opening the lid restores a panel
+disabled or adopted by the policy. It also restores the internal panel whenever
+the final external output disconnects and no output remains active, so display
+handling cannot leave the session with zero outputs. Closing without an external
+output leaves the internal panel enabled. Power changes use the compositor
+abstraction for both sway and niri and are serialized with manual display power
+controls; manual controls still reject disabling the final active output.
+
 ## Display controls
 
 `modules/display/Manager.qml` combines output selection, power, render scale,

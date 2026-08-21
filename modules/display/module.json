@@ -9,5 +9,6 @@
     "button": "Button.qml",
     "popup": "Popup.qml",
     "settings": "Settings.qml"
-  }
+  },
+  "rootComponents": ["Clamshell.qml"]
 }

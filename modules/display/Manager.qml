@@ -11,6 +11,13 @@ Singleton {
   property var outputs: []
   property string selectedOutputName: ""
   readonly property var selectedOutput: outputByName(selectedOutputName)
+  property bool lidStateKnown: false
+  property bool lidClosed: false
+  property bool _outputPowerPending: false
+  property string _pendingOutputName: ""
+  property bool _pendingOutputAutomatic: false
+  property string _clamshellOutputName: ""
+  property bool _automaticRetryAttempted: false
   readonly property int activeCount: {
     var count = 0
     for (var i = 0; i < outputs.length; i++) if (outputs[i].active) count++
@@ -154,11 +161,94 @@ Singleton {
     refreshBrightness()
   }
 
+  function _isInternalOutput(output) {
+    return output && /^(eDP|LVDS|DSI)-/.test(output.name)
+  }
+
+  function _requestOutputPower(name, active, automatic) {
+    if (_outputPowerPending) return false
+    _outputPowerPending = true
+    _pendingOutputName = name
+    _pendingOutputAutomatic = automatic
+    Compositor.setOutputActive(name, active)
+    return true
+  }
+
   function setOutputActive(name, active) {
     var output = outputByName(name)
-    if (!output || output.active === active) return
+    if (!output || output.active === active || _outputPowerPending) return
+    // Manual controls must never turn off the final active output.
     if (!active && activeCount <= 1) return
-    Compositor.setOutputActive(name, active)
+    _requestOutputPower(name, active, false)
+  }
+
+  function _setLidState(closed) {
+    var changed = !lidStateKnown || lidClosed !== closed
+    lidClosed = closed
+    lidStateKnown = true
+    if (changed) {
+      _automaticRetryAttempted = false
+      Compositor.fetchOutputs()
+    }
+  }
+
+  function _parseLidLine(line, propertiesChangedOnly) {
+    if (propertiesChangedOnly
+        && (line.indexOf("PropertiesChanged") < 0 || line.indexOf("LidClosed") < 0)) return
+    var match = line.match(/<(true|false)>/)
+    if (match) _setLidState(match[1] === "true")
+  }
+
+  function _reconcileClamshell() {
+    // Never apply policy against an assumed lid state or while compositor's
+    // single output-power process is occupied.
+    if (!lidStateKnown || _outputPowerPending) return
+
+    var internals = []
+    var activeExternalCount = 0
+    for (var i = 0; i < outputs.length; i++) {
+      if (_isInternalOutput(outputs[i])) internals.push(outputs[i])
+      else if (outputs[i].active) activeExternalCount++
+    }
+    if (internals.length === 0) {
+      _clamshellOutputName = ""
+      return
+    }
+
+    var owned = outputByName(_clamshellOutputName)
+    if (owned && !_isInternalOutput(owned)) owned = null
+    if (!owned) _clamshellOutputName = ""
+
+    if (lidClosed && activeExternalCount > 0) {
+      var activeInternal = null
+      for (var j = 0; j < internals.length; j++) {
+        if (internals[j].active) {
+          activeInternal = internals[j]
+          break
+        }
+      }
+      if (activeInternal) {
+        _clamshellOutputName = activeInternal.name
+        _requestOutputPower(activeInternal.name, false, true)
+      } else if (!_clamshellOutputName) {
+        // Adopt an already-disabled panel so opening the lid restores it.
+        _clamshellOutputName = internals[0].name
+      }
+      return
+    }
+
+    if (owned && !owned.active) {
+      // Opening the lid, or losing the last external while closed, restores
+      // the panel owned/adopted by clamshell policy and avoids zero outputs.
+      _requestOutputPower(owned.name, true, true)
+      return
+    }
+    if (owned && owned.active) _clamshellOutputName = ""
+
+    if (activeExternalCount === 0 && activeCount === 0) {
+      _clamshellOutputName = internals[0].name
+      _requestOutputPower(internals[0].name, true, true)
+    }
   }
 
   function setScale(scale) {
@@ -240,7 +330,11 @@ Singleton {
     textSizeProcess.running = true
   }
 
-  Component.onCompleted: Compositor.fetchOutputs()
+  Component.onCompleted: {
+    Compositor.fetchOutputs()
+    lidInitial.running = true
+    lidMonitor.running = true
+  }
 
   Connections {
     target: Quickshell
@@ -256,7 +350,62 @@ Singleton {
       displayManager.outputs = displayManager.normalizeOutputs(json)
       displayManager._ensureSelection()
       displayManager.refreshBrightness()
+      displayManager._reconcileClamshell()
     }
+    function onOutputPowerApplied(name, success) {
+      if (!displayManager._outputPowerPending || name !== displayManager._pendingOutputName)
+        return
+      var automatic = displayManager._pendingOutputAutomatic
+      displayManager._outputPowerPending = false
+      displayManager._pendingOutputName = ""
+      displayManager._pendingOutputAutomatic = false
+      if (success) {
+        displayManager._automaticRetryAttempted = false
+      } else if (automatic && !displayManager._automaticRetryAttempted) {
+        displayManager._automaticRetryAttempted = true
+        clamshellRetry.start()
+      } else if (!automatic) {
+        displayManager._reconcileClamshell()
+      }
+    }
+  }
+
+  Process {
+    id: lidInitial
+    command: ["gdbus", "call", "--system", "--dest", "org.freedesktop.login1",
+      "--object-path", "/org/freedesktop/login1", "--method",
+      "org.freedesktop.DBus.Properties.Get", "org.freedesktop.login1.Manager", "LidClosed"]
+    stdout: StdioCollector {}
+    onExited: exitCode => {
+      if (exitCode === 0 && !displayManager.lidStateKnown)
+        displayManager._parseLidLine(lidInitial.stdout.text, false)
+    }
+  }
+
+  Process {
+    id: lidMonitor
+    command: ["gdbus", "monitor", "--system", "--dest", "org.freedesktop.login1",
+      "--object-path", "/org/freedesktop/login1"]
+    stdout: SplitParser {
+      onRead: line => displayManager._parseLidLine(line, true)
+    }
+    onExited: lidMonitorRestart.start()
+  }
+
+  Timer {
+    id: lidMonitorRestart
+    interval: 2000
+    repeat: false
+    onTriggered: {
+      if (!lidMonitor.running) lidMonitor.running = true
+    }
+  }
+
+  Timer {
+    id: clamshellRetry
+    interval: 750
+    repeat: false
+    onTriggered: Compositor.fetchOutputs()
   }
 
   Timer {

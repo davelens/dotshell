@@ -13,7 +13,7 @@ bash -n setup/init.sh setup/uninstall.sh setup/lib/platform.sh setup/platforms/*
   tests/pi_discover_test.sh tests/remote_stream_test.sh tests/popup_manager_cleanup_test.sh \
   tests/popup_ipc_test.sh tests/popup_geometry_test.sh tests/dropdown_test.sh \
   tests/notification_remote_stream_test.sh tests/display_brightness_test.sh \
-  tests/display_text_size_test.sh tests/theme_typography_test.sh \
+  tests/display_clamshell_test.sh tests/display_text_size_test.sh tests/theme_typography_test.sh \
   tests/theme_font_coverage_test.sh
 
 if ! command -v jq >/dev/null 2>&1; then
@@ -35,7 +35,7 @@ if command -v shellcheck >/dev/null 2>&1; then
     tests/pi_discover_test.sh tests/remote_stream_test.sh tests/popup_manager_cleanup_test.sh \
     tests/popup_ipc_test.sh tests/popup_geometry_test.sh tests/dropdown_test.sh \
     tests/notification_remote_stream_test.sh tests/display_brightness_test.sh \
-    tests/display_text_size_test.sh tests/theme_typography_test.sh \
+    tests/display_clamshell_test.sh tests/display_text_size_test.sh tests/theme_typography_test.sh \
     tests/theme_font_coverage_test.sh
 fi
 
@@ -49,6 +49,7 @@ bash tests/popup_ipc_test.sh
 bash tests/popup_geometry_test.sh
 bash tests/dropdown_test.sh
 bash tests/display_brightness_test.sh
+bash tests/display_clamshell_test.sh
 bash tests/display_text_size_test.sh
 bash tests/theme_typography_test.sh
 bash tests/theme_font_coverage_test.sh
