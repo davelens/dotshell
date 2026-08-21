@@ -1,10 +1,47 @@
 import Quickshell
 import QtQuick
+import QtQuick.Window
 import qs
 import qs.core.components
 
 ModulePopup {
   id: popupHost
+
+  component SectionSeparator: Item {
+    width: parent.width
+    height: 17
+
+    Rectangle {
+      readonly property real pixelRatio: Window.window ? Window.window.devicePixelRatio : 1
+
+      anchors.verticalCenter: parent.verticalCenter
+      width: parent.width
+      height: 1 / pixelRatio
+      color: Theme.bgBorder
+    }
+  }
+
+  component ValueHeading: Item {
+    property string title
+    property string value
+
+    width: parent.width
+    height: Math.max(titleText.implicitHeight, valueText.implicitHeight)
+
+    TitleText {
+      id: titleText
+      anchors.left: parent.left
+      text: title
+    }
+
+    AnnotationText {
+      id: valueText
+      anchors.left: titleText.right
+      anchors.right: parent.right
+      horizontalAlignment: Text.AlignRight
+      text: value
+    }
+  }
 
   onIsOpenChanged: {
     if (isOpen) {
@@ -17,11 +54,13 @@ ModulePopup {
     popupWidth: 360
     contentSpacing: 10
 
-    Row {
+    Item {
       width: parent.width
       height: 28
 
       Text {
+        id: displayIcon
+        anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         text: "󰍹"
         color: Theme.accent
@@ -30,8 +69,9 @@ ModulePopup {
       }
 
       Column {
+        anchors.left: displayIcon.right
+        anchors.leftMargin: 10
         anchors.verticalCenter: parent.verticalCenter
-        leftPadding: 10
 
         BodyText {
           text: DisplayManager.selectedOutput
@@ -44,9 +84,9 @@ ModulePopup {
         }
       }
 
-      Item { width: Math.max(0, parent.width - 190); height: 1 }
-
       FocusLink {
+        anchors.right: parent.right
+        anchors.rightMargin: 4
         anchors.verticalCenter: parent.verticalCenter
         text: "Configure"
         textColor: Theme.textMuted
@@ -107,10 +147,7 @@ ModulePopup {
       }
     }
 
-    Rectangle {
-      width: parent.width
-      height: 1
-      color: Theme.bgBorder
+    SectionSeparator {
       visible: DisplayManager.brightnessAvailable
     }
 
@@ -119,12 +156,9 @@ ModulePopup {
       spacing: 4
       visible: DisplayManager.brightnessAvailable
 
-      Row {
-        width: parent.width
-
-        TitleText { text: "Brightness" }
-        Item { width: Math.max(0, parent.width - 120); height: 1 }
-        AnnotationText { text: DisplayManager.selectedBrightness + "%" }
+      ValueHeading {
+        title: "Brightness"
+        value: DisplayManager.selectedBrightness + "%"
       }
 
       Row {
@@ -153,17 +187,15 @@ ModulePopup {
       }
     }
 
-    Rectangle { width: parent.width; height: 1; color: Theme.bgBorder }
+    SectionSeparator {}
 
     Column {
       width: parent.width
       spacing: 5
 
-      Row {
-        width: parent.width
-        TitleText { text: "Text size" }
-        Item { width: Math.max(0, parent.width - 112); height: 1 }
-        AnnotationText { text: DisplayManager.textSize + "px" }
+      ValueHeading {
+        title: "Text size"
+        value: DisplayManager.textSize + "px"
       }
 
       Row {
@@ -192,10 +224,7 @@ ModulePopup {
       }
     }
 
-    Rectangle {
-      width: parent.width
-      height: 1
-      color: Theme.bgBorder
+    SectionSeparator {
       visible: DisplayManager.selectedOutput && DisplayManager.selectedOutput.active
     }
 
@@ -204,15 +233,11 @@ ModulePopup {
       spacing: 5
       visible: DisplayManager.selectedOutput && DisplayManager.selectedOutput.active
 
-      Row {
-        width: parent.width
-        TitleText { text: "Render scale" }
-        Item { width: Math.max(0, parent.width - 140); height: 1 }
-        AnnotationText {
-          text: DisplayManager.selectedOutput
-            ? Number(DisplayManager.selectedOutput.scale).toFixed(2).replace(/0+$/, "").replace(/[.]$/, "") + "x"
-            : ""
-        }
+      ValueHeading {
+        title: "Render scale"
+        value: DisplayManager.selectedOutput
+          ? Number(DisplayManager.selectedOutput.scale).toFixed(2).replace(/0+$/, "").replace(/[.]$/, "") + "x"
+          : ""
       }
 
       Row {
