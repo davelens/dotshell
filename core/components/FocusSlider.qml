@@ -7,7 +7,7 @@ Item {
 
   property real from: 0
   property real to: 100
-  property real value: 0
+  property alias value: control.value
   property real stepSize: 1
   property bool live: true
 
@@ -37,9 +37,6 @@ Item {
   width: parent ? parent.width : 200
   height: 24
 
-  // Sync value changes from internal slider
-  onValueChanged: control.value = value
-
   // Focus ring
   Rectangle {
     anchors.centerIn: parent
@@ -57,11 +54,9 @@ Item {
     anchors.fill: parent
     from: slider.from
     to: slider.to
-    value: slider.value
     stepSize: slider.stepSize
     live: slider.live
 
-    onValueChanged: slider.value = value
     onMoved: slider.moved()
 
     background: Rectangle {
