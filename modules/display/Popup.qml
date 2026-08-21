@@ -68,20 +68,14 @@ ModulePopup {
         font.pixelSize: Theme.scaledFontSize(22)
       }
 
-      Column {
+      Text {
         anchors.left: displayIcon.right
         anchors.leftMargin: 10
         anchors.verticalCenter: parent.verticalCenter
-
-        BodyText {
-          text: DisplayManager.selectedOutput
-            ? (DisplayManager.selectedOutput.model || DisplayManager.selectedOutput.name)
-            : "No display"
-        }
-
-        AnnotationText {
-          text: DisplayManager.selectedOutput ? DisplayManager.selectedOutput.name : ""
-        }
+        text: "Displays"
+        color: Theme.textPrimary
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.scaledFontSize(16)
       }
 
       FocusLink {
@@ -96,12 +90,16 @@ ModulePopup {
       }
     }
 
+    Rectangle {
+      width: parent.width
+      height: 1
+      color: Theme.bgCardHover
+    }
+
     Column {
       width: parent.width
       spacing: 4
       visible: DisplayManager.outputs.length > 1
-
-      TitleText { text: "Displays" }
 
       Repeater {
         model: DisplayManager.outputs
@@ -187,43 +185,6 @@ ModulePopup {
       }
     }
 
-    SectionSeparator {}
-
-    Column {
-      width: parent.width
-      spacing: 5
-
-      ValueHeading {
-        title: "Text size"
-        value: DisplayManager.textSize + "px"
-      }
-
-      Row {
-        width: parent.width
-        spacing: 4
-
-        Repeater {
-          model: DisplayManager.textSizeStops
-
-          FocusButton {
-            required property int modelData
-            width: (parent.width - 24) / 7
-            height: 30
-            text: String(modelData)
-            fontSize: 11
-            backgroundColor: DisplayManager.textSize === modelData
-              ? Theme.accent : Theme.bgCard
-            hoverColor: DisplayManager.textSize === modelData
-              ? Theme.accent : Theme.bgCardHover
-            textColor: DisplayManager.textSize === modelData
-              ? Theme.bgDeep : Theme.textPrimary
-            textHoverColor: textColor
-            onClicked: DisplayManager.setTextSize(modelData)
-          }
-        }
-      }
-    }
-
     SectionSeparator {
       visible: DisplayManager.selectedOutput && DisplayManager.selectedOutput.active
     }
@@ -260,6 +221,43 @@ ModulePopup {
             textColor: backgroundColor === Theme.accent ? Theme.bgDeep : Theme.textPrimary
             textHoverColor: textColor
             onClicked: DisplayManager.setScale(modelData)
+          }
+        }
+      }
+    }
+
+    SectionSeparator {}
+
+    Column {
+      width: parent.width
+      spacing: 5
+
+      ValueHeading {
+        title: "Text size (global)"
+        value: DisplayManager.textSize + "px"
+      }
+
+      Row {
+        width: parent.width
+        spacing: 4
+
+        Repeater {
+          model: DisplayManager.textSizeStops
+
+          FocusButton {
+            required property int modelData
+            width: (parent.width - 24) / 7
+            height: 30
+            text: String(modelData)
+            fontSize: 11
+            backgroundColor: DisplayManager.textSize === modelData
+              ? Theme.accent : Theme.bgCard
+            hoverColor: DisplayManager.textSize === modelData
+              ? Theme.accent : Theme.bgCardHover
+            textColor: DisplayManager.textSize === modelData
+              ? Theme.bgDeep : Theme.textPrimary
+            textHoverColor: textColor
+            onClicked: DisplayManager.setTextSize(modelData)
           }
         }
       }

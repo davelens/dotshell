@@ -5,6 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 screen_manager="$repo_root/core/ScreenManager.qml"
 compositor="$repo_root/core/Compositor.qml"
 display_manager="$repo_root/modules/display/Manager.qml"
+popup="$repo_root/modules/display/Popup.qml"
 settings="$repo_root/modules/display/Settings.qml"
 
 # Incomplete ShellScreen metadata must not collapse multiple outputs into one id.
@@ -25,6 +26,22 @@ if grep -Fq 'pendingApplyCount' "$settings" || grep -Fq 'text: "Apply"' "$settin
   echo 'display positions must apply immediately and sequentially without extra controls' >&2
   exit 1
 fi
+
+# Popup header matches the other connectivity popups without monitor identifiers.
+grep -Fq 'font.pixelSize: Theme.scaledFontSize(16)' "$popup"
+grep -Fq 'color: Theme.textPrimary' "$popup"
+grep -Fq 'color: Theme.bgCardHover' "$popup"
+test "$(grep -Fc 'text: "Displays"' "$popup")" -eq 1
+if grep -Fq 'DisplayManager.selectedOutput.model' "$popup" \
+    || grep -Fq 'text: DisplayManager.selectedOutput ? DisplayManager.selectedOutput.name : ""' "$popup"; then
+  echo 'display popup header must not show a monitor identifier' >&2
+  exit 1
+fi
+
+# Global text size follows the selected monitor's render scale controls.
+render_scale_line="$(grep -nF 'title: "Render scale"' "$popup" | cut -d: -f1)"
+text_size_line="$(grep -nF 'title: "Text size (global)"' "$popup" | cut -d: -f1)"
+test "$render_scale_line" -lt "$text_size_line"
 
 # Popup output selection only targets its controls; primary display changes in settings.
 grep -Fq 'ScreenManager.setPrimary(modelData)' "$settings"
