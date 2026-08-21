@@ -146,7 +146,7 @@ ModulePopup {
     }
 
     SectionSeparator {
-      visible: DisplayManager.brightnessAvailable
+      visible: DisplayManager.brightnessAvailable && DisplayManager.outputs.length > 1
     }
 
     Column {

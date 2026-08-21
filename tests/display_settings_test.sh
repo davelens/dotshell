@@ -43,6 +43,9 @@ render_scale_line="$(grep -nF 'title: "Render scale"' "$popup" | cut -d: -f1)"
 text_size_line="$(grep -nF 'title: "Text size (global)"' "$popup" | cut -d: -f1)"
 test "$render_scale_line" -lt "$text_size_line"
 
+# A collapsed single-display list must not leave an extra separator behind.
+grep -Fq 'visible: DisplayManager.brightnessAvailable && DisplayManager.outputs.length > 1' "$popup"
+
 # Popup output selection only targets its controls; primary display changes in settings.
 grep -Fq 'ScreenManager.setPrimary(modelData)' "$settings"
 if grep -Fq 'ScreenManager.setPrimary' "$display_manager"; then
