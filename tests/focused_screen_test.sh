@@ -37,5 +37,9 @@ for panel in \
 done
 
 grep -Fq 'root.panelScreen = OverlayManager.targetScreen' "$repo_root/modules/notifications/Panel.qml"
+grep -Fq 'signal popupShown()' "$repo_root/modules/notifications/Manager.qml"
+grep -Fq 'root.popupScreen = ScreenManager.focusedScreen || ScreenManager.primaryScreen' \
+  "$repo_root/modules/notifications/Popups.qml"
+grep -Fq '? [root.popupScreen] : []' "$repo_root/modules/notifications/Popups.qml"
 
 echo 'focused screen source contract tests passed'

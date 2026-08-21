@@ -60,6 +60,7 @@ Singleton {
 
   // Use ListModel for proper add/remove animations
   property alias visibleNotifications: popupModel
+  signal popupShown()
   ListModel { id: popupModel }
   property var history: []                     // all notifications grouped by app
   property int unreadCount: 0                  // unread notification count
@@ -195,6 +196,8 @@ Singleton {
   }
 
   function showPopup(notification) {
+    popupShown()
+
     // Insert at beginning (max 5)
     popupModel.insert(0, {
       notificationId: notification.id,

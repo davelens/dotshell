@@ -73,7 +73,9 @@ without auto-scanning; closing it stops a scan explicitly started by the user.
    against its right edge minus 20px, and sets `anchoredToButton = false`.
 
 Sway focus comes from Quickshell's I3 model. Niri focus is initialized with
-`niri msg -j focused-output` and refreshed from its event stream.
+`niri msg -j focused-output` and refreshed from its event stream. Transient
+notification cards snapshot the same focused output when each notification is
+shown.
 
 Stem connector visibility (`core/components/PopupBase.qml`):
 
