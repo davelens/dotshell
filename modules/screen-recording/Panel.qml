@@ -11,7 +11,7 @@ Scope {
   // PanelWindow is only created when panelOpen is true and destroyed when
   // closed, avoiding the cost of a full-screen Wayland surface at idle.
   Variants {
-    model: ScreenRecordingManager.panelOpen && ScreenManager.primaryScreen ? [ScreenManager.primaryScreen] : []
+    model: ScreenRecordingManager.panelOpen && OverlayManager.targetScreen ? [OverlayManager.targetScreen] : []
 
     PanelBase {
       id: panel

@@ -9,7 +9,7 @@ BarButton {
   icon: NotificationManager.getIcon()
   iconColor: NotificationManager.isDndActive ? Theme.textMuted : Theme.textPrimary
 
-  onClicked: OverlayManager.toggle("notifications")
+  onClicked: OverlayManager.toggle("notifications", button.screen)
 
   // Unread badge
   Rectangle {

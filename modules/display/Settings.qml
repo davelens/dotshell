@@ -11,7 +11,7 @@ SettingsPage {
   property var outputs: DisplayManager.outputs
 
   // Layout positions being edited
-  // Each entry: { name, x, y, width, height, active, make, model, scale }
+  // Each entry: { name, x, y, width, height, active, make, model, scale, workspace }
   property var layoutItems: []
   property bool layoutDirty: false
   property int selectedIndex: -1
@@ -50,6 +50,11 @@ SettingsPage {
 
   onOutputsChanged: buildLayoutItems()
 
+  function screenFriendlyName(screen) {
+    var output = DisplayManager.outputByName(screen.name)
+    return ScreenManager.friendlyName(screen, output ? output.model : "")
+  }
+
   // Build editable layout items from normalized outputs
   function buildLayoutItems() {
     var items = []
@@ -78,6 +83,7 @@ SettingsPage {
         make: o.make || "",
         model: o.model || "",
         scale: scale,
+        workspace: o.workspace || "",
         friendlyName: o.name.startsWith("eDP") ? "Built-in Display" : (o.model || o.name)
       })
     }
@@ -226,20 +232,36 @@ SettingsPage {
     layoutItems = items
   }
 
-  // Apply layout via Compositor
-  property int pendingApplyCount: 0
+  // The compositor uses one position process, so apply outputs sequentially.
+  property var pendingPositions: []
+  property bool applyingPositions: false
+  property bool positionApplySucceeded: true
 
   function applyLayout() {
+    if (applyingPositions) return
     normalizeLayout()
-    var activeItems = []
+    var positions = []
     for (var i = 0; i < layoutItems.length; i++) {
-      if (layoutItems[i].active) activeItems.push(layoutItems[i])
+      if (layoutItems[i].active) positions.push(layoutItems[i])
     }
-    if (activeItems.length === 0) return
-    pendingApplyCount = activeItems.length
-    for (var j = 0; j < activeItems.length; j++) {
-      Compositor.applyPosition(activeItems[j].name, activeItems[j].x, activeItems[j].y)
+    if (positions.length === 0) return
+    pendingPositions = positions
+    applyingPositions = true
+    positionApplySucceeded = true
+    applyNextPosition()
+  }
+
+  function applyNextPosition() {
+    if (pendingPositions.length === 0) {
+      applyingPositions = false
+      layoutDirty = !positionApplySucceeded
+      Compositor.fetchOutputs()
+      return
     }
+    var positions = pendingPositions.slice()
+    var position = positions.shift()
+    pendingPositions = positions
+    Compositor.applyPosition(position.name, position.x, position.y)
   }
 
   // Fetch outputs on load and when screens change
@@ -256,14 +278,8 @@ SettingsPage {
   Connections {
     target: Compositor
     function onPositionApplied(success) {
-      settingsRoot.pendingApplyCount--
-      if (settingsRoot.pendingApplyCount <= 0) {
-        settingsRoot.pendingApplyCount = 0
-        if (success) {
-          settingsRoot.layoutDirty = false
-        }
-        Compositor.fetchOutputs()
-      }
+      settingsRoot.positionApplySucceeded = settingsRoot.positionApplySucceeded && success
+      settingsRoot.applyNextPosition()
     }
   }
 
@@ -318,7 +334,7 @@ SettingsPage {
         anchors.fill: parent
         hoverEnabled: true
         z: 20
-        enabled: settingsRoot.activeCount > 1
+        enabled: settingsRoot.activeCount > 1 && !settingsRoot.applyingPositions
         focus: settingsRoot.dragIndex >= 0
 
         property int hoverIndex: -1
@@ -366,6 +382,7 @@ SettingsPage {
             )
             settingsRoot.layoutItems = items
             settingsRoot.layoutDirty = true
+            settingsRoot.applyLayout()
 
             settingsRoot.dragIndex = -1
             settingsRoot.guideLineX = -1
@@ -462,7 +479,10 @@ SettingsPage {
 
               Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: monitorData ? monitorData.rawWidth + "x" + monitorData.rawHeight : ""
+                text: monitorData
+                  ? monitorData.rawWidth + "x" + monitorData.rawHeight
+                    + (monitorData.workspace ? " · Workspace " + monitorData.workspace : "")
+                  : ""
                 color: Theme.textMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.scaledFontSize(Math.min(9, monitorRect.height * 0.14))
@@ -536,23 +556,55 @@ SettingsPage {
       text: "Connect a second display to arrange layout"
     }
 
-    // Apply button row
-    Row {
-      spacing: 12
-      visible: settingsRoot.layoutDirty
+    TitleText {
+      visible: settingsRoot.activeCount > 1
+      text: settingsRoot.highlightText("Workspace Placement", settingsRoot.searchQuery)
+      textFormat: Text.RichText
+    }
 
-      FocusButton {
-        text: "Apply"
-        backgroundColor: Theme.accent
-        textColor: Theme.bgDeep
-        textHoverColor: Theme.bgDeep
-        onClicked: settingsRoot.applyLayout()
-      }
+    Rectangle {
+      visible: settingsRoot.activeCount > 1
+      width: parent.width
+      height: workspaceColumn.height + 24
+      radius: 8
+      color: Theme.bgCard
 
-      FocusButton {
-        text: "Reset"
-        backgroundColor: Theme.bgBorder
-        onClicked: Compositor.fetchOutputs()
+      Column {
+        id: workspaceColumn
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 12
+        spacing: 4
+
+        HelpText {
+          text: "Select a display to move the currently focused workspace there"
+          bottomPadding: 8
+        }
+
+        Repeater {
+          model: settingsRoot.layoutItems
+
+          FocusListItem {
+            required property var modelData
+
+            itemHeight: 44
+            bodyMargins: 0
+            bodyRadius: 4
+            icon: modelData.name.startsWith("eDP") ? "󰌢" : "󰍹"
+            iconSize: 16
+            text: modelData.friendlyName
+            fontSize: 14
+            subtitle: modelData.workspace ? "Workspace " + modelData.workspace : "No active workspace"
+            subtitleFontSize: 11
+            rightIcon: "󰁔"
+            rightIconColor: Theme.accent
+            rightIconHoverColor: Theme.accent
+            backgroundColor: Theme.bgCardHover
+            hoverBackgroundColor: Theme.bgBorder
+            onClicked: Compositor.moveFocusedWorkspaceToOutput(modelData.name)
+          }
+        }
       }
     }
 
@@ -593,7 +645,7 @@ SettingsPage {
             icon: modelData.name.startsWith("eDP") ? "󰌢" : "󰍹"
             iconSize: 16
             iconColor: ScreenManager.isPrimary(modelData) ? Theme.accent : Theme.textPrimary
-            text: ScreenManager.friendlyName(modelData)
+            text: settingsRoot.screenFriendlyName(modelData)
             fontSize: 14
             subtitle: modelData.name
             subtitleFontSize: 11

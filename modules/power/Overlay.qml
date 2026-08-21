@@ -5,8 +5,8 @@ import qs.core.components
 
 Scope {
   Variants {
-    model: PowerManager.menuOpen && ScreenManager.primaryScreen
-             ? [ScreenManager.primaryScreen] : []
+    model: PowerManager.menuOpen && OverlayManager.targetScreen
+             ? [OverlayManager.targetScreen] : []
 
     PanelBase {
       id: overlay

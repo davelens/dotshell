@@ -13,19 +13,20 @@ Scope {
   // One-way latch: create the PanelWindow on first open, then keep it
   // alive so the QML tree stays laid out and the slide animation is smooth.
   property bool panelVisible: false
+  property var panelScreen: null
 
   Connections {
     target: NotificationManager
     function onPanelOpenChanged() {
       if (NotificationManager.panelOpen) {
+        root.panelScreen = OverlayManager.targetScreen
         root.panelVisible = true
       }
     }
   }
 
   Variants {
-    model: root.panelVisible && ScreenManager.primaryScreen
-             ? [ScreenManager.primaryScreen] : []
+    model: root.panelVisible && root.panelScreen ? [root.panelScreen] : []
 
     PanelWindow {
       required property var modelData
@@ -242,7 +243,7 @@ Scope {
                   textColor: Theme.textMuted
                   hoverColor: Theme.accent
                   fontSize: 12
-                  onClicked: OverlayManager.open("settings", { category: "notifications" })
+                  onClicked: OverlayManager.open("settings", { category: "notifications" }, panel.screen)
                 }
               }
             }

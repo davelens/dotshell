@@ -22,7 +22,9 @@ Component.onCompleted: OverlayManager.register("wallpaper", "Wallpaper browser")
 
 The registrations map id → human label. Labels build the feedback
 strings ("Wallpaper browser opened"); the id set validates calls —
-unknown ids return `error: unknown overlay '<id>'`. Registered overlays:
+unknown ids return `error: unknown overlay '<id>'`. Keyboard/IPC opens snapshot
+the compositor's focused output; opens originating from a bar button or an
+existing panel pass that surface's screen explicitly. Registered overlays:
 `notifications`, `power`, `screen-recording`, `wallpaper` (modules) and
 `settings` (core, `settings/Panel.qml`).
 
@@ -63,15 +65,15 @@ without auto-scanning; closing it stops a scan explicitly started by the user.
 
 ## Popup anchoring and the stem
 
-`core/PopupManager.qml` toggles popups by name. Anchor resolution on
-IPC toggle:
+`core/PopupManager.qml` snapshots a target screen whenever a popup opens:
 
-1. Bar button registered for the popup (`registerButton`, called from
-   `BarButton`) → anchor to the button's right edge,
+1. A bar click passes its button's screen and right edge directly,
    `anchoredToButton = true`.
-2. No button (module disabled in the bar) → primary screen, right edge
-   minus 20px (matches the 20px statusbar-to-popup gap),
-   `anchoredToButton = false`.
+2. A keyboard/IPC toggle uses the compositor's focused output, positions
+   against its right edge minus 20px, and sets `anchoredToButton = false`.
+
+Sway focus comes from Quickshell's I3 model. Niri focus is initialized with
+`niri msg -j focused-output` and refreshed from its event stream.
 
 Stem connector visibility (`core/components/PopupBase.qml`):
 

@@ -19,6 +19,9 @@ Singleton {
   // Optional payload passed by open() (e.g. { category: "notifications" })
   property var overlayContext: ({})
 
+  // Screen snapshotted when the overlay opens.
+  property var targetScreen: null
+
   // id → human label, filled by register() from each overlay's manager at
   // startup. Doubles as the known-id list for IPC validation; core holds
   // no module knowledge.
@@ -39,8 +42,9 @@ Singleton {
     return activeOverlay === id
   }
 
-  function open(id: string, context: var): void {
+  function open(id: string, context: var, screen: var): void {
     PopupManager.close()
+    targetScreen = screen || ScreenManager.focusedScreen || ScreenManager.primaryScreen
     overlayContext = context || ({})
     activeOverlay = id
     opened(id)
@@ -51,9 +55,9 @@ Singleton {
     if (id === undefined || id === "" || activeOverlay === id) activeOverlay = ""
   }
 
-  function toggle(id: string): void {
+  function toggle(id: string, screen: var): void {
     if (isOpen(id)) close(id)
-    else open(id, undefined)
+    else open(id, undefined, screen)
   }
 
   // One id-addressed IPC seam for every overlay; module-specific verbs

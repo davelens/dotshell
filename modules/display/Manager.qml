@@ -96,7 +96,8 @@ Singleton {
           y: sway.rect ? sway.rect.y : 0,
           make: sway.make || "",
           model: sway.model || "",
-          serial: sway.serial || ""
+          serial: sway.serial || "",
+          workspace: sway.current_workspace || ""
         })
       }
     } else if (raw && typeof raw === "object") {
@@ -117,7 +118,8 @@ Singleton {
           y: logical ? logical.y : 0,
           make: niri.make || "",
           model: niri.model || "",
-          serial: niri.serial || ""
+          serial: niri.serial || "",
+          workspace: ""
         })
       }
     }
@@ -244,11 +246,6 @@ Singleton {
       return
     }
     if (owned && owned.active) _clamshellOutputName = ""
-
-    if (activeExternalCount === 0 && activeCount === 0) {
-      _clamshellOutputName = internals[0].name
-      _requestOutputPower(internals[0].name, true, true)
-    }
   }
 
   function setScale(scale) {

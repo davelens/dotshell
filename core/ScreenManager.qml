@@ -1,6 +1,7 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.I3
 import Quickshell.Io
 import QtQuick
 import qs
@@ -14,24 +15,30 @@ Singleton {
     moduleId: "screens"
     adapter: JsonAdapter {
       id: adapter
-      // Stable display identifier: "model:serialNumber"
-      // Empty string means "no preference" -> use first available screen
+      // Stable display identifier: "model:serialNumber", or connector name
+      // when Quickshell does not expose usable monitor metadata.
+      // Empty string means "no preference" -> use first available screen.
       property string primaryDisplayId: ""
     }
   }
 
-  // Stable identifier for a ShellScreen: "model:serialNumber"
   function screenId(screen) {
     if (!screen) return ""
-    return screen.model + ":" + screen.serialNumber
+    var model = screen.model || ""
+    var serial = screen.serialNumber || ""
+    // ponytail: Connector fallback can change across ports; use compositor
+    // identity if ScreenManager gains a core-safe metadata source.
+    if (!model || model === "Unknown" || !serial || serial === "Unknown")
+      return screen.name
+    return model + ":" + serial
   }
 
-  // Human-friendly name for a ShellScreen
-  // eDP connectors -> "Built-in Display", externals -> model name
-  function friendlyName(screen) {
+  function friendlyName(screen, fallbackModel) {
     if (!screen) return ""
     if (screen.name.startsWith("eDP")) return "Built-in Display"
-    return screen.model || screen.name
+    var model = screen.model || ""
+    if (!model || model === "Unknown") model = fallbackModel || ""
+    return model || screen.name
   }
 
   // The persisted primary display ID
@@ -54,6 +61,17 @@ Singleton {
 
     // Fallback: saved primary not connected, use first available
     return screens[0]
+  }
+
+  readonly property var focusedScreen: {
+    var focusedName = Compositor.resolvedBackend === "niri"
+      ? Compositor.focusedOutputName
+      : (I3.focusedMonitor ? I3.focusedMonitor.name : "")
+    var screens = Quickshell.screens
+    for (var i = 0; i < screens.length; i++) {
+      if (screens[i].name === focusedName) return screens[i]
+    }
+    return primaryScreen
   }
 
   // Check if a screen is the primary

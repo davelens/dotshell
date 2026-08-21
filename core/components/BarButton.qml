@@ -76,15 +76,6 @@ Rectangle {
     font.family: "Symbols Nerd Font"
   }
 
-  // Store anchor position for IPC toggles (so popup appears below the button)
-  // Register this button with PopupManager so IPC toggles can compute
-  // the anchor position at open time (avoids stale stored positions).
-  Component.onCompleted: {
-    if (popupId !== "" && popupManager) {
-      popupManager.registerButton(popupId, button)
-    }
-  }
-
   MouseArea {
     id: mouseArea
     anchors.fill: parent
@@ -94,7 +85,7 @@ Rectangle {
     onClicked: {
       if (button.popupId !== "" && button.popupManager) {
         var mapped = button.mapToItem(null, button.width, 0)
-        button.popupManager.toggle(button.popupId, mapped.x)
+        button.popupManager.toggle(button.popupId, mapped.x, button.screen)
       } else {
         button.clicked()
       }

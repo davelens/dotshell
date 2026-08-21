@@ -9,8 +9,8 @@ Scope {
   id: root
 
   Variants {
-    model: WallpaperManager.panelOpen && ScreenManager.primaryScreen
-             ? [ScreenManager.primaryScreen] : []
+    model: WallpaperManager.panelOpen && OverlayManager.targetScreen
+             ? [OverlayManager.targetScreen] : []
 
     PanelBase {
       id: panel

@@ -22,10 +22,14 @@ Singleton {
 
   readonly property bool detected:
     Quickshell.env("SWAYSOCK") || Quickshell.env("I3SOCK") || Quickshell.env("NIRI_SOCKET")
+  property string focusedOutputName: ""
 
   Component.onCompleted: {
     if (!detected) {
       console.warn("[Compositor] No SWAYSOCK / I3SOCK / NIRI_SOCKET set; compositor commands disabled.")
+    } else if (resolvedBackend === "niri") {
+      refreshFocusedOutput()
+      niriEventProc.running = true
     }
   }
 
@@ -42,6 +46,7 @@ Singleton {
   signal positionApplied(bool success)
   signal scaleApplied(string name, bool success)
   signal outputPowerApplied(string name, bool success)
+  signal workspaceMoved(string outputName, bool success)
 
   // Focus a window by app_id / desktop entry
   function focusWindow(appId) {
@@ -101,6 +106,24 @@ Singleton {
     outputPowerProc.running = true
   }
 
+  function moveFocusedWorkspaceToOutput(name) {
+    if (!name) return
+    if (_skip("moveFocusedWorkspaceToOutput")) {
+      compositor.workspaceMoved(name, false)
+      return
+    }
+    workspaceMoveProc.outputName = name
+    workspaceMoveProc.command = resolvedBackend === "niri"
+      ? ["niri", "msg", "action", "move-workspace-to-monitor", name]
+      : ["swaymsg", "move", "workspace", "to", "output", name]
+    workspaceMoveProc.running = true
+  }
+
+  function refreshFocusedOutput() {
+    if (resolvedBackend === "niri" && !niriFocusedOutputProc.running)
+      niriFocusedOutputProc.running = true
+  }
+
   // Fetch all outputs (async). Result delivered via outputsFetched signal.
   function fetchOutputs() {
     if (_skip("fetchOutputs")) {
@@ -130,6 +153,16 @@ Singleton {
     onExited: exitCode => {
       var success = exitCode === 0
       compositor.outputPowerApplied(outputName, success)
+      if (success) compositor.fetchOutputs()
+    }
+  }
+
+  Process {
+    id: workspaceMoveProc
+    property string outputName: ""
+    onExited: exitCode => {
+      var success = exitCode === 0
+      compositor.workspaceMoved(outputName, success)
       if (success) compositor.fetchOutputs()
     }
   }
@@ -164,6 +197,41 @@ Singleton {
   Process {
     id: niriFocusProc
     running: false
+  }
+
+  Process {
+    id: niriFocusedOutputProc
+    command: ["niri", "msg", "-j", "focused-output"]
+    stdout: StdioCollector {}
+    onExited: exitCode => {
+      if (exitCode !== 0) return
+      try {
+        var output = JSON.parse(stdout.text)
+        compositor.focusedOutputName = output ? output.name || "" : ""
+      } catch (e) {
+        console.warn("[Compositor] Failed to parse Niri focused output:", e)
+      }
+    }
+  }
+
+  Process {
+    id: niriEventProc
+    command: ["niri", "msg", "-j", "event-stream"]
+    stdout: SplitParser {
+      onRead: line => {
+        if (line.indexOf("WorkspacesChanged") >= 0 || line.indexOf("WorkspaceActivated") >= 0)
+          compositor.refreshFocusedOutput()
+      }
+    }
+    onExited: niriEventRestart.start()
+  }
+
+  Timer {
+    id: niriEventRestart
+    interval: 2000
+    onTriggered: {
+      if (compositor.resolvedBackend === "niri") niriEventProc.running = true
+    }
   }
 
   Process {

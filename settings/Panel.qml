@@ -257,7 +257,7 @@ Scope {
 
   // Full-screen overlay with centered panel
   Variants {
-    model: root.visible && ScreenManager.primaryScreen ? [ScreenManager.primaryScreen] : []
+    model: root.visible && OverlayManager.targetScreen ? [OverlayManager.targetScreen] : []
 
     PanelBase {
       namespaceName: "dotshell-settings"

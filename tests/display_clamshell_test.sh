@@ -27,7 +27,10 @@ grep -Fq '/^(eDP|LVDS|DSI)-/' "$manager"
 grep -Fq 'else if (outputs[i].active) activeExternalCount++' "$manager"
 grep -Fq 'if (lidClosed && activeExternalCount > 0)' "$manager"
 grep -Fq 'if (owned && !owned.active)' "$manager"
-grep -Fq 'if (activeExternalCount === 0 && activeCount === 0)' "$manager"
+if grep -Fq 'activeExternalCount === 0 && activeCount === 0' "$manager"; then
+  echo 'clamshell policy must not mutate outputs during a zero-output hotplug transient' >&2
+  exit 1
+fi
 grep -Fq 'if (!lidStateKnown || _outputPowerPending) return' "$manager"
 grep -Fq 'if (!active && activeCount <= 1) return' "$manager"
 
