@@ -167,7 +167,7 @@ Singleton {
   // Power on
   Process {
     id: powerOnProc
-    command: ["bash", "-c", "echo 'power on' | bluetoothctl"]
+    command: ["bash", "-c", "rfkill unblock bluetooth; sleep 1; bluetoothctl power on"]
     onExited: {
       // Delay scan start to allow bluetooth to actually power on
       powerOnScanTimer.restart()
