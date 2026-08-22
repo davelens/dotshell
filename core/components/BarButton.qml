@@ -76,6 +76,13 @@ Rectangle {
     font.family: "Symbols Nerd Font"
   }
 
+  Component.onCompleted: {
+    if (popupId !== "" && popupManager) popupManager.registerButton(popupId, button)
+  }
+  Component.onDestruction: {
+    if (popupId !== "" && popupManager) popupManager.unregisterButton(popupId, button)
+  }
+
   MouseArea {
     id: mouseArea
     anchors.fill: parent

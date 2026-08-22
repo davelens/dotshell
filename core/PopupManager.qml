@@ -18,6 +18,24 @@ Singleton {
   // connector would point at nothing, so PopupBase hides it.
   property bool anchoredToButton: false
 
+  property var registeredButtons: ({})
+
+  function registerButton(name: string, button: var): void {
+    registeredButtons[name] = button
+  }
+
+  function unregisterButton(name: string, button: var): void {
+    if (registeredButtons[name] === button) delete registeredButtons[name]
+  }
+
+  function getButtonAnchor(name: string, screen: var): var {
+    var button = registeredButtons[name]
+    if (!button || button.screen !== screen || !button.visible
+        || (button.showInBar !== undefined && !button.showInBar)) return null
+    var mapped = button.mapToItem(null, button.width, 0)
+    return mapped.x > button.width ? mapped.x : null
+  }
+
   function toggle(name: string, buttonRight: real, screen: var): void {
     if (activePopup === name) {
       close()
@@ -53,10 +71,11 @@ Singleton {
       OverlayManager.close("")
       var screen = ScreenManager.focusedScreen || ScreenManager.primaryScreen
       if (screen) {
+        var anchor = popupManager.getButtonAnchor(name, screen)
         popupManager.targetScreen = screen
         popupManager.activePopup = name
-        popupManager.anchorRight = screen.width - 20
-        popupManager.anchoredToButton = false
+        popupManager.anchorRight = anchor !== null ? anchor : screen.width - 20
+        popupManager.anchoredToButton = anchor !== null
       }
       return "Popup '" + name + "' opened"
     }

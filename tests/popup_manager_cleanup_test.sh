@@ -10,8 +10,5 @@ fi
 grep -Fq 'function toggle(name: string, buttonRight: real, screen: var): void' "$popup_manager"
 grep -Fq 'popupManager.toggle(button.popupId, mapped.x, button.screen)' "$repo_root/core/components/BarButton.qml"
 grep -Fq 'PopupManager.toggle(moduleId, anchorRight, modelData)' "$repo_root/shell.qml"
-if grep -Eq 'registeredButtons|registerButton|getButtonAnchor' "$popup_manager"; then
-  exit 1
-fi
 
 echo 'popup manager cleanup tests passed'

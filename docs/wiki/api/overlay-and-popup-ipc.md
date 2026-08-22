@@ -69,8 +69,10 @@ without auto-scanning; closing it stops a scan explicitly started by the user.
 
 1. A bar click passes its button's screen and right edge directly,
    `anchoredToButton = true`.
-2. A keyboard/IPC toggle uses the compositor's focused output, positions
-   against its right edge minus 20px, and sets `anchoredToButton = false`.
+2. A keyboard/IPC toggle uses the compositor's focused output. If that output
+   has a visible bar button for the popup, it reuses the button's right edge
+   and sets `anchoredToButton = true`; otherwise it positions against the
+   output's right edge minus 20px and sets `anchoredToButton = false`.
 
 Sway focus comes from Quickshell's I3 model. Niri focus is initialized with
 `niri msg -j focused-output` and refreshed from its event stream. Transient
@@ -83,10 +85,10 @@ Stem connector visibility (`core/components/PopupBase.qml`):
 showStem = StatusbarManager.popupStem && stemEnabled && PopupManager.anchoredToButton
 ```
 
-so an IPC-opened popup without its bar button never draws a stem
-pointing at nothing, regardless of the global `popupStem` setting.
-Stemless popups get a square top-right corner and a larger content
-offset via existing bindings.
+so an IPC-opened popup draws a stem only when its visible bar button is on
+the focused output. Popups without that button stay stemless regardless of
+the global `popupStem` setting, with a square top-right corner and a larger
+content offset via existing bindings.
 
 ## Adding a new overlay
 
