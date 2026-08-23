@@ -12,16 +12,16 @@
 #            non-empty errorMessage, with no later user/toolResult message.
 #   - busy:  last user/toolResult message is newer than the last assistant
 #            message with stopReason == "stop".
-#   - input: an unanswered ask_user_question tool call is pending, or the last
-#            assistant stop is newer than the last user/toolResult and asks for input.
+#   - input: an unanswered ask_user_question or built-in pi-guardrails prompt
+#            is pending, or the last assistant stop asks for input.
 #   - idle:  otherwise (last assistant has stopReason == "stop", or session
 #            has no messages yet).
 #
 # Output: one tab-separated line per instance:
 #   <pid>\t<cwd>\t<sessionId>\t<status>\t<sessionTitle>
 #
-# When multiple `pi` processes share a cwd, the lowest PID wins (one entry
-# per cwd). Title is derived from the latest session_info name when present,
+# When multiple `pi` processes share a cwd, each is paired with one recent
+# session file. Title is derived from the latest session_info name when present,
 # falling back to the first user-text message, normalised to a single line and
 # truncated to 80 chars.
 
@@ -33,10 +33,92 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 0
 fi
 
-# Collect (pid, cwd) pairs for interactive pi processes, dedup by cwd keeping
-# the lowest PID. Pi clears its argv after startup, so the controlling terminal
-# is the reliable way to exclude headless RPC and print-mode workers.
-declare -A cwd_pid
+session_status() {
+  tail -n 50 "$1" | tr -d '\000' | jq -rs '
+    def text_content:
+      [(.message.content // [])[]? | select(.type == "text") | .text] | join("\n");
+
+    def asks_for_input:
+      gsub("[[:space:]]+$"; "")
+      | test("\\?$|(?im)(^|\\n)\\s*(pick|choose|select|run|proceed|continue|which|want me to|should i|shall i|ok to|okay to|approve|confirm)\\b.*\\?\\s*$");
+
+    # ponytail: Mirrors built-ins only; use an event/state bridge for custom patterns.
+    def needs_guardrail_confirmation:
+      test(
+        "(^|[;&|\\n][[:space:]]*)("
+        + "rm[[:space:]]+(?=[^;&|\\n]*(-[^[:space:]]*[rR]|--recursive|--dir))(?=[^;&|\\n]*(-[^[:space:]]*f|--force))[^;&|\\n]*"
+        + "|(?:sudo|doas|pkexec|shred|wipefs|blkdiscard|fdisk|sfdisk|cfdisk|parted|sgdisk|mkfs(?:\\.[^[:space:];|&]+)?)(?:[[:space:]]|$)"
+        + "|dd[[:space:]]+(?:[^[:space:];&|]+[[:space:]]+)*of=[^;&|\\n]*"
+        + "|chmod[[:space:]]+(?=[^;&|\\n]*(-R|--recursive))(?=[^;&|\\n]*(0?777|a\\+rwx|ugo\\+rwx|7777|1777))[^;&|\\n]*"
+        + "|chown[[:space:]]+(?=[^;&|\\n]*(-R|--recursive))[^;&|\\n]*"
+        + "|(?:docker|podman)[[:space:]]+(?:run|create)[[:space:]]+(?=[^;&|\\n]*(--privileged|--pid=host|--network=host|--userns=host|--uts=host|--ipc=host|-v/:|--volume=/:|--mount=type=bind,source=/,|docker\\.sock|podman\\.sock))[^;&|\\n]*"
+        + ")";
+        "i"
+      );
+
+    def guarded_tool_call:
+      .type == "toolCall"
+      and .name == "bash"
+      and ((.arguments.command // "") | needs_guardrail_confirmation);
+
+    reduce .[] as $e (
+      {lastAssistantStop: null, lastAssistantStopText: "", lastAssistantError: null, lastInputRequest: null, lastUserOrTool: null, pendingGuardrailCalls: {}};
+      if $e.type == "message" then
+        if $e.message.role == "assistant" then
+          (reduce ($e.message.content // [])[]? as $content (.;
+            if ($content | guarded_tool_call) then
+              .pendingGuardrailCalls[$content.id] = true
+            else . end
+          ))
+          | (if ($e.message.stopReason == "stop") then
+            .lastAssistantStop = $e.timestamp
+            | .lastAssistantStopText = ($e | text_content)
+          else . end)
+          | (if ($e.message.stopReason == "aborted")
+                or (($e.message.errorMessage // "") != "") then
+            .lastAssistantError = $e.timestamp
+          else . end)
+          | (if any($e.message.content[]?; .type == "toolCall" and .name == "ask_user_question") then
+            .lastInputRequest = $e.timestamp
+          else . end)
+        elif ($e.message.role == "user") or ($e.message.role == "toolResult") then
+          .lastUserOrTool = $e.timestamp
+          | if $e.message.role == "toolResult" and (($e.message.toolCallId // "") != "") then
+              del(.pendingGuardrailCalls[$e.message.toolCallId])
+            else . end
+        else . end
+      else . end
+    )
+    | if (.pendingGuardrailCalls | length) > 0
+      then "input"
+      elif (.lastAssistantError != null)
+        and ((.lastUserOrTool == null) or (.lastUserOrTool < .lastAssistantError))
+      then "error"
+      elif (.lastInputRequest != null)
+        and ((.lastUserOrTool == null) or (.lastUserOrTool < .lastInputRequest))
+      then "input"
+      elif (.lastUserOrTool != null)
+        and ((.lastAssistantStop == null) or (.lastUserOrTool > .lastAssistantStop))
+      then "busy"
+      elif (.lastAssistantStop != null)
+        and ((.lastUserOrTool == null) or (.lastAssistantStop > .lastUserOrTool))
+        and (.lastAssistantStopText | asks_for_input)
+      then "input"
+      else "idle"
+      end
+  '
+}
+
+if [ "${1:-}" = "--status-file" ]; then
+  [ "$#" -eq 2 ] || exit 2
+  session_status "$2"
+  exit
+fi
+
+# Collect interactive pi processes by cwd. Pi clears its argv after startup,
+# so the controlling terminal is the reliable way to exclude headless RPC and
+# print-mode workers.
+declare -A cwd_pids
 
 while read -r pid; do
   [ -n "$pid" ] || continue
@@ -44,12 +126,10 @@ while read -r pid; do
   [[ "$stdin" == /dev/pts/* || "$stdin" == /dev/tty* ]] || continue
   cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null) || continue
   [ -n "$cwd" ] || continue
-  if [ -z "${cwd_pid[$cwd]:-}" ] || [ "$pid" -lt "${cwd_pid[$cwd]}" ]; then
-    cwd_pid[$cwd]=$pid
-  fi
+  cwd_pids[$cwd]="${cwd_pids[$cwd]:-}${cwd_pids[$cwd]:+$'\n'}$pid"
 done < <(pgrep -x pi 2>/dev/null || true)
 
-[ "${#cwd_pid[@]}" -eq 0 ] && exit 0
+[ "${#cwd_pids[@]}" -eq 0 ] && exit 0
 
 # Slugify a cwd path the way Pi does: strip leading/trailing slash, replace /
 # with -, wrap with -- on both ends. e.g. /home/x/y -> --home-x-y--
@@ -79,98 +159,58 @@ normalise_title() {
 
 shopt -s nullglob
 
-for cwd in "${!cwd_pid[@]}"; do
-  pid="${cwd_pid[$cwd]}"
+for cwd in "${!cwd_pids[@]}"; do
   slug=$(slugify "$cwd")
   dir="$sessions_dir/$slug"
 
-  # Newest .jsonl by mtime
-  active_file=""
-  active_mtime=0
-  for f in "$dir"/*.jsonl; do
-    [ -f "$f" ] || continue
-    mtime=$(stat -c '%Y' "$f" 2>/dev/null || echo 0)
-    if [ "$mtime" -gt "$active_mtime" ]; then
-      active_mtime=$mtime
-      active_file=$f
+  mapfile -t pids < <(
+    while read -r process_pid; do
+      start_ticks=$(awk '{print $22}' "/proc/$process_pid/stat" 2>/dev/null) || continue
+      printf '%s\t%s\n' "$start_ticks" "$process_pid"
+    done <<<"${cwd_pids[$cwd]}" | sort -nr | cut -f2
+  )
+  mapfile -t active_files < <(
+    find "$dir" -maxdepth 1 -type f -name '*.jsonl' -printf '%T@\t%p\n' 2>/dev/null \
+      | sort -nr | cut -f2-
+  )
+  active_idx=0
+
+  for pid in "${pids[@]}"; do
+    active_file="${active_files[$active_idx]:-}"
+
+    # A blank Pi process has no current session file. Do not inherit the status
+    # or title of an older session from the same cwd.
+    if [ -z "$active_file" ] || [ "$active_file" -ot "/proc/$pid" ]; then
+      printf '%s\t%s\t\tidle\t\n' "$pid" "$cwd"
+      continue
     fi
+    active_idx=$((active_idx + 1))
+
+    # Session id from the first line (type=session)
+    session_id=$(head -n 1 "$active_file" | jq -r 'select(.type=="session") | .id // ""' 2>/dev/null || echo "")
+
+    # Status inference from the tail
+    status=$(session_status "$active_file" 2>/dev/null || echo "idle")
+
+    [ -n "$status" ] || status="idle"
+
+    # Prefer the latest manual session name; fall back to the first user-text message
+    raw_title=$(jq -rs '
+      ([ .[]
+        | select(.type == "session_info")
+        | (.name // "" | strings | gsub("^[[:space:]]+|[[:space:]]+$"; ""))
+        | select(. != "")
+      ] | last) //
+      ([ .[]
+        | select(.type == "message" and .message.role == "user")
+        | (.message.content // [])[]?
+        | select(.type == "text")
+        | .text
+      ] | (.[0] // ""))
+    ' "$active_file" 2>/dev/null || echo "")
+
+    title=$(normalise_title "$raw_title")
+
+    printf '%s\t%s\t%s\t%s\t%s\n' "$pid" "$cwd" "$session_id" "$status" "$title"
   done
-
-  # A blank Pi process has no current session file. Do not inherit the status
-  # or title of an older session from the same cwd.
-  if [ -z "$active_file" ] || [ "$active_file" -ot "/proc/$pid" ]; then
-    printf '%s\t%s\t\tidle\t\n' "$pid" "$cwd"
-    continue
-  fi
-
-  # Session id from the first line (type=session)
-  session_id=$(head -n 1 "$active_file" | jq -r 'select(.type=="session") | .id // ""' 2>/dev/null || echo "")
-
-  # Status inference from the tail
-  status=$(tail -n 50 "$active_file" | jq -rs '
-    def text_content:
-      [(.message.content // [])[]? | select(.type == "text") | .text] | join("\n");
-
-    def asks_for_input:
-      gsub("[[:space:]]+$"; "")
-      | test("\\?$|(?im)(^|\\n)\\s*(pick|choose|select|run|proceed|continue|which|want me to|should i|shall i|ok to|okay to|approve|confirm)\\b.*\\?\\s*$");
-
-    # Walk events in order; track assistant state and the last user/toolResult.
-    reduce .[] as $e (
-      {lastAssistantStop: null, lastAssistantStopText: "", lastAssistantError: null, lastInputRequest: null, lastUserOrTool: null};
-      if $e.type == "message" then
-        if $e.message.role == "assistant" then
-          (if ($e.message.stopReason == "stop") then
-            .lastAssistantStop = $e.timestamp
-            | .lastAssistantStopText = ($e | text_content)
-          else . end)
-          | (if ($e.message.stopReason == "aborted")
-                or (($e.message.errorMessage // "") != "") then
-            .lastAssistantError = $e.timestamp
-          else . end)
-          | (if any($e.message.content[]?; .type == "toolCall" and .name == "ask_user_question") then
-            .lastInputRequest = $e.timestamp
-          else . end)
-        elif ($e.message.role == "user") or ($e.message.role == "toolResult") then
-          .lastUserOrTool = $e.timestamp
-        else . end
-      else . end
-    )
-    | if (.lastAssistantError != null)
-        and ((.lastUserOrTool == null) or (.lastUserOrTool < .lastAssistantError))
-      then "error"
-      elif (.lastInputRequest != null)
-        and ((.lastUserOrTool == null) or (.lastUserOrTool < .lastInputRequest))
-      then "input"
-      elif (.lastUserOrTool != null)
-        and ((.lastAssistantStop == null) or (.lastUserOrTool > .lastAssistantStop))
-      then "busy"
-      elif (.lastAssistantStop != null)
-        and ((.lastUserOrTool == null) or (.lastAssistantStop > .lastUserOrTool))
-        and (.lastAssistantStopText | asks_for_input)
-      then "input"
-      else "idle"
-      end
-  ' 2>/dev/null || echo "idle")
-
-  [ -n "$status" ] || status="idle"
-
-  # Prefer the latest manual session name; fall back to the first user-text message
-  raw_title=$(jq -rs '
-    ([ .[]
-      | select(.type == "session_info")
-      | (.name // "" | strings | gsub("^[[:space:]]+|[[:space:]]+$"; ""))
-      | select(. != "")
-    ] | last) //
-    ([ .[]
-      | select(.type == "message" and .message.role == "user")
-      | (.message.content // [])[]?
-      | select(.type == "text")
-      | .text
-    ] | (.[0] // ""))
-  ' "$active_file" 2>/dev/null || echo "")
-
-  title=$(normalise_title "$raw_title")
-
-  printf '%s\t%s\t%s\t%s\t%s\n' "$pid" "$cwd" "$session_id" "$status" "$title"
 done

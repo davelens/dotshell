@@ -5,11 +5,16 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DISCOVER="$REPO_ROOT/modules/ai-agents-monitor/bin/pi-discover"
 SANDBOX="$(mktemp -d)"
 launcher_pid=""
+launcher_pid2=""
 pi_pid=""
+pi_pid2=""
 
 cleanup() {
+  [ -z "$pi_pid2" ] || kill "$pi_pid2" 2>/dev/null || true
   [ -z "$pi_pid" ] || kill "$pi_pid" 2>/dev/null || true
+  [ -z "$launcher_pid2" ] || kill "$launcher_pid2" 2>/dev/null || true
   [ -z "$launcher_pid" ] || kill "$launcher_pid" 2>/dev/null || true
+  [ -z "$launcher_pid2" ] || wait "$launcher_pid2" 2>/dev/null || true
   [ -z "$launcher_pid" ] || wait "$launcher_pid" 2>/dev/null || true
   rm -rf "$SANDBOX"
 }
@@ -64,3 +69,60 @@ status=$(PI_SESSIONS_DIR="$sessions" "$DISCOVER" | awk -F '\t' -v cwd="$work" '$
 }
 
 echo 'ok - pending Pi question reports input'
+
+fixture="$SANDBOX/guardrail.jsonl"
+printf '%s\n' \
+  '{"type":"message","timestamp":"2026-01-01T00:00:00Z","message":{"role":"user","content":[]}}' \
+  '{"type":"message","timestamp":"2026-01-01T00:00:01Z","message":{"role":"assistant","stopReason":"toolUse","content":[{"type":"toolCall","id":"danger-1","name":"bash","arguments":{"command":"set -e\nrm -rf ./base"}}]}}' \
+  >"$fixture"
+status=$("$DISCOVER" --status-file "$fixture")
+[ "$status" = input ] || {
+  printf 'not ok - pending Pi guardrail: expected input, got %s\n' "${status:-missing}" >&2
+  exit 1
+}
+
+echo 'ok - pending Pi guardrail reports input'
+
+printf '%s\n' \
+  '{"type":"message","timestamp":"2026-01-01T00:00:02Z","message":{"role":"toolResult","toolCallId":"danger-1","content":[]}}' \
+  >>"$fixture"
+status=$("$DISCOVER" --status-file "$fixture")
+[ "$status" = busy ] || {
+  printf 'not ok - resolved Pi guardrail: expected busy, got %s\n' "${status:-missing}" >&2
+  exit 1
+}
+
+echo 'ok - resolved Pi guardrail no longer reports input'
+
+script -qefc "cd '$work' && exec '$SANDBOX/pi' 60" /dev/null >/dev/null 2>&1 &
+launcher_pid2=$!
+for _ in {1..100}; do
+  for candidate in $(pgrep -x pi 2>/dev/null || true); do
+    if [ "$candidate" != "$pi_pid" ] \
+        && [ "$(readlink "/proc/$candidate/cwd" 2>/dev/null || true)" = "$work" ]; then
+      pi_pid2=$candidate
+      break 2
+    fi
+  done
+  sleep 0.01
+done
+[ -n "$pi_pid2" ] || { echo 'not ok - second fake Pi process did not start' >&2; exit 1; }
+
+printf '%s\n' \
+  '{"type":"session","id":"guardrail"}' \
+  '{"type":"message","timestamp":"2026-01-01T00:00:00Z","message":{"role":"user","content":[]}}' \
+  '{"type":"message","timestamp":"2026-01-01T00:00:01Z","message":{"role":"assistant","stopReason":"toolUse","content":[{"type":"toolCall","id":"danger-2","name":"bash","arguments":{"command":"set -e\nrm -rf ./base"}}]}}' \
+  >"$sessions/$slug/guardrail.jsonl"
+sleep 0.1
+printf '%s\n' \
+  '{"type":"message","timestamp":"2026-01-01T00:00:02Z","message":{"role":"toolResult","toolCallId":"question-1","content":[]}}' \
+  >>"$session"
+
+statuses=$(PI_SESSIONS_DIR="$sessions" "$DISCOVER" \
+  | awk -F '\t' -v cwd="$work" '$2 == cwd { print $4 }' | sort)
+[ "$statuses" = $'busy\ninput' ] || {
+  printf 'not ok - same-cwd Pi sessions: expected busy and input, got %s\n' "${statuses:-missing}" >&2
+  exit 1
+}
+
+echo 'ok - same-cwd Pi sessions report independently'
