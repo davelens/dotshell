@@ -32,6 +32,7 @@ BarButton {
 
       TooltipText {
         text: "Uptime: " + WirelessManager.getConnectionDurationLong()
+        visible: WirelessManager.connectionTimestamp > 0
       }
 
       Row {

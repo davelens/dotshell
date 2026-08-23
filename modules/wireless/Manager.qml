@@ -2,148 +2,520 @@ pragma Singleton
 
 import Quickshell
 import Quickshell.Io
+import Quickshell.Networking
 import QtQuick
-import qs
 
 Singleton {
   id: wirelessManager
 
-  // =========================================================================
-  // PUBLIC STATE
-  // =========================================================================
+  enum FailureCode {
+    None,
+    BackendUnavailable,
+    WifiAuthTimeout,
+    NoSecrets,
+    WifiClientDisconnected,
+    WifiNetworkLost,
+    WifiClientFailed,
+    Unknown,
+    OperationTimeout
+  }
 
-  // WiFi radio enabled
-  property bool enabled: false
-
-  // Currently scanning
-  property bool scanning: false
-
-  // Connected network (null if none)
+  // Native, event-driven state. The public network model contains primitives
+  // only; native WifiNetwork objects are resolved internally when needed.
+  readonly property bool backendAvailable: Networking.backend === NetworkBackendType.NetworkManager
+  readonly property bool hardwareEnabled: Networking.wifiHardwareEnabled
+  readonly property bool enabled: backendAvailable && Networking.wifiEnabled
+  readonly property var networks: networkRows
   property var connectedNetwork: null
-
-  // Connection timestamp (Unix timestamp when connected)
-  property int connectionTimestamp: 0
-
-  // List of available networks
-  // Each: { ssid: string, signal: int, security: string, active: bool }
-  property var networks: []
-
-  // Operation in progress
-  property bool busy: false
-
-  // SSID currently being connected to (for UI feedback)
-  property string connectingSSID: ""
-
-  // Suppress refreshes briefly after operations
-  property bool suppressRefresh: false
-
-  // Saved WiFi connection profiles (SSIDs with stored credentials)
-  property var savedConnections: []
-
-  // SSID awaiting password entry (non-empty triggers password prompt in UI)
-  property string pendingSSID: ""
-
-  // Error message from last failed connection attempt
-  property string connectError: ""
-
-  // Active NetworkManager Wi-Fi device (predictable names vary by system).
   property string activeDevice: ""
-  property bool disconnectPending: false
 
-  // Network speeds (bytes per second)
+  readonly property bool busy: actionKind !== ""
+  property string actionKind: "" // "radio" | "connect" | "disconnect" | "forget"
+  property string actionKey: ""
+  readonly property string actionMessage: {
+    if (actionKind === "radio") return actionTargetEnabled ? "Enabling Wi-Fi…" : "Disabling Wi-Fi…"
+    if (actionKind === "connect") return "Connecting…"
+    if (actionKind === "disconnect") return "Disconnecting…"
+    if (actionKind === "forget") return "Forgetting…"
+    return ""
+  }
+
+  property int failureCode: WirelessManager.FailureCode.None
+  property string failureKey: ""
+  property string failureMessage: ""
+  property string failureAction: ""
+  property string pendingNetworkKey: ""
+
+  // Popup scanning and bounded settings scans have independent ownership.
+  property bool continuousScanRequested: false
+  property bool boundedScanRequested: false
+  readonly property bool scannerRequested: continuousScanRequested || boundedScanRequested
+  property var scannerDevices: []
+  readonly property bool scanning: scannerIsActive()
+
+  // Passive interface throughput (bytes per second).
   property real downloadSpeed: 0
   property real uploadSpeed: 0
   property real lastRxBytes: 0
   property real lastTxBytes: 0
+  property real lastSampleTime: 0
 
-  // =========================================================================
-  // PUBLIC API
-  // =========================================================================
+  // NetworkManager's last successful activation timestamp. Native Quickshell
+  // does not expose it, so it is fetched once when the connection changes.
+  property real connectionTimestamp: 0
+  property int uptimeTick: 0
+  property string uptimeNetworkKey: ""
+  property bool uptimeRefreshPending: false
 
-  function toggleEnabled() {
-    if (enabled) {
-      // Optimistic update
-      enabled = false
-      connectedNetwork = null
-      networks = []
-      disableProc.running = true
-    } else {
-      // Optimistic update
-      enabled = true
-      enableProc.running = true
+  property bool actionRequiresPsk: false
+  property bool actionTargetEnabled: false
+
+  readonly property var nativeDevices: Networking.devices ? Networking.devices.values : []
+  readonly property string nativeRevision: buildNativeRevision()
+
+  ListModel {
+    id: networkRows
+    dynamicRoles: false
+  }
+
+  function wifiDevices() {
+    var result = []
+    var devices = nativeDevices || []
+    for (var i = 0; i < devices.length; i++) {
+      var device = devices[i]
+      if (device && device.type === DeviceType.Wifi) result.push(device)
+    }
+    return result
+  }
+
+  function networkKey(device, network) {
+    return JSON.stringify([device.name || "", network.name || ""])
+  }
+
+  function buildNativeRevision() {
+    var parts = [Networking.backend, Networking.wifiEnabled, Networking.wifiHardwareEnabled]
+    var devices = nativeDevices || []
+    for (var i = 0; i < devices.length; i++) {
+      var device = devices[i]
+      if (!device) continue
+      parts.push(device.type, device.name, device.connected, device.state)
+      if (device.type !== DeviceType.Wifi || !device.networks) continue
+
+      var available = device.networks.values || []
+      parts.push(available.length)
+      for (var j = 0; j < available.length; j++) {
+        var network = available[j]
+        if (!network) continue
+        parts.push(network.name, network.signalStrength, network.security, network.known,
+                   network.connected, network.state, network.stateChanging)
+      }
+    }
+    return parts.join("\u001f")
+  }
+
+  function isPskSecurity(security) {
+    return security === WifiSecurityType.WpaPsk
+        || security === WifiSecurityType.Wpa2Psk
+        || security === WifiSecurityType.Sae
+  }
+
+  function primitiveRow(device, network) {
+    var security = network.security
+    return {
+      networkKey: networkKey(device, network),
+      deviceName: device.name || "",
+      ssid: network.name || "",
+      signal: Math.round(Math.max(0, Math.min(1, network.signalStrength || 0)) * 100),
+      security: security,
+      secured: security !== WifiSecurityType.Open,
+      requiresPsk: isPskSecurity(security),
+      known: !!network.known,
+      connected: !!network.connected,
+      state: network.state,
+      stateChanging: !!network.stateChanging
     }
   }
 
-  function startScan() {
-    if (!enabled || scanning) return
-    scanning = true
-    scanProc.running = true
+  function copyRow(row) {
+    return {
+      networkKey: row.networkKey,
+      deviceName: row.deviceName,
+      ssid: row.ssid,
+      signal: row.signal,
+      security: row.security,
+      secured: row.secured,
+      requiresPsk: row.requiresPsk,
+      known: row.known,
+      connected: row.connected,
+      state: row.state,
+      stateChanging: row.stateChanging
+    }
   }
 
-  function connect(ssid, password) {
-    connectError = ""
+  function sortRows(rows) {
+    rows.sort(function(a, b) {
+      if (a.connected !== b.connected) return a.connected ? -1 : 1
+      if (a.signal !== b.signal) return b.signal - a.signal
+      var ssidOrder = a.ssid.localeCompare(b.ssid)
+      if (ssidOrder !== 0) return ssidOrder
+      return a.deviceName.localeCompare(b.deviceName)
+    })
+    return rows
+  }
 
-    // If the network is secured and has no saved profile, prompt for password
-    if (!password) {
-      var network = null
-      for (var i = 0; i < networks.length; i++) {
-        if (networks[i].ssid === ssid) {
-          network = networks[i]
-          break
+  function rowIndex(key, start) {
+    for (var i = start || 0; i < networkRows.count; i++) {
+      if (networkRows.get(i).networkKey === key) return i
+    }
+    return -1
+  }
+
+  function updateRows(rows) {
+    var wanted = {}
+    for (var i = 0; i < rows.length; i++) wanted[rows[i].networkKey] = true
+
+    for (var oldIndex = networkRows.count - 1; oldIndex >= 0; oldIndex--) {
+      if (!wanted[networkRows.get(oldIndex).networkKey]) networkRows.remove(oldIndex)
+    }
+
+    var roles = ["networkKey", "deviceName", "ssid", "signal", "security", "secured",
+                 "requiresPsk", "known", "connected", "state", "stateChanging"]
+    for (var target = 0; target < rows.length; target++) {
+      var source = rowIndex(rows[target].networkKey, target)
+      if (source < 0) networkRows.insert(target, rows[target])
+      else if (source !== target) networkRows.move(source, target, 1)
+
+      for (var roleIndex = 0; roleIndex < roles.length; roleIndex++) {
+        var role = roles[roleIndex]
+        networkRows.setProperty(target, role, rows[target][role])
+      }
+    }
+  }
+
+  function syncNativeState() {
+    var rows = []
+    var connected = null
+    var connectedDevice = ""
+    var devices = wifiDevices()
+
+    if (backendAvailable && enabled) {
+      for (var i = 0; i < devices.length; i++) {
+        var device = devices[i]
+        var available = device.networks ? device.networks.values : []
+        for (var j = 0; j < available.length; j++) {
+          var network = available[j]
+          if (!network || !network.name) continue
+          var row = primitiveRow(device, network)
+          rows.push(row)
+          if (!connected && row.connected) {
+            connected = copyRow(row)
+            connectedDevice = row.deviceName
+          }
         }
       }
+    }
 
-      var hasSavedProfile = savedConnections.indexOf(ssid) >= 0
-      if (network && network.security && !hasSavedProfile) {
-        pendingSSID = ssid
-        return
+    sortRows(rows)
+    updateRows(rows)
+    connectedNetwork = connected
+    activeDevice = connectedDevice
+    syncConnectionUptime(connected)
+    applyScannerState()
+    reconcileAction()
+  }
+
+  function resolveNetwork(key) {
+    if (!key) return null
+    var devices = wifiDevices()
+    for (var i = 0; i < devices.length; i++) {
+      var device = devices[i]
+      var available = device.networks ? device.networks.values : []
+      for (var j = 0; j < available.length; j++) {
+        var network = available[j]
+        if (network && networkKey(device, network) === key) return network
       }
     }
+    return null
+  }
 
-    pendingSSID = ""
-    busy = true
-    connectingSSID = ssid
-    connectProc.lastSSID = ssid
-    if (password) {
-      connectProc.command = ["nmcli", "dev", "wifi", "connect", ssid, "password", password]
-    } else {
-      connectProc.command = ["nmcli", "dev", "wifi", "connect", ssid]
+  function clearFailure() {
+    failureCode = WirelessManager.FailureCode.None
+    failureKey = ""
+    failureMessage = ""
+    failureAction = ""
+  }
+
+  function setFailure(code, key, message, action) {
+    failureCode = code
+    failureKey = key || ""
+    failureMessage = message
+    failureAction = action || ""
+  }
+
+  function backendFailure(action, key) {
+    setFailure(WirelessManager.FailureCode.BackendUnavailable, key,
+               "NetworkManager is unavailable.", action)
+  }
+
+  function beginAction(kind, key, network) {
+    if (busy) return false
+    if (!backendAvailable) {
+      backendFailure(kind, key)
+      return false
     }
-    connectProc.running = true
+
+    clearFailure()
+    actionKind = kind
+    actionKey = key || ""
+    actionRequiresPsk = !!network && isPskSecurity(network.security)
+    actionTimeout.restart()
+    return true
+  }
+
+  function finishAction() {
+    var finishedKind = actionKind
+    actionTimeout.stop()
+    actionKind = ""
+    actionKey = ""
+    actionRequiresPsk = false
+    if (finishedKind === "connect") pendingNetworkKey = ""
+  }
+
+  function failAction(code, message) {
+    var failedKind = actionKind
+    var failedKey = actionKey
+    actionTimeout.stop()
+    actionKind = ""
+    actionKey = ""
+    actionRequiresPsk = false
+    setFailure(code, failedKey, message, failedKind)
+  }
+
+  function reconcileAction() {
+    if (!busy) return
+    if (!backendAvailable) {
+      failAction(WirelessManager.FailureCode.BackendUnavailable,
+                 "NetworkManager became unavailable.")
+      return
+    }
+
+    if (actionKind === "radio") {
+      if (Networking.wifiEnabled === actionTargetEnabled) finishAction()
+      return
+    }
+
+    var network = resolveNetwork(actionKey)
+    if (!network) {
+      if (actionKind === "disconnect" || actionKind === "forget") finishAction()
+      return
+    }
+    if (actionKind === "connect" && network.connected) finishAction()
+    else if (actionKind === "disconnect" && !network.connected && !network.stateChanging) finishAction()
+    else if (actionKind === "forget" && !network.known && !network.stateChanging) finishAction()
+  }
+
+  function failureFromReason(reason) {
+    if (reason === ConnectionFailReason.WifiAuthTimeout)
+      return WirelessManager.FailureCode.WifiAuthTimeout
+    if (reason === ConnectionFailReason.NoSecrets)
+      return WirelessManager.FailureCode.NoSecrets
+    if (reason === ConnectionFailReason.WifiClientDisconnected)
+      return WirelessManager.FailureCode.WifiClientDisconnected
+    if (reason === ConnectionFailReason.WifiNetworkLost)
+      return WirelessManager.FailureCode.WifiNetworkLost
+    if (reason === ConnectionFailReason.WifiClientFailed)
+      return WirelessManager.FailureCode.WifiClientFailed
+    if (reason === ConnectionFailReason.Unknown)
+      return WirelessManager.FailureCode.Unknown
+    return WirelessManager.FailureCode.Unknown
+  }
+
+  function messageForFailure(reason, requiresPsk) {
+    if (reason === ConnectionFailReason.WifiAuthTimeout)
+      return requiresPsk ? "Wrong password." : "Wi-Fi authentication timed out."
+    if (reason === ConnectionFailReason.NoSecrets)
+      return requiresPsk ? "Password required." : "Credentials required."
+    if (reason === ConnectionFailReason.WifiClientDisconnected) return "Wi-Fi client disconnected."
+    if (reason === ConnectionFailReason.WifiNetworkLost) return "Network lost."
+    if (reason === ConnectionFailReason.WifiClientFailed) return "Wi-Fi client failed."
+    if (reason === ConnectionFailReason.Unknown) return "Connection failed."
+    return "Connection failed."
+  }
+
+  function handleConnectionFailure(reason) {
+    if (actionKind !== "connect") return
+    var key = actionKey
+    var reprompt = actionRequiresPsk
+        && (reason === ConnectionFailReason.NoSecrets
+            || reason === ConnectionFailReason.WifiAuthTimeout)
+    failAction(failureFromReason(reason), messageForFailure(reason, actionRequiresPsk))
+    if (reprompt) pendingNetworkKey = key
+  }
+
+  function setEnabled(value) {
+    value = !!value
+    if (!backendAvailable) {
+      backendFailure("radio", "")
+      return false
+    }
+    if (busy || Networking.wifiEnabled === value) return false
+    actionTargetEnabled = value
+    if (!beginAction("radio", "", null)) return false
+    Networking.wifiEnabled = value
+    reconcileAction()
+    return true
+  }
+
+  function toggleEnabled() {
+    return setEnabled(!enabled)
+  }
+
+  function connect(key) {
+    if (busy) return false
+    if (!backendAvailable) {
+      backendFailure("connect", key)
+      return false
+    }
+    var network = resolveNetwork(key)
+    if (!network) {
+      setFailure(WirelessManager.FailureCode.Unknown, key,
+                 "Network is no longer available.", "connect")
+      return false
+    }
+    if (isPskSecurity(network.security) && !network.known) {
+      clearFailure()
+      pendingNetworkKey = key
+      return true
+    }
+    pendingNetworkKey = ""
+    if (!beginAction("connect", key, network)) return false
+    try {
+      network.connect()
+      reconcileAction()
+      return true
+    } catch (error) {
+      failAction(WirelessManager.FailureCode.Unknown, "Could not start connection.")
+      return false
+    }
+  }
+
+  function connectWithPsk(key, password) {
+    if (busy) return false
+    if (!backendAvailable) {
+      backendFailure("connect", key)
+      return false
+    }
+    var network = resolveNetwork(key)
+    if (!network) {
+      setFailure(WirelessManager.FailureCode.Unknown, key,
+                 "Network is no longer available.", "connect")
+      return false
+    }
+    if (!isPskSecurity(network.security)) return connect(key)
+    pendingNetworkKey = ""
+    if (!beginAction("connect", key, network)) return false
+    try {
+      // The password is passed directly to the native backend and never stored.
+      network.connectWithPsk(password)
+      reconcileAction()
+      return true
+    } catch (error) {
+      failAction(WirelessManager.FailureCode.Unknown, "Could not start connection.")
+      return false
+    }
+  }
+
+  function disconnect(key) {
+    if (busy) return false
+    if (!backendAvailable) {
+      backendFailure("disconnect", key)
+      return false
+    }
+    var network = resolveNetwork(key)
+    if (!network) {
+      setFailure(WirelessManager.FailureCode.Unknown, key,
+                 "Network is no longer available.", "disconnect")
+      return false
+    }
+    if (!beginAction("disconnect", key, network)) return false
+    try {
+      network.disconnect()
+      reconcileAction()
+      return true
+    } catch (error) {
+      failAction(WirelessManager.FailureCode.Unknown, "Could not disconnect network.")
+      return false
+    }
+  }
+
+  function forget(key) {
+    if (busy) return false
+    if (!backendAvailable) {
+      backendFailure("forget", key)
+      return false
+    }
+    var network = resolveNetwork(key)
+    if (!network) {
+      setFailure(WirelessManager.FailureCode.Unknown, key,
+                 "Network is no longer available.", "forget")
+      return false
+    }
+    if (!beginAction("forget", key, network)) return false
+    try {
+      network.forget()
+      reconcileAction()
+      return true
+    } catch (error) {
+      failAction(WirelessManager.FailureCode.Unknown, "Could not forget network.")
+      return false
+    }
   }
 
   function cancelPending() {
-    pendingSSID = ""
-    connectError = ""
+    pendingNetworkKey = ""
+    clearFailure()
   }
 
-  function disconnect() {
-    if (!activeDevice) {
-      disconnectPending = true
-      activeDeviceProc.running = true
-      return
+  function scannerIsActive() {
+    if (!scannerRequested || !enabled || scannerDevices.length === 0) return false
+    for (var i = 0; i < scannerDevices.length; i++) {
+      if (scannerDevices[i] && scannerDevices[i].scannerEnabled) return true
     }
-    disconnectPending = false
-    busy = true
-    suppressRefresh = true
-    disconnectProc.command = ["nmcli", "dev", "disconnect", activeDevice]
-    // Optimistic update
-    connectedNetwork = null
-    var updatedNetworks = networks.slice()
-    for (var i = 0; i < updatedNetworks.length; i++) {
-      updatedNetworks[i].active = false
+    return false
+  }
+
+  function startScanning() {
+    continuousScanRequested = true
+    applyScannerState()
+  }
+
+  function stopScanning() {
+    continuousScanRequested = false
+    applyScannerState()
+  }
+
+  function requestScan() {
+    boundedScanRequested = true
+    scannerStopTimer.restart()
+    applyScannerState()
+  }
+
+  function applyScannerState() {
+    var devices = enabled && scannerRequested ? wifiDevices() : []
+    var previous = scannerDevices || []
+
+    for (var i = 0; i < previous.length; i++) {
+      if (devices.indexOf(previous[i]) < 0) previous[i].scannerEnabled = false
     }
-    networks = updatedNetworks
-    disconnectProc.running = true
+    for (var j = 0; j < devices.length; j++) devices[j].scannerEnabled = true
+    scannerDevices = devices.slice()
   }
 
-  function refresh() {
-    statusProc.running = true
+  function releaseScanners() {
+    var previous = scannerDevices || []
+    for (var i = 0; i < previous.length; i++) previous[i].scannerEnabled = false
+    scannerDevices = []
   }
-
-  // =========================================================================
-  // ICONS
-  // =========================================================================
 
   readonly property string iconDisabled: "󰤮"
   readonly property string iconDisconnected: "󰤯"
@@ -152,11 +524,7 @@ Singleton {
   function getIcon() {
     if (!enabled) return iconDisabled
     if (!connectedNetwork) return iconDisconnected
-    var signal = connectedNetwork.signal || 0
-    if (signal >= 75) return iconSignal[3]
-    if (signal >= 50) return iconSignal[2]
-    if (signal >= 25) return iconSignal[1]
-    return iconSignal[0]
+    return getSignalIcon(connectedNetwork.signal || 0)
   }
 
   function getSignalIcon(signal) {
@@ -166,341 +534,203 @@ Singleton {
     return iconSignal[0]
   }
 
+  function formatSpeed(bytesPerSecond) {
+    if (bytesPerSecond < 1024) return bytesPerSecond.toFixed(0) + " B/s"
+    if (bytesPerSecond < 1024 * 1024) return (bytesPerSecond / 1024).toFixed(1) + " KB/s"
+    return (bytesPerSecond / (1024 * 1024)).toFixed(2) + " MB/s"
+  }
+
+  function syncConnectionUptime(network) {
+    var key = network ? network.networkKey : ""
+    if (key === uptimeNetworkKey) return
+
+    uptimeNetworkKey = key
+    connectionTimestamp = 0
+    uptimeTick = 0
+    if (!network) return
+
+    if (connectionUuidProc.running || connectionTimestampProc.running) {
+      uptimeRefreshPending = true
+      return
+    }
+
+    connectionUuidProc.sampleKey = key
+    connectionUuidProc.command = ["nmcli", "-g", "GENERAL.CON-UUID", "device", "show", network.deviceName]
+    connectionUuidProc.running = true
+  }
+
+  function finishUptimeLookup() {
+    if (!uptimeRefreshPending) return
+    uptimeRefreshPending = false
+    var network = connectedNetwork
+    uptimeNetworkKey = ""
+    syncConnectionUptime(network)
+  }
+
   function formatDurationLong(seconds) {
     if (seconds < 60) return "Less than a minute"
     var minutes = Math.floor(seconds / 60) % 60
     var hours = Math.floor(seconds / 3600) % 24
     var days = Math.floor(seconds / 86400)
-
     var parts = []
     if (days > 0) parts.push(days + (days === 1 ? " day" : " days"))
     if (hours > 0) parts.push(hours + (hours === 1 ? " hour" : " hours"))
     if (minutes > 0) parts.push(minutes + (minutes === 1 ? " min" : " mins"))
-
     return parts.join(", ")
   }
 
   function getConnectionDurationLong() {
+    var _ = uptimeTick
     if (connectionTimestamp <= 0) return ""
-    var now = Math.floor(Date.now() / 1000)
-    var seconds = now - connectionTimestamp
-    return formatDurationLong(seconds)
+    return formatDurationLong(Math.max(0, Math.floor(Date.now() / 1000) - connectionTimestamp))
   }
 
-  function formatSpeed(bytesPerSecond) {
-    if (bytesPerSecond < 1024) {
-      return bytesPerSecond.toFixed(0) + " B/s"
-    } else if (bytesPerSecond < 1024 * 1024) {
-      return (bytesPerSecond / 1024).toFixed(1) + " KB/s"
-    } else {
-      return (bytesPerSecond / (1024 * 1024)).toFixed(2) + " MB/s"
+  function resetThroughput() {
+    downloadSpeed = 0
+    uploadSpeed = 0
+    lastRxBytes = 0
+    lastTxBytes = 0
+    lastSampleTime = 0
+  }
+
+  function pollThroughput() {
+    if (!activeDevice || networkStatsProc.running) return
+    networkStatsProc.sampleDevice = activeDevice
+    networkStatsProc.running = true
+  }
+
+  onNativeRevisionChanged: syncNativeState()
+  onActiveDeviceChanged: resetThroughput()
+  onEnabledChanged: {
+    if (!enabled) pendingNetworkKey = ""
+    applyScannerState()
+    reconcileAction()
+  }
+  Component.onCompleted: syncNativeState()
+  Component.onDestruction: releaseScanners()
+
+  Connections {
+    target: wirelessManager.resolveNetwork(wirelessManager.actionKey)
+
+    function onConnectedChanged() {
+      wirelessManager.syncNativeState()
     }
-  }
 
-  // =========================================================================
-  // PROCESSES
-  // =========================================================================
-
-  // Check WiFi status
-  Process {
-    id: statusProc
-    command: ["nmcli", "-t", "radio", "wifi"]
-    running: true
-    stdout: StdioCollector {}
-    onExited: {
-      wirelessManager.enabled = statusProc.stdout.text.trim() === "enabled"
-      if (wirelessManager.enabled) {
-        activeDeviceProc.running = true
-        networkListProc.running = true
-        savedConnectionsProc.running = true
-      } else {
-        wirelessManager.activeDevice = ""
-        wirelessManager.connectedNetwork = null
-        wirelessManager.networks = []
-      }
+    function onKnownChanged() {
+      wirelessManager.syncNativeState()
     }
-  }
 
-  // Enable WiFi
-  Process {
-    id: enableProc
-    command: ["nmcli", "radio", "wifi", "on"]
-    onExited: {
-      enableScanTimer.restart()
+    function onStateChangingChanged() {
+      wirelessManager.syncNativeState()
     }
-  }
 
-  Timer {
-    id: enableScanTimer
-    interval: 1000
-    onTriggered: {
-      wirelessManager.scanning = true
-      scanProc.running = true
-    }
-  }
-
-  // Disable WiFi
-  Process {
-    id: disableProc
-    command: ["nmcli", "radio", "wifi", "off"]
-    onExited: {
-      wirelessManager.enabled = false
-      wirelessManager.connectedNetwork = null
-      wirelessManager.networks = []
-    }
-  }
-
-  // Scan for networks (with rescan)
-  Process {
-    id: scanProc
-    command: ["nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL,SECURITY", "dev", "wifi", "list", "--rescan", "yes"]
-    stdout: StdioCollector {}
-    onExited: {
-      wirelessManager.scanning = false
-      wirelessManager.parseNetworkList(scanProc.stdout.text)
-    }
-  }
-
-  // Get network list (without rescan)
-  Process {
-    id: networkListProc
-    command: ["nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL,SECURITY", "dev", "wifi", "list", "--rescan", "no"]
-    stdout: StdioCollector {}
-    onExited: {
-      wirelessManager.parseNetworkList(networkListProc.stdout.text)
-      // Fetch connection timestamp if connected
-      if (wirelessManager.connectedNetwork) {
-        timestampProc.running = true
-      }
-    }
-  }
-
-  // Get connection timestamp
-  Process {
-    id: timestampProc
-    command: ["nmcli", "-t", "-f", "NAME,TIMESTAMP", "connection", "show", "--active"]
-    stdout: StdioCollector {}
-    onExited: {
-      var lines = timestampProc.stdout.text.trim().split("\n")
-      for (var i = 0; i < lines.length; i++) {
-        var parts = lines[i].split(":")
-        if (parts.length >= 2 && wirelessManager.connectedNetwork && parts[0] === wirelessManager.connectedNetwork.ssid) {
-          wirelessManager.connectionTimestamp = parseInt(parts[1]) || 0
-          return
-        }
-      }
-      wirelessManager.connectionTimestamp = 0
-    }
-  }
-
-  // Fetch saved WiFi connection profiles
-  Process {
-    id: savedConnectionsProc
-    command: ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show"]
-    stdout: StdioCollector {}
-    onExited: {
-      var lines = savedConnectionsProc.stdout.text.trim().split("\n")
-      var saved = []
-      var suffix = ":802-11-wireless"
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i]
-        if (line.length > suffix.length && line.slice(-suffix.length) === suffix) {
-          saved.push(line.slice(0, -suffix.length))
-        }
-      }
-      wirelessManager.savedConnections = saved
-    }
-  }
-
-  // Connect to network
-  Process {
-    id: connectProc
-    property string lastSSID: ""
-    command: []
-    stderr: StdioCollector {}
-    onExited: exitCode => {
-      wirelessManager.busy = false
-      wirelessManager.connectingSSID = ""
-      if (exitCode !== 0) {
-        var errMsg = connectProc.stderr.text.trim()
-        // Find the network to check if it's secured
-        var network = null
-        for (var i = 0; i < wirelessManager.networks.length; i++) {
-          if (wirelessManager.networks[i].ssid === lastSSID) {
-            network = wirelessManager.networks[i]
-            break
-          }
-        }
-        // Re-show password prompt if the network is secured
-        if (network && network.security) {
-          wirelessManager.pendingSSID = lastSSID
-        }
-        // Use nmcli's actual error when available
-        if (errMsg) {
-          // Strip "Error: " prefix from nmcli output
-          if (errMsg.indexOf("Error: ") === 0) {
-            errMsg = errMsg.substring(7)
-          }
-          wirelessManager.connectError = errMsg
-        } else {
-          wirelessManager.connectError = "Connection failed."
-        }
-      } else {
-        wirelessManager.connectError = ""
-        wirelessManager.pendingSSID = ""
-        savedConnectionsProc.running = true
-      }
-      wirelessManager.refresh()
-    }
-  }
-
-  // Resolve the active Wi-Fi interface rather than assuming wlan0.
-  Process {
-    id: activeDeviceProc
-    command: ["nmcli", "-t", "-f", "DEVICE,TYPE", "device", "status"]
-    stdout: StdioCollector {}
-    onExited: {
-      var lines = stdout.text.trim().split("\n")
-      wirelessManager.activeDevice = ""
-      for (var i = 0; i < lines.length; i++) {
-        var fields = lines[i].split(":")
-        if (fields.length >= 2 && fields[1] === "wifi") {
-          wirelessManager.activeDevice = fields[0]
-          break
-        }
-      }
-      if (wirelessManager.disconnectPending && wirelessManager.activeDevice) {
-        wirelessManager.disconnect()
-      }
-    }
-  }
-
-  // Disconnect
-  Process {
-    id: disconnectProc
-    command: []
-    onExited: {
-      wirelessManager.busy = false
-      disconnectRefreshTimer.restart()
+    function onConnectionFailed(reason) {
+      wirelessManager.handleConnectionFailure(reason)
     }
   }
 
   Timer {
-    id: disconnectRefreshTimer
-    interval: 1000
+    id: actionTimeout
+    interval: 30000
+    repeat: false
     onTriggered: {
-      wirelessManager.suppressRefresh = false
-      wirelessManager.refresh()
+      if (!wirelessManager.busy) return
+      var kind = wirelessManager.actionKind
+      var message = kind === "connect" ? "Timed out connecting."
+                  : kind === "disconnect" ? "Timed out disconnecting."
+                  : kind === "forget" ? "Timed out forgetting."
+                  : "Timed out changing Wi-Fi radio state."
+      wirelessManager.failAction(WirelessManager.FailureCode.OperationTimeout, message)
     }
   }
 
-  // =========================================================================
-  // HELPERS
-  // =========================================================================
+  Timer {
+    id: scannerStopTimer
+    interval: 5000
+    repeat: false
+    onTriggered: {
+      wirelessManager.boundedScanRequested = false
+      wirelessManager.applyScannerState()
+    }
+  }
 
-  function parseNetworkList(output) {
-    var lines = output.trim().split("\n").filter(function(l) { return l.length > 0 })
-    var networksBySsid = {}
-    var connected = null
+  Timer {
+    interval: 60000
+    repeat: true
+    running: wirelessManager.connectionTimestamp > 0
+    onTriggered: wirelessManager.uptimeTick++
+  }
 
-    for (var i = 0; i < lines.length; i++) {
-      // Format: ACTIVE:SSID:SIGNAL:SECURITY
-      var parts = lines[i].split(":")
-      if (parts.length >= 4) {
-        var active = parts[0] === "yes"
-        var ssid = parts[1]
-        var signal = parseInt(parts[2]) || 0
-        var security = parts.slice(3).join(":") // Security may contain colons
-
-        // Skip empty SSIDs
-        if (!ssid) continue
-
-        var network = {
-          ssid: ssid,
-          signal: signal,
-          security: security,
-          active: active
-        }
-
-        // If we've seen this SSID, keep the one with active=true or stronger signal
-        if (networksBySsid[ssid]) {
-          if (active) {
-            networksBySsid[ssid] = network
-          } else if (!networksBySsid[ssid].active && signal > networksBySsid[ssid].signal) {
-            networksBySsid[ssid] = network
-          }
-        } else {
-          networksBySsid[ssid] = network
-        }
-
-        if (active) {
-          connected = network
-        }
+  Process {
+    id: connectionUuidProc
+    property string sampleKey: ""
+    command: []
+    stdout: StdioCollector { id: uuidOutput }
+    onExited: function(exitCode) {
+      if (sampleKey !== wirelessManager.uptimeNetworkKey) {
+        wirelessManager.finishUptimeLookup()
+        return
       }
+
+      var uuid = uuidOutput.text.trim()
+      if (exitCode !== 0 || !uuid) {
+        wirelessManager.finishUptimeLookup()
+        return
+      }
+
+      connectionTimestampProc.sampleKey = sampleKey
+      connectionTimestampProc.command = ["nmcli", "-g", "connection.timestamp",
+                                         "connection", "show", "uuid", uuid]
+      connectionTimestampProc.running = true
     }
-
-    // Convert to array
-    var newNetworks = []
-    for (var ssidKey in networksBySsid) {
-      newNetworks.push(networksBySsid[ssidKey])
-    }
-
-    // Sort by signal strength (strongest first), but keep active at top
-    newNetworks.sort(function(a, b) {
-      if (a.active && !b.active) return -1
-      if (!a.active && b.active) return 1
-      return b.signal - a.signal
-    })
-
-    wirelessManager.networks = newNetworks
-    wirelessManager.connectedNetwork = connected
   }
 
-  // =========================================================================
-  // NETWORK SPEED TRACKING
-  // =========================================================================
+  Process {
+    id: connectionTimestampProc
+    property string sampleKey: ""
+    command: []
+    stdout: StdioCollector { id: timestampOutput }
+    onExited: function(exitCode) {
+      if (sampleKey === wirelessManager.uptimeNetworkKey && exitCode === 0)
+        wirelessManager.connectionTimestamp = parseInt(timestampOutput.text.trim()) || 0
+      wirelessManager.finishUptimeLookup()
+    }
+  }
 
   Process {
     id: networkStatsProc
-    command: wirelessManager.activeDevice ? [
+    property string sampleDevice: ""
+    command: sampleDevice ? [
       "cat",
-      "/sys/class/net/" + wirelessManager.activeDevice + "/statistics/rx_bytes",
-      "/sys/class/net/" + wirelessManager.activeDevice + "/statistics/tx_bytes"
+      "/sys/class/net/" + sampleDevice + "/statistics/rx_bytes",
+      "/sys/class/net/" + sampleDevice + "/statistics/tx_bytes"
     ] : []
-    stdout: StdioCollector {}
+    stdout: StdioCollector { id: statsOutput }
     onExited: {
-      var lines = networkStatsProc.stdout.text.trim().split("\n")
-      if (lines.length >= 2) {
-        var rxBytes = parseInt(lines[0]) || 0
-        var txBytes = parseInt(lines[1]) || 0
+      if (sampleDevice !== wirelessManager.activeDevice) return
+      var lines = statsOutput.text.trim().split("\n")
+      if (lines.length < 2) return
 
-        if (wirelessManager.lastRxBytes > 0) {
-          wirelessManager.downloadSpeed = rxBytes - wirelessManager.lastRxBytes
-          wirelessManager.uploadSpeed = txBytes - wirelessManager.lastTxBytes
-        }
-
-        wirelessManager.lastRxBytes = rxBytes
-        wirelessManager.lastTxBytes = txBytes
+      var rxBytes = parseInt(lines[0])
+      var txBytes = parseInt(lines[1])
+      if (!isFinite(rxBytes) || !isFinite(txBytes)) return
+      var now = Date.now()
+      if (wirelessManager.lastSampleTime > 0 && now > wirelessManager.lastSampleTime) {
+        var elapsed = (now - wirelessManager.lastSampleTime) / 1000
+        wirelessManager.downloadSpeed = Math.max(0, rxBytes - wirelessManager.lastRxBytes) / elapsed
+        wirelessManager.uploadSpeed = Math.max(0, txBytes - wirelessManager.lastTxBytes) / elapsed
       }
+      wirelessManager.lastRxBytes = rxBytes
+      wirelessManager.lastTxBytes = txBytes
+      wirelessManager.lastSampleTime = now
     }
   }
 
   Timer {
     interval: 1000
-    running: wirelessManager.enabled && wirelessManager.connectedNetwork && wirelessManager.activeDevice
+    running: wirelessManager.enabled && wirelessManager.connectedNetwork !== null
+             && wirelessManager.activeDevice !== ""
     repeat: true
-    onTriggered: networkStatsProc.running = true
-  }
-
-  // =========================================================================
-  // TIMERS
-  // =========================================================================
-
-  // Periodic refresh
-  Timer {
-    interval: 30000
-    running: wirelessManager.enabled && !wirelessManager.suppressRefresh
-    repeat: true
-    onTriggered: networkListProc.running = true
+    onTriggered: wirelessManager.pollThroughput()
   }
 }

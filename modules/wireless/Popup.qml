@@ -7,50 +7,44 @@ import qs.core.components
 ModulePopup {
   id: wirelessPopup
 
-  // Start scan when popup opens, clear pending state when it closes
   onIsOpenChanged: {
-    if (isOpen && WirelessManager.enabled) {
-      WirelessManager.connectError = ""
-      WirelessManager.startScan()
-    } else if (!isOpen) {
+    if (isOpen) {
+      WirelessManager.clearFailure()
+      WirelessManager.startScanning()
+    } else {
+      WirelessManager.stopScanning()
       WirelessManager.cancelPending()
     }
   }
 
   PopupBase {
+    id: popupBase
     popupWidth: 380
     contentSpacing: 12
 
-    popupHeight: {
-      // Header (28) + spacing (12) + separator (1) + spacing (12)
-      var h = 28 + 12 + 1 + 12
-
-      if (!WirelessManager.enabled) {
-        h += 50
-      } else {
-        if (WirelessManager.connectedNetwork) {
-          // Label (16) + spacing (6) + row (36) + spacing (6) + info (32) + spacing (12)
-          // + separator (1) + spacing (12)
-          h += 16 + 6 + 36 + 6 + 32 + 12 + 1 + 12
-        }
-
-        h += 20 + 12
-
-        var visibleNetworks = WirelessManager.networks.filter(n => !n.active).length
-        if (visibleNetworks > 0) {
-          var displayCount = Math.min(visibleNetworks, 6)
-          h += displayCount * 36 + (displayCount - 1) * 2
-          // Password input row: padding (4) + input (36) + spacing (4) + optional error (20)
-          if (WirelessManager.pendingSSID) {
-            h += 44
-            if (WirelessManager.connectError) h += 20
-          }
-        } else {
-          h += 40
-        }
+    readonly property int availableNetworkCount: {
+      var count = 0
+      for (var i = 0; i < WirelessManager.networks.count; i++) {
+        if (!WirelessManager.networks.get(i).connected) count++
       }
+      return count
+    }
 
-      return h + 48
+    function networkExists(key) {
+      if (!key) return false
+      for (var i = 0; i < WirelessManager.networks.count; i++) {
+        if (WirelessManager.networks.get(i).networkKey === key) return true
+      }
+      return false
+    }
+
+    function availableNetworkExists(key) {
+      if (!key) return false
+      for (var i = 0; i < WirelessManager.networks.count; i++) {
+        var network = WirelessManager.networks.get(i)
+        if (!network.connected && network.networkKey === key) return true
+      }
+      return false
     }
 
     // Header with power toggle
@@ -84,11 +78,34 @@ ModulePopup {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         checked: WirelessManager.enabled
+        enabled: WirelessManager.backendAvailable && WirelessManager.hardwareEnabled
+          && !WirelessManager.busy
+        opacity: enabled ? 1 : 0.5
         onClicked: WirelessManager.toggleEnabled()
       }
     }
 
-    // Separator
+    Text {
+      width: parent.width
+      text: WirelessManager.actionMessage
+      color: Theme.accent
+      font.family: Theme.fontFamily
+      font.pixelSize: Theme.scaledFontSize(12)
+      wrapMode: Text.WordWrap
+      visible: WirelessManager.actionKind !== "" && WirelessManager.actionKey === ""
+    }
+
+    Text {
+      width: parent.width
+      text: WirelessManager.failureMessage
+      color: Theme.danger
+      font.family: Theme.fontFamily
+      font.pixelSize: Theme.scaledFontSize(12)
+      wrapMode: Text.WordWrap
+      visible: WirelessManager.failureMessage !== ""
+        && (!WirelessManager.failureKey || !popupBase.networkExists(WirelessManager.failureKey))
+    }
+
     Rectangle {
       width: parent.width
       height: 1
@@ -96,52 +113,96 @@ ModulePopup {
       visible: WirelessManager.enabled
     }
 
-    // Connected network
+    // Connected network. Disconnect and forget remain separate focus targets.
     Column {
+      id: connectedSection
       width: parent.width
       spacing: 6
       visible: WirelessManager.connectedNetwork !== null
+
+      readonly property var network: WirelessManager.connectedNetwork
+      readonly property string networkKey: network ? network.networkKey : ""
+      readonly property string rowText: {
+        if (!network) return ""
+        if (WirelessManager.actionKey === networkKey && WirelessManager.actionMessage)
+          return network.ssid + "  —  " + WirelessManager.actionMessage
+        if (network.stateChanging) return network.ssid + "  —  Updating…"
+        return network.ssid
+      }
 
       TitleText {
         text: "Connected network"
       }
 
-      FocusListItem {
-        itemHeight: 36
-        bodyMargins: 0
-        bodyRadius: 4
-        icon: WirelessManager.getIcon()
-        iconSize: 18
-        iconColor: Theme.success
-        text: WirelessManager.connectedNetwork ? WirelessManager.connectedNetwork.ssid : ""
-        fontSize: 15
-        rightIcon: "󰅖"
-        rightIconColor: Theme.textMuted
-        rightIconHoverColor: Theme.danger
-        backgroundColor: Theme.bgCardHover
-        hoverBackgroundColor: Theme.bgCardHover
-        onClicked: WirelessManager.disconnect()
+      Row {
+        width: parent.width
+        height: 36
+        spacing: 6
+
+        FocusListItem {
+          width: parent.width - (connectedForgetButton.visible
+            ? connectedForgetButton.width + parent.spacing : 0)
+          itemHeight: 36
+          bodyMargins: 0
+          bodyRadius: 4
+          icon: WirelessManager.getIcon()
+          iconSize: 18
+          iconColor: WirelessManager.actionKey === connectedSection.networkKey
+            ? Theme.accent : Theme.success
+          text: connectedSection.rowText
+          fontSize: 15
+          rightIcon: "󰅖"
+          rightIconColor: Theme.textMuted
+          rightIconHoverColor: Theme.danger
+          backgroundColor: Theme.bgCardHover
+          hoverBackgroundColor: Theme.bgCardHover
+          enabled: !WirelessManager.busy
+          opacity: enabled ? 1 : 0.7
+          onClicked: WirelessManager.disconnect(connectedSection.networkKey)
+        }
+
+        FocusIconButton {
+          id: connectedForgetButton
+          anchors.verticalCenter: parent.verticalCenter
+          icon: "󰆴"
+          iconSize: 16
+          iconColor: Theme.textMuted
+          hoverColor: Theme.danger
+          visible: connectedSection.network ? connectedSection.network.known : false
+          enabled: !WirelessManager.busy
+          opacity: enabled ? 1 : 0.5
+          onClicked: WirelessManager.forget(connectedSection.networkKey)
+        }
       }
 
-      // Connection info
-      Column {
-        anchors.left: parent.left
-        anchors.leftMargin: 10
-        spacing: 2
+      Text {
+        width: parent.width
+        text: WirelessManager.failureMessage
+        color: Theme.danger
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.scaledFontSize(12)
+        leftPadding: 10
+        wrapMode: Text.WordWrap
+        visible: WirelessManager.failureKey === parent.networkKey
+          && WirelessManager.failureMessage !== ""
+      }
 
-        Text {
-          text: "Uptime: " + WirelessManager.getConnectionDurationLong()
-          color: Theme.textMuted
-          font.family: Theme.fontFamily
-          font.pixelSize: Theme.scaledFontSize(14)
-        }
+      Text {
+        text: "Uptime: " + WirelessManager.getConnectionDurationLong()
+        color: Theme.textMuted
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.scaledFontSize(14)
+        leftPadding: 10
+        visible: WirelessManager.connectionTimestamp > 0
+      }
 
-        Text {
-          text: "Down: " + WirelessManager.formatSpeed(WirelessManager.downloadSpeed) + "  Up: " + WirelessManager.formatSpeed(WirelessManager.uploadSpeed)
-          color: Theme.textMuted
-          font.family: Theme.fontFamily
-          font.pixelSize: Theme.scaledFontSize(14)
-        }
+      Text {
+        text: "Down: " + WirelessManager.formatSpeed(WirelessManager.downloadSpeed)
+          + "  Up: " + WirelessManager.formatSpeed(WirelessManager.uploadSpeed)
+        color: Theme.textMuted
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.scaledFontSize(14)
+        leftPadding: 10
       }
     }
 
@@ -194,7 +255,9 @@ ModulePopup {
         iconSize: 16
         hoverColor: Theme.accent
         visible: !WirelessManager.scanning
-        onClicked: WirelessManager.startScan()
+        enabled: !WirelessManager.busy
+        opacity: enabled ? 1 : 0.5
+        onClicked: WirelessManager.startScanning()
       }
     }
 
@@ -206,14 +269,12 @@ ModulePopup {
       contentWidth: availableWidth
 
       height: {
-        var visibleNetworks = WirelessManager.networks.filter(n => !n.active).length
-        if (visibleNetworks === 0) return 40
-        var displayCount = Math.min(visibleNetworks, 6)
+        if (popupBase.availableNetworkCount === 0) return 40
+        var displayCount = Math.min(popupBase.availableNetworkCount, 6)
         var h = displayCount * 36 + (displayCount - 1) * 2
-        if (WirelessManager.pendingSSID) {
-          h += 44
-          if (WirelessManager.connectError) h += 20
-        }
+        if (popupBase.availableNetworkExists(WirelessManager.pendingNetworkKey)) h += 40
+        if (WirelessManager.failureMessage
+            && popupBase.availableNetworkExists(WirelessManager.failureKey)) h += 20
         return h
       }
 
@@ -222,40 +283,73 @@ ModulePopup {
         spacing: 2
 
         Repeater {
-          model: WirelessManager.networks.filter(n => !n.active)
+          model: WirelessManager.networks
 
           Column {
-            required property var modelData
+            id: networkDelegate
+            required property string networkKey
+            required property string ssid
+            required property int signal
+            required property bool secured
+            required property bool known
+            required property bool connected
+            required property bool stateChanging
+
+            readonly property bool isPending: WirelessManager.pendingNetworkKey === networkKey
+            readonly property bool hasAction: WirelessManager.actionKey === networkKey
+              && WirelessManager.actionMessage !== ""
+            readonly property string rowText: {
+              if (hasAction) return ssid + "  —  " + WirelessManager.actionMessage
+              if (stateChanging) return ssid + "  —  Updating…"
+              return ssid
+            }
 
             width: parent.width
             spacing: 0
+            visible: !connected
 
-            property bool isPending: WirelessManager.pendingSSID === modelData.ssid
+            Row {
+              width: parent.width
+              height: 36
+              spacing: 6
 
-            FocusListItem {
-              property bool isConnecting: WirelessManager.connectingSSID === modelData.ssid
+              FocusListItem {
+                width: parent.width - (availableForgetButton.visible
+                  ? availableForgetButton.width + parent.spacing : 0)
+                itemHeight: 36
+                bodyMargins: 0
+                bodyRadius: 4
+                icon: WirelessManager.getSignalIcon(networkDelegate.signal)
+                iconSize: 18
+                iconColor: networkDelegate.hasAction ? Theme.accent : Theme.textMuted
+                text: networkDelegate.rowText
+                fontSize: 15
+                rightIcon: networkDelegate.secured ? "󰌾" : ""
+                hoverBackgroundColor: Theme.bgCard
+                enabled: !WirelessManager.busy
+                opacity: enabled ? 1 : 0.7
+                onClicked: WirelessManager.connect(networkDelegate.networkKey)
+              }
 
-              itemHeight: 36
-              bodyMargins: 0
-              bodyRadius: 4
-              icon: WirelessManager.getSignalIcon(modelData.signal)
-              iconSize: 18
-              iconColor: isConnecting ? Theme.accent : Theme.textMuted
-              text: isConnecting ? modelData.ssid + "  —  Connecting..." : modelData.ssid
-              fontSize: 15
-              rightIcon: modelData.security ? "󰌾" : ""
-              hoverBackgroundColor: Theme.bgCard
-              onClicked: {
-                if (!WirelessManager.busy) WirelessManager.connect(modelData.ssid)
+              FocusIconButton {
+                id: availableForgetButton
+                anchors.verticalCenter: parent.verticalCenter
+                icon: "󰆴"
+                iconSize: 16
+                iconColor: Theme.textMuted
+                hoverColor: Theme.danger
+                visible: networkDelegate.known
+                enabled: !WirelessManager.busy
+                opacity: enabled ? 1 : 0.5
+                onClicked: WirelessManager.forget(networkDelegate.networkKey)
               }
             }
 
             // Inline password input
             Column {
-              id: passwordColumn
               width: parent.width
               spacing: 4
-              visible: parent.isPending
+              visible: networkDelegate.isPending
               topPadding: 4
 
               onVisibleChanged: {
@@ -268,39 +362,39 @@ ModulePopup {
               PasswordInput {
                 id: passwordInput
                 onSubmitted: function(password) {
-                  WirelessManager.connect(modelData.ssid, password)
+                  WirelessManager.connectWithPsk(networkDelegate.networkKey, password)
                 }
                 onCancelled: WirelessManager.cancelPending()
               }
+            }
 
-              // Error message
-              Text {
-                width: parent.width
-                text: WirelessManager.connectError
-                color: Theme.danger
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.scaledFontSize(12)
-                leftPadding: 10
-                wrapMode: Text.WordWrap
-                visible: WirelessManager.connectError !== ""
-              }
+            Text {
+              width: parent.width
+              text: WirelessManager.failureMessage
+              color: Theme.danger
+              font.family: Theme.fontFamily
+              font.pixelSize: Theme.scaledFontSize(12)
+              leftPadding: 10
+              topPadding: 4
+              wrapMode: Text.WordWrap
+              visible: WirelessManager.failureKey === networkDelegate.networkKey
+                && WirelessManager.failureMessage !== ""
             }
           }
         }
 
-        // Empty state
         BodyText {
           width: parent.width
           text: WirelessManager.scanning ? "Looking for networks..." : "No networks found"
           horizontalAlignment: Text.AlignHCenter
-          visible: WirelessManager.networks.filter(n => !n.active).length === 0
+          visible: popupBase.availableNetworkCount === 0
           topPadding: 8
           bottomPadding: 8
         }
       }
     }
 
-    // WiFi off state
+    // Wi-Fi off state
     Column {
       width: parent.width
       spacing: 8
@@ -308,7 +402,9 @@ ModulePopup {
 
       Text {
         width: parent.width
-        text: "Wi-Fi is off"
+        text: !WirelessManager.backendAvailable ? "NetworkManager is unavailable"
+          : !WirelessManager.hardwareEnabled ? "Wi-Fi hardware is disabled"
+          : "Wi-Fi is off"
         color: Theme.textMuted
         font.family: Theme.fontFamily
         font.pixelSize: Theme.scaledFontSize(15)
@@ -318,12 +414,14 @@ ModulePopup {
 
       Text {
         width: parent.width
-        text: "Toggle the switch above to enable"
+        text: WirelessManager.backendAvailable && WirelessManager.hardwareEnabled
+          ? "Toggle the switch above to enable" : ""
         color: Theme.textSubtle
         font.family: Theme.fontFamily
         font.pixelSize: Theme.scaledFontSize(13)
         horizontalAlignment: Text.AlignHCenter
         bottomPadding: 8
+        visible: text !== ""
       }
     }
   }
