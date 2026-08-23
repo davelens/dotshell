@@ -53,20 +53,15 @@ ModulePopup {
       objects: volumePopup.audioSinks.concat(volumePopup.audioSources)
     }
 
-    property var currentSink: Pipewire.defaultAudioSink
-    property var currentSource: Pipewire.defaultAudioSource
-
     function setDefaultSink(item) {
-      currentSink = item
       Pipewire.preferredDefaultAudioSink = item
-      sinkProcess.command = ["wpctl", "set-default", String(item.id)]
+      sinkProcess.command = ["volume-set-default", "sink", String(item.id), String(item.name || "")]
       sinkProcess.running = true
     }
 
     function setDefaultSource(item) {
-      currentSource = item
       Pipewire.preferredDefaultAudioSource = item
-      sourceProcess.command = ["wpctl", "set-default", String(item.id)]
+      sourceProcess.command = ["volume-set-default", "source", String(item.id), String(item.name || "")]
       sourceProcess.running = true
     }
 
@@ -130,7 +125,7 @@ ModulePopup {
     Dropdown {
       width: parent.width
       items: volumePopup.audioSinks
-      currentItem: popupBase.currentSink
+      currentItem: Pipewire.defaultAudioSink
       headerIcon: "󰓃"
       headerLabel: "Output"
       textRole: "description"
@@ -144,11 +139,63 @@ ModulePopup {
       color: Theme.bgCardHover
     }
 
+    Row {
+      width: parent.width
+      height: 32
+      spacing: 8
+
+      property var source: Pipewire.defaultAudioSource
+      property real volume: source && source.audio ? source.audio.volume : 0
+      property bool muted: source && source.audio ? source.audio.muted : false
+
+      FocusIconButton {
+        anchors.verticalCenter: parent.verticalCenter
+        icon: parent.muted ? "󰍭" : "󰍬"
+        iconColor: parent.muted ? Theme.danger : Theme.textPrimary
+        hoverColor: parent.muted ? Theme.danger : Theme.accent
+        iconSize: 20
+        onClicked: {
+          if (Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio) {
+            Pipewire.defaultAudioSource.audio.muted = !Pipewire.defaultAudioSource.audio.muted
+          }
+        }
+      }
+
+      FocusSlider {
+        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width - 28 - 44 - 16
+        height: 20
+        from: 0
+        to: 1
+        stepSize: 0.02
+        value: parent.volume
+        accentColor: Theme.accent
+        trackColor: Theme.bgCard
+        trackHeight: 8
+        handleSize: 14
+        onMoved: {
+          if (Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio) {
+            Pipewire.defaultAudioSource.audio.volume = value
+          }
+        }
+      }
+
+      Text {
+        anchors.verticalCenter: parent.verticalCenter
+        text: Math.round(parent.volume * 100) + "%"
+        color: Theme.accent
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.scaledFontSize(16)
+        width: 44
+        horizontalAlignment: Text.AlignRight
+      }
+    }
+
     // Input devices
     Dropdown {
       width: parent.width
       items: volumePopup.audioSources
-      currentItem: popupBase.currentSource
+      currentItem: Pipewire.defaultAudioSource
       headerIcon: "󰍬"
       headerLabel: "Input"
       textRole: "description"

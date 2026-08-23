@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+kind="${1:-}"
+node_id="${2:-}"
+node_name="${3:-}"
+
+case "$kind" in
+  sink|source) ;;
+  *)
+    printf 'usage: %s {sink|source} NODE_ID [NODE_NAME]\n' "${0##*/}" >&2
+    exit 2
+    ;;
+esac
+
+[[ -n $node_id ]] || exit 2
+wpctl set-default "$node_id"
+
+if [[ -z $node_name ]] || ! command -v pactl >/dev/null 2>&1; then
+  exit 0
+fi
+
+pactl "set-default-$kind" "$node_name"
+if [[ $kind == sink ]]; then
+  pactl list sink-inputs | awk '
+    /^Sink Input #/ { id = substr($3, 2); application = "" }
+    /application\.name = / {
+      application = $0
+      sub(/.*application\.name = "/, "", application)
+      sub(/"$/, "", application)
+      if (application != "EasyEffects") print id
+    }
+  ' | while read -r stream_id; do
+    pactl move-sink-input "$stream_id" "$node_name" || true
+  done
+else
+  pactl list short source-outputs | while read -r stream_id _; do
+    [[ -n $stream_id ]] || continue
+    pactl move-source-output "$stream_id" "$node_name" || true
+  done
+fi

@@ -18,6 +18,7 @@ bash -n setup/init.sh setup/uninstall.sh setup/lib/platform.sh setup/platforms/*
   tests/wireless_test.sh tests/display_clamshell_test.sh tests/display_settings_test.sh \
   tests/display_text_size_test.sh \
   tests/theme_typography_test.sh tests/theme_font_coverage_test.sh
+bash -n modules/volume/bin/volume-set-default tests/volume_test.sh
 
 if ! command -v jq >/dev/null 2>&1; then
   echo "error: jq is required to validate JSON files" >&2
@@ -43,6 +44,7 @@ if command -v shellcheck >/dev/null 2>&1; then
     tests/wireless_test.sh tests/display_clamshell_test.sh tests/display_settings_test.sh \
     tests/display_text_size_test.sh \
     tests/theme_typography_test.sh tests/theme_font_coverage_test.sh
+  shellcheck modules/volume/bin/volume-set-default tests/volume_test.sh
 fi
 
 bash tests/dshell_test.sh
@@ -59,6 +61,7 @@ bash tests/focus_slider_test.sh
 bash tests/display_brightness_test.sh
 bash tests/bluetooth_device_test.sh
 bash tests/bluetooth_test.sh
+bash tests/volume_test.sh
 bash tests/wireless_test.sh
 bash tests/display_clamshell_test.sh
 bash tests/display_settings_test.sh
