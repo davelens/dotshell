@@ -6,7 +6,6 @@
   "keywords": "workspace desktop virtual switch icons dots numbers count",
   "skipBarFocus": true,
   "components": {
-    "manager": "Manager.qml",
     "segment": "Segment.qml",
     "settings": "Settings.qml"
   }

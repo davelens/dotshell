@@ -37,7 +37,6 @@ model.
 | `icon` | nerd-font glyph for the settings sidebar |
 | `order` | sort key for settings categories and unlisted ordering |
 | `keywords` | settings search terms |
-| `components.manager` | singleton with state/logic (also holds IPC handlers) |
 | `components.button` / `components.segment` | bar component (button = clickable, segment = passive) |
 | `components.popup` | bar-anchored popup window |
 | `components.settings` | settings panel page |
@@ -73,6 +72,11 @@ can't double-instantiate. Bar components load per enabled statusbar
 item via `Loader.setSource` with *relative* paths
 (`getBarComponentRelPath`) — `file://` URLs would give modules an
 isolated singleton set.
+
+Manager singletons are module-local implementation details declared in the
+module's `qmldir` and instantiated when another module component references
+them. A manager that must start independently uses a `rootComponents` bootstrap
+such as `Root.qml`.
 
 ## Adding a module
 

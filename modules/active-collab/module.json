@@ -5,7 +5,6 @@
   "order": 206,
   "keywords": "activecollab active-collab tasks time sessions running",
   "components": {
-    "manager": "Manager.qml",
     "segment": "Segment.qml"
   }
 }

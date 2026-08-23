@@ -6,7 +6,6 @@
   "order": 5,
   "keywords": "record screen capture gpu-screen-recorder video screenshot screencast files browse",
   "components": {
-    "manager": "Manager.qml",
     "button": "Button.qml",
     "settings": "Settings.qml"
   },

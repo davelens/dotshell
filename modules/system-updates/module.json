@@ -6,7 +6,6 @@
   "order": 15,
   "keywords": "packages updates package manager pacman paru aur xbps flatpak upgrade system settings",
   "components": {
-    "manager": "Manager.qml",
     "button": "Button.qml",
     "popup": "Popup.qml",
     "settings": "Settings.qml"

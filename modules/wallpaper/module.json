@@ -5,7 +5,6 @@
   "order": 45,
   "keywords": "wallpaper background image wallhaven browse download",
   "components": {
-    "manager": "Manager.qml",
     "button": "Button.qml",
     "settings": "Settings.qml"
   },

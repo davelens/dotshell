@@ -6,7 +6,6 @@
   "keywords": "power shutdown reboot logout suspend lock commands",
   "components": {
     "button": "Button.qml",
-    "manager": "Manager.qml",
     "settings": "Settings.qml"
   },
   "rootComponents": ["Overlay.qml"]
