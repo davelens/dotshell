@@ -10,6 +10,7 @@ Item {
   property alias value: control.value
   property real stepSize: 1
   property bool live: true
+  readonly property bool pressed: control.pressed
 
   // Configurable appearance (defaults match settings panel usage)
   property color accentColor: Theme.accent

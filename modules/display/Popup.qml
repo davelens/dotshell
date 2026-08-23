@@ -179,8 +179,14 @@ ModulePopup {
           to: 100
           stepSize: 1
           value: DisplayManager.selectedBrightness
+          live: false
           accentColor: Theme.warning
-          onMoved: DisplayManager.setBrightness(value)
+          onMoved: {
+            if (!pressed) DisplayManager.setBrightness(value)
+          }
+          onPressedChanged: {
+            if (!pressed) DisplayManager.setBrightness(value)
+          }
         }
       }
     }

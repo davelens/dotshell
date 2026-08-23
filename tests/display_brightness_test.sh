@@ -3,6 +3,8 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 script="$repo_root/modules/display/bin/display-brightness"
+slider="$repo_root/core/components/FocusSlider.qml"
+popup="$repo_root/modules/display/Popup.qml"
 sandbox="$(mktemp -d)"
 trap 'rm -rf "$sandbox"' EXIT
 
@@ -82,3 +84,8 @@ after="$(grep -c 'ddcutil --skip-ddc-checks detect --brief' "$CALL_LOG")"
 grep -Eq '^unavailable [0-9]+$' \
   "$XDG_RUNTIME_DIR/dotshell-display-brightness/DP-2.bus"
 printf 'ok - unavailable connectors use the negative cache\n'
+
+grep -Fq 'readonly property bool pressed: control.pressed' "$slider"
+grep -Fq 'live: false' "$popup"
+[[ $(grep -Fc 'if (!pressed) DisplayManager.setBrightness(value)' "$popup") == 2 ]]
+printf 'ok - brightness drag commits one hardware write on release\n'
