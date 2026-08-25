@@ -53,6 +53,8 @@ SettingsPage {
       model: BluetoothManager.connectedDevices
 
       Column {
+        id: connectedDevice
+
         required property var modelData
         required property int index
         readonly property bool known: modelData.paired || modelData.bonded || modelData.trusted
@@ -61,6 +63,15 @@ SettingsPage {
           if (BluetoothManager.deviceAction === "disconnect") return "Disconnecting..."
           if (BluetoothManager.deviceAction === "forget") return "Forgetting..."
           return "Connected"
+        }
+        property bool renaming: false
+
+        function saveName() {
+          if (!renaming) return
+          renaming = false
+          if (renameInput.text && renameInput.text !== modelData.name) {
+            BluetoothManager.renameDevice(modelData.address, renameInput.text)
+          }
         }
 
         width: parent.width
@@ -75,10 +86,13 @@ SettingsPage {
           Row {
             anchors.left: parent.left
             anchors.leftMargin: 16
+            anchors.right: actions.left
+            anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter
             spacing: 12
 
             Text {
+              id: connectedIcon
               anchors.verticalCenter: parent.verticalCenter
               text: "󰂱"
               color: Theme.accent
@@ -87,14 +101,47 @@ SettingsPage {
             }
 
             Column {
+              width: parent.width - connectedIcon.width - parent.spacing
               anchors.verticalCenter: parent.verticalCenter
               spacing: 2
 
               Text {
+                width: parent.width
                 text: modelData.name
                 color: Theme.textPrimary
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.scaledFontSize(14)
+                elide: Text.ElideRight
+                visible: !connectedDevice.renaming
+              }
+
+              Row {
+                width: parent.width
+                spacing: 8
+                visible: connectedDevice.renaming
+
+                FocusTextInput {
+                  id: renameInput
+                  width: parent.width - saveButton.width - parent.spacing
+                  text: modelData.name
+                  onVisibleChanged: {
+                    if (visible) forceActiveFocus()
+                  }
+                  onEditingFinished: connectedDevice.saveName()
+                }
+
+                FocusButton {
+                  id: saveButton
+                  width: 56
+                  height: 28
+                  anchors.verticalCenter: parent.verticalCenter
+                  text: "Save"
+                  fontSize: 12
+                  backgroundColor: Theme.accent
+                  textColor: Theme.bgBase
+                  hoverColor: Qt.darker(Theme.accent, 1.2)
+                  onClicked: connectedDevice.saveName()
+                }
               }
 
               Text {
@@ -108,13 +155,33 @@ SettingsPage {
           }
 
           Row {
+            id: actions
             anchors.right: parent.right
             anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter
             spacing: 12
 
-            FocusLink {
+            FocusButton {
+              width: 72
+              height: 30
+              text: "Rename"
+              fontSize: 12
+              backgroundColor: Theme.bgCardHover
+              hoverColor: Theme.bgBorder
+              visible: !connectedDevice.renaming
+              enabled: !BluetoothManager.busy
+              opacity: enabled ? 1 : 0.5
+              onClicked: connectedDevice.renaming = true
+            }
+
+            FocusButton {
+              width: 92
+              height: 30
               text: "Disconnect"
+              fontSize: 12
+              backgroundColor: Theme.danger
+              textColor: Theme.bgBase
+              hoverColor: Qt.darker(Theme.danger, 1.2)
               enabled: !BluetoothManager.busy
               opacity: enabled ? 1 : 0.5
               onClicked: BluetoothManager.disconnect(modelData.address)

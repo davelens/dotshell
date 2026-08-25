@@ -36,7 +36,9 @@ assert_contains 'Bluetooth.devices.values'
 for property in connected paired bonded trusted; do
   assert_contains "device.$property"
 done
-printf 'ok - adapter and device state come from Quickshell.Bluetooth\n'
+assert_contains 'name: device.name || device.deviceName || device.address'
+assert_contains 'device.name = name'
+printf 'ok - adapter, device state, and local aliases come from Quickshell.Bluetooth\n'
 
 assert_contains 'known ? "connect" : "pair"'
 for operation in pair connect disconnect forget; do
@@ -133,14 +135,18 @@ if [[ $(grep -Fc 'enabled: !BluetoothManager.busy' "$settings") -lt 6 ]]; then
   printf 'Bluetooth settings must disable conflicting controls while busy\n' >&2
   exit 1
 fi
-if [[ $(grep -Fc 'FocusLink {' "$settings") -lt 3 ]] \
+if [[ $(grep -Fc 'FocusLink {' "$settings") -lt 2 ]] \
     || [[ $(grep -Fc 'text: "Forget"' "$settings") -lt 2 ]]; then
   printf 'Bluetooth settings forget actions must be distinct keyboard-focusable controls\n' >&2
   exit 1
 fi
-printf 'ok - settings uses bounded discovery and exposes primary, forget, busy, and error states\n'
+for text in 'Rename' 'Save' 'Disconnect'; do
+  assert_settings_contains "text: \"$text\""
+done
+assert_settings_contains 'BluetoothManager.renameDevice(modelData.address, renameInput.text)'
+printf 'ok - settings uses bounded discovery and exposes rename, forget, busy, and error states\n'
 
-for function_name in clearErrors togglePower startScan stopScan connect disconnect forget; do
+for function_name in clearErrors togglePower startScan stopScan connect disconnect forget renameDevice; do
   assert_contains "function $function_name("
 done
 printf 'ok - Bluetooth manager public operation API is preserved\n'

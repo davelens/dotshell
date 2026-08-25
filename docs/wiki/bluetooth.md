@@ -4,7 +4,7 @@
 
 The Bluetooth module controls the adapter and manages nearby devices from the
 status bar popup or settings. Quickshell's BlueZ integration is the source of
-truth; command-line tools are used only for state-changing operations.
+truth; command-line tools handle multi-step device operations.
 
 `modules/bluetooth/Manager.qml`
 
@@ -20,6 +20,9 @@ Selecting a device performs one serialized operation through
 - Known device: trust, then connect.
 - Connected device: disconnect.
 - Forget: disconnect when necessary, then remove the BlueZ record.
+
+Renaming writes Quickshell's writable `BluetoothDevice.name` property. This
+sets a local BlueZ alias without changing the name broadcast by the device.
 
 The helper validates Bluetooth addresses, stops pair/connect sequences on the
 first failure, treats BlueZ failures written to stdout as errors, and times out

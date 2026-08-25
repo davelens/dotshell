@@ -22,7 +22,7 @@ Singleton {
       var device = nativeDevices[i]
       result.push({
         address: device.address,
-        name: device.deviceName || device.name || device.address,
+        name: device.name || device.deviceName || device.address,
         paired: device.paired,
         bonded: device.bonded,
         trusted: device.trusted,
@@ -145,6 +145,22 @@ Singleton {
 
   function forget(address) {
     _enqueueDeviceOperation("forget", address)
+  }
+
+  function renameDevice(address, name) {
+    name = name.trim()
+    var device = _nativeDevice(address)
+    if (!device || !name || busy || name === device.name) return
+    connectError = ""
+    connectErrorAddress = ""
+    connectErrorAction = ""
+    try {
+      device.name = name
+    } catch (error) {
+      connectError = "Could not rename this device."
+      connectErrorAddress = address
+      connectErrorAction = "rename"
+    }
   }
 
   // =========================================================================
