@@ -69,10 +69,13 @@ Item {
     Row {
       anchors.left: parent.left
       anchors.leftMargin: item.contentLeftMargin
+      anchors.right: rightIconText.left
+      anchors.rightMargin: rightIconText.visible ? 12 : 0
       anchors.verticalCenter: parent.verticalCenter
       spacing: 12
 
       Text {
+        id: itemIcon
         anchors.verticalCenter: parent.verticalCenter
         text: item.icon
         color: item.iconColor
@@ -82,27 +85,34 @@ Item {
       }
 
       Column {
+        width: parent.width - (itemIcon.visible ? itemIcon.width + parent.spacing : 0)
         anchors.verticalCenter: parent.verticalCenter
         spacing: item.subtitle ? 2 : 0
 
         Text {
+          id: itemText
+          width: parent.width
           text: item.text
           color: Theme.textPrimary
           font.family: Theme.fontFamily
           font.pixelSize: Theme.scaledFontSize(item.fontSize)
+          elide: Text.ElideRight
         }
 
         Text {
+          width: parent.width
           text: item.subtitle
           color: item.subtitleColor
           font.family: Theme.fontFamily
           font.pixelSize: Theme.scaledFontSize(item.subtitleFontSize)
+          elide: Text.ElideRight
           visible: item.subtitle !== ""
         }
       }
     }
 
     Text {
+      id: rightIconText
       anchors.right: parent.right
       anchors.rightMargin: 12
       anchors.verticalCenter: parent.verticalCenter
@@ -111,6 +121,15 @@ Item {
       font.pixelSize: Theme.scaledFontSize(item.iconSize)
       font.family: "Symbols Nerd Font"
       visible: item.rightIcon !== ""
+    }
+
+    TooltipBase {
+      anchorItem: itemText
+      visible: itemText.truncated && mouseArea.containsMouse
+
+      TooltipText {
+        text: item.text
+      }
     }
   }
 

@@ -15,6 +15,7 @@ bash -n setup/init.sh setup/uninstall.sh setup/lib/platform.sh setup/platforms/*
   tests/popup_ipc_test.sh tests/popup_geometry_test.sh tests/dropdown_test.sh \
   tests/focused_screen_test.sh tests/focus_slider_test.sh tests/notification_remote_stream_test.sh \
   tests/display_brightness_test.sh tests/bluetooth_device_test.sh tests/bluetooth_test.sh \
+  tests/bluetooth_rename_test.sh tests/connectivity_popup_layout_test.sh \
   tests/wireless_test.sh tests/display_clamshell_test.sh tests/display_settings_test.sh \
   tests/display_text_size_test.sh \
   tests/theme_typography_test.sh tests/theme_font_coverage_test.sh
@@ -41,6 +42,7 @@ if command -v shellcheck >/dev/null 2>&1; then
     tests/popup_ipc_test.sh tests/popup_geometry_test.sh tests/dropdown_test.sh \
     tests/focused_screen_test.sh tests/focus_slider_test.sh tests/notification_remote_stream_test.sh \
     tests/display_brightness_test.sh tests/bluetooth_device_test.sh tests/bluetooth_test.sh \
+    tests/bluetooth_rename_test.sh tests/connectivity_popup_layout_test.sh \
     tests/wireless_test.sh tests/display_clamshell_test.sh tests/display_settings_test.sh \
     tests/display_text_size_test.sh \
     tests/theme_typography_test.sh tests/theme_font_coverage_test.sh
@@ -61,6 +63,8 @@ bash tests/focus_slider_test.sh
 bash tests/display_brightness_test.sh
 bash tests/bluetooth_device_test.sh
 bash tests/bluetooth_test.sh
+bash tests/bluetooth_rename_test.sh
+bash tests/connectivity_popup_layout_test.sh
 bash tests/volume_test.sh
 bash tests/wireless_test.sh
 bash tests/display_clamshell_test.sh

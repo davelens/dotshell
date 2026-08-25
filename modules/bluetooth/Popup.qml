@@ -225,8 +225,9 @@ ModulePopup {
       }
 
       FocusIconButton {
+        id: availableDevicesRefresh
         anchors.right: parent.right
-        anchors.rightMargin: 12
+        anchors.rightMargin: 8
         anchors.verticalCenter: parent.verticalCenter
         icon: "󰑐"
         iconSize: 16
