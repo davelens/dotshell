@@ -175,9 +175,22 @@ SettingsPage {
             }
 
             FocusButton {
-              width: 92
+              width: 64
               height: 30
-              text: "Disconnect"
+              text: "Forget"
+              fontSize: 12
+              backgroundColor: Theme.bgCardHover
+              hoverColor: Theme.bgBorder
+              visible: known
+              enabled: !BluetoothManager.busy
+              opacity: enabled ? 1 : 0.5
+              onClicked: BluetoothManager.forget(modelData.address)
+            }
+
+            FocusButton {
+              width: 36
+              height: 30
+              text: "×"
               fontSize: 12
               backgroundColor: Theme.danger
               textColor: Theme.bgBase
@@ -185,14 +198,6 @@ SettingsPage {
               enabled: !BluetoothManager.busy
               opacity: enabled ? 1 : 0.5
               onClicked: BluetoothManager.disconnect(modelData.address)
-            }
-
-            FocusLink {
-              text: "Forget"
-              visible: known
-              enabled: !BluetoothManager.busy
-              opacity: enabled ? 1 : 0.5
-              onClicked: BluetoothManager.forget(modelData.address)
             }
           }
         }

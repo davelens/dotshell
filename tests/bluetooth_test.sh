@@ -111,6 +111,14 @@ assert_popup_contains 'BluetoothManager.connectErrorAddress === modelData.addres
 assert_popup_contains 'BluetoothManager.globalError'
 assert_popup_contains 'FocusListItem {'
 assert_popup_contains 'FocusIconButton {'
+if grep -Fq 'contentLeftMargin: 0' "$popup"; then
+  printf 'Bluetooth popup device icons must keep the standard content inset\n' >&2
+  exit 1
+fi
+if grep -Fq 'icon: known ?' "$popup"; then
+  printf 'Available Bluetooth devices must not repeat a redundant Bluetooth icon\n' >&2
+  exit 1
+fi
 printf 'ok - popup owns scanning and exposes primary, forget, busy, and error states\n'
 
 assert_settings_contains 'onClicked: BluetoothManager.startScan(false)'
@@ -135,14 +143,15 @@ if [[ $(grep -Fc 'enabled: !BluetoothManager.busy' "$settings") -lt 6 ]]; then
   printf 'Bluetooth settings must disable conflicting controls while busy\n' >&2
   exit 1
 fi
-if [[ $(grep -Fc 'FocusLink {' "$settings") -lt 2 ]] \
+if [[ $(grep -Fc 'FocusLink {' "$settings") -lt 1 ]] \
     || [[ $(grep -Fc 'text: "Forget"' "$settings") -lt 2 ]]; then
   printf 'Bluetooth settings forget actions must be distinct keyboard-focusable controls\n' >&2
   exit 1
 fi
-for text in 'Rename' 'Save' 'Disconnect'; do
+for text in 'Rename' 'Save' 'Forget' '×'; do
   assert_settings_contains "text: \"$text\""
 done
+assert_settings_contains 'onClicked: BluetoothManager.disconnect(modelData.address)'
 assert_settings_contains 'BluetoothManager.renameDevice(modelData.address, renameInput.text)'
 printf 'ok - settings uses bounded discovery and exposes rename, forget, busy, and error states\n'
 

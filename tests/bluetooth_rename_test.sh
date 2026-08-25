@@ -8,7 +8,7 @@ settings="$repo_root/modules/bluetooth/Settings.qml"
 # Connected devices can be renamed inline and submitted by Save or Enter.
 grep -Fq 'text: "Rename"' "$settings"
 grep -Fq 'text: "Save"' "$settings"
-test "$(grep -Fc 'FocusButton {' "$settings")" -eq 3
+test "$(grep -Fc 'FocusButton {' "$settings")" -eq 4
 grep -Fq 'text: modelData.name' "$settings"
 grep -Fq 'onEditingFinished: connectedDevice.saveName()' "$settings"
 grep -Fq 'BluetoothManager.renameDevice(modelData.address, renameInput.text)' "$settings"

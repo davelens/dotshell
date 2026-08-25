@@ -136,7 +136,6 @@ ModulePopup {
               itemHeight: 36
               bodyMargins: 0
               bodyRadius: 4
-              contentLeftMargin: 0
               icon: "󰂱"
               iconSize: 18
               iconColor: BluetoothManager.deviceActionAddress === modelData.address
@@ -295,11 +294,6 @@ ModulePopup {
                 itemHeight: 36
                 bodyMargins: 0
                 bodyRadius: 4
-                contentLeftMargin: 0
-                icon: known ? "󰂰" : "󰂯"
-                iconSize: 18
-                iconColor: BluetoothManager.deviceActionAddress === modelData.address
-                  ? Theme.accent : (known ? Theme.accent : Theme.textMuted)
                 text: displayText
                 fontSize: 15
                 hoverBackgroundColor: Theme.bgCard
