@@ -47,8 +47,12 @@ render_scale_line="$(grep -nF 'title: "Render scale"' "$popup" | cut -d: -f1)"
 text_size_line="$(grep -nF 'title: "Text size (global)"' "$popup" | cut -d: -f1)"
 test "$render_scale_line" -lt "$text_size_line"
 
-# A collapsed single-display list must not leave an extra separator behind.
-grep -Fq 'visible: DisplayManager.brightnessAvailable && DisplayManager.outputs.length > 1' "$popup"
+# Brightness is separated from the device list even when only one display exists.
+grep -Fq 'visible: DisplayManager.brightnessAvailable' "$popup"
+if grep -Fq 'brightnessAvailable && DisplayManager.outputs.length > 1' "$popup"; then
+  echo 'brightness separator must not depend on the display count' >&2
+  exit 1
+fi
 
 # Popup output selection only targets its controls; primary display changes in settings.
 grep -Fq 'ScreenManager.setPrimary(modelData)' "$settings"
