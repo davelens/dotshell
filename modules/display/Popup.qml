@@ -99,7 +99,6 @@ ModulePopup {
     Column {
       width: parent.width
       spacing: 4
-      visible: DisplayManager.outputs.length > 1
 
       Repeater {
         model: DisplayManager.outputs

@@ -32,6 +32,10 @@ grep -Fq 'font.pixelSize: Theme.scaledFontSize(16)' "$popup"
 grep -Fq 'color: Theme.textPrimary' "$popup"
 grep -Fq 'color: Theme.bgCardHover' "$popup"
 test "$(grep -Fc 'text: "Displays"' "$popup")" -eq 1
+if grep -Fq 'visible: DisplayManager.outputs.length > 1' "$popup"; then
+  echo 'display popup must show the current monitor when only one output exists' >&2
+  exit 1
+fi
 if grep -Fq 'DisplayManager.selectedOutput.model' "$popup" \
     || grep -Fq 'text: DisplayManager.selectedOutput ? DisplayManager.selectedOutput.name : ""' "$popup"; then
   echo 'display popup header must not show a monitor identifier' >&2
