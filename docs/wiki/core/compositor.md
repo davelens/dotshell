@@ -41,8 +41,9 @@ at compositor startup, before the shell.
 to the connector name when Quickshell reports incomplete metadata, resolved
 against connected screens with first-screen fallback. The display module's UI
 calls `ScreenManager.setPrimary`; the statusbar, settings panel, and popup
-fallback anchor all follow `primaryScreen`. `focusedScreen` resolves Sway's
-`I3.focusedMonitor` or Niri's focused-output IPC to a `ShellScreen` for
+fallback anchor all follow `primaryScreen`. `focusedScreen` reads
+`Compositor.focusedOutputName` (Sway's native `I3.focusedMonitor` or Niri's
+focused-output IPC, resolved inside Compositor) to a `ShellScreen` for
 keyboard/IPC-opened overlays and popups, falling back to `primaryScreen` when
 unavailable. Niri focus stays current through `WorkspacesChanged` and
 `WorkspaceActivated` event-stream updates. Display settings use

@@ -1,7 +1,6 @@
 pragma Singleton
 
 import Quickshell
-import Quickshell.I3
 import Quickshell.Io
 import QtQuick
 import qs
@@ -64,9 +63,7 @@ Singleton {
   }
 
   readonly property var focusedScreen: {
-    var focusedName = Compositor.resolvedBackend === "niri"
-      ? Compositor.focusedOutputName
-      : (I3.focusedMonitor ? I3.focusedMonitor.name : "")
+    var focusedName = Compositor.focusedOutputName
     var screens = Quickshell.screens
     for (var i = 0; i < screens.length; i++) {
       if (screens[i].name === focusedName) return screens[i]

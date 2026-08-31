@@ -1,6 +1,7 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.I3
 import Quickshell.Io
 import QtQuick
 import qs
@@ -22,7 +23,13 @@ Singleton {
 
   readonly property bool detected:
     Quickshell.env("SWAYSOCK") || Quickshell.env("I3SOCK") || Quickshell.env("NIRI_SOCKET")
-  property string focusedOutputName: ""
+
+  // Name of the currently focused output, whichever backend is active.
+  // Sway comes from the native Quickshell.I3 API; Niri from its IPC below.
+  readonly property string focusedOutputName: resolvedBackend === "niri"
+    ? _niriFocusedOutput
+    : (I3.focusedMonitor ? I3.focusedMonitor.name : "")
+  property string _niriFocusedOutput: ""
 
   Component.onCompleted: {
     if (!detected) {
@@ -207,7 +214,7 @@ Singleton {
       if (exitCode !== 0) return
       try {
         var output = JSON.parse(stdout.text)
-        compositor.focusedOutputName = output ? output.name || "" : ""
+        compositor._niriFocusedOutput = output ? output.name || "" : ""
       } catch (e) {
         console.warn("[Compositor] Failed to parse Niri focused output:", e)
       }

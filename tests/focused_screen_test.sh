@@ -10,9 +10,15 @@ module_popup="$repo_root/core/components/ModulePopup.qml"
 bar_button="$repo_root/core/components/BarButton.qml"
 
 # Keyboard/IPC opens resolve the compositor's focused output, with primary fallback.
-grep -Fq 'import Quickshell.I3' "$screen_manager"
+# Compositor owns focused-output tracking for both backends; ScreenManager
+# stays compositor-agnostic.
+grep -Fq 'import Quickshell.I3' "$compositor"
+grep -Fq 'I3.focusedMonitor' "$compositor"
+if grep -Fq 'Quickshell.I3' "$screen_manager"; then
+  echo 'error: ScreenManager must not depend on Quickshell.I3' >&2
+  exit 1
+fi
 grep -Fq 'readonly property var focusedScreen:' "$screen_manager"
-grep -Fq 'I3.focusedMonitor' "$screen_manager"
 grep -Fq 'Compositor.focusedOutputName' "$screen_manager"
 grep -Fq 'command: ["niri", "msg", "-j", "focused-output"]' "$compositor"
 grep -Fq 'command: ["niri", "msg", "-j", "event-stream"]' "$compositor"
