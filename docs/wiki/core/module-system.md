@@ -41,6 +41,7 @@ model.
 | `components.popup` | bar-anchored popup window |
 | `components.settings` | settings panel page |
 | `rootComponents` | files instantiated once at shell root (panels, popup windows) |
+| `bar` | default statusbar placement (`{ section, order, marginLeft?, marginRight? }`); omit to exclude from the default layout |
 | `skipBarFocus` | exclude from bar keyboard navigation |
 | `requiresHostWindow` | inject the containing bar window into a bar component as `hostWindow` |
 

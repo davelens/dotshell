@@ -3,6 +3,11 @@
   "name": "Media",
   "icon": "󰎈",
   "order": 130,
+  "bar": {
+    "section": "center",
+    "order": 10,
+    "marginRight": 0
+  },
   "keywords": "music player mpris spotify",
   "components": {
     "segment": "Segment.qml"

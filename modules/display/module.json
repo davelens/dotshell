@@ -3,6 +3,11 @@
   "name": "Display",
   "icon": "󰍹",
   "order": 40,
+  "bar": {
+    "section": "right",
+    "order": 40,
+    "marginRight": 10
+  },
   "keywords": "monitor screen layout scale brightness backlight text size",
   "components": {
     "button": "Button.qml",

@@ -4,6 +4,11 @@
   "name": "Screen Recording",
   "icon": "󰑊",
   "order": 5,
+  "bar": {
+    "section": "right",
+    "order": 10,
+    "marginRight": 10
+  },
   "keywords": "record screen capture gpu-screen-recorder video screenshot screencast files browse",
   "components": {
     "button": "Button.qml",

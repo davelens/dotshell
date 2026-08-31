@@ -3,6 +3,11 @@
   "name": "Workspaces",
   "icon": "󰨇",
   "order": 100,
+  "bar": {
+    "section": "left",
+    "order": 30,
+    "marginRight": 20
+  },
   "keywords": "workspace desktop virtual switch icons dots numbers count",
   "skipBarFocus": true,
   "components": {

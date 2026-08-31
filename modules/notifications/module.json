@@ -3,6 +3,11 @@
   "name": "Notifications",
   "icon": "󰂚",
   "order": 30,
+  "bar": {
+    "section": "right",
+    "order": 90,
+    "marginRight": 0
+  },
   "keywords": "alerts dnd do not disturb popup history timeout schedule remote ssh settings",
   "components": {
     "button": "Button.qml",

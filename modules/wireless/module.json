@@ -3,6 +3,11 @@
   "name": "Wireless",
   "icon": "󰤨",
   "order": 10,
+  "bar": {
+    "section": "right",
+    "order": 20,
+    "marginRight": 10
+  },
   "keywords": "wifi network ssid available networks connected signal strength download upload speed settings",
   "components": {
     "button": "Button.qml",

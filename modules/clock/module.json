@@ -3,6 +3,11 @@
   "name": "Clock",
   "icon": "󰥔",
   "order": 120,
+  "bar": {
+    "section": "right",
+    "order": 70,
+    "marginRight": 16
+  },
   "keywords": "time date clock",
   "components": {
     "segment": "Segment.qml"

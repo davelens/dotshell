@@ -17,7 +17,7 @@ bash -n setup/init.sh setup/uninstall.sh setup/lib/platform.sh setup/platforms/*
   tests/display_brightness_test.sh tests/bluetooth_device_test.sh tests/bluetooth_test.sh \
   tests/bluetooth_rename_test.sh tests/connectivity_popup_layout_test.sh \
   tests/wireless_test.sh tests/display_clamshell_test.sh tests/display_settings_test.sh \
-  tests/display_text_size_test.sh \
+  tests/display_text_size_test.sh tests/statusbar_defaults_test.sh \
   tests/theme_typography_test.sh tests/theme_font_coverage_test.sh
 bash -n modules/volume/bin/volume-set-default tests/volume_test.sh
 
@@ -44,13 +44,14 @@ if command -v shellcheck >/dev/null 2>&1; then
     tests/display_brightness_test.sh tests/bluetooth_device_test.sh tests/bluetooth_test.sh \
     tests/bluetooth_rename_test.sh tests/connectivity_popup_layout_test.sh \
     tests/wireless_test.sh tests/display_clamshell_test.sh tests/display_settings_test.sh \
-    tests/display_text_size_test.sh \
+    tests/display_text_size_test.sh tests/statusbar_defaults_test.sh \
     tests/theme_typography_test.sh tests/theme_font_coverage_test.sh
   shellcheck modules/volume/bin/volume-set-default tests/volume_test.sh
 fi
 
 bash tests/dshell_test.sh
 bash tests/module_rename_test.sh
+bash tests/statusbar_defaults_test.sh
 bash tests/pi_discover_test.sh
 bash tests/remote_stream_test.sh
 bash tests/notification_remote_stream_test.sh

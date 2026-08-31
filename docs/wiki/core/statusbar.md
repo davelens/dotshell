@@ -24,8 +24,10 @@ self-healing, persisting back when anything changed:
 3. `mergeNewModules` prepends unseen modules (disabled) to the right
    section.
 
-Empty/missing file → built-in `defaultConfig` (hardcoded layout — plan:
-`docs/plans/manifest-driven-statusbar-defaults.md`).
+Empty/missing file → `defaultConfig()`, assembled from each manifest's
+`bar` declaration via `ModuleRegistry.getBarDefaults()` (sections sorted
+by `bar.order`). Modules without a `bar` declaration are excluded from
+the defaults; `mergeNewModules` still surfaces them disabled.
 
 ## Bar focus mode
 

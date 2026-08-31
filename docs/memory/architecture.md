@@ -7,13 +7,17 @@ Core (`core/`, `shell.qml`, `statusbar/`, `settings/`) must not hardcode
 module ids, labels, or state-file names. Sanctioned mechanisms:
 
 - **Manifests** — modules self-describe in `module.json`; core queries
-  through `ModuleRegistry` (`getPopupModules`, `getBarComponents`, …).
+  through `ModuleRegistry` (`getPopupModules`, `getBarComponents`,
+  `getBarDefaults`, …). The default statusbar layout comes from each
+  manifest's `bar` declaration; modules without one stay out of the
+  defaults.
 - **Runtime registration** — managers announce capabilities at startup
   (e.g. `OverlayManager.register(id, label)`); the registrations double
   as the known-id list for IPC validation.
 
-Soft exceptions exist by design (statusbar default layout, rename map,
-settings category order) — mitigated and documented in `docs/plans/`.
+One soft exception remains by design: the settings category order
+default in `core/defaults.json` names module ids (ordering hint only;
+unknown modules are appended by manifest order).
 
 ## State ownership
 

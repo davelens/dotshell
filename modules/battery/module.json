@@ -3,6 +3,11 @@
   "name": "Battery",
   "icon": "󰁹",
   "order": 110,
+  "bar": {
+    "section": "right",
+    "order": 60,
+    "marginRight": 16
+  },
   "keywords": "battery power charge percentage",
   "components": {
     "segment": "Segment.qml"

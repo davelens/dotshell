@@ -160,6 +160,31 @@ Singleton {
     return ""
   }
 
+  // Build the default bar layout from manifest "bar" declarations
+  // ({ section, order, marginLeft?, marginRight? }). Modules without one are
+  // excluded from the defaults; mergeNewModules still surfaces them disabled.
+  function getBarDefaults() {
+    var sections = { left: [], center: [], right: [] }
+    for (var i = 0; i < modules.length; i++) {
+      var bar = modules[i].bar
+      if (!bar || !sections[bar.section]) continue
+      sections[bar.section].push({
+        id: modules[i].id,
+        enabled: true,
+        marginLeft: bar.marginLeft || 0,
+        marginRight: bar.marginRight || 0,
+        order: bar.order || 100
+      })
+    }
+    for (var key in sections) {
+      sections[key].sort(function(a, b) { return a.order - b.order })
+      sections[key] = sections[key].map(function(item) {
+        return { id: item.id, enabled: item.enabled, marginLeft: item.marginLeft, marginRight: item.marginRight }
+      })
+    }
+    return sections
+  }
+
   // Internal: return the bar component file for a module (button or segment), or ""
   function _barFile(module) {
     if (!module || !module.components) return ""

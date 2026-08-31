@@ -3,6 +3,11 @@
   "name": "Bluetooth",
   "icon": "󰂯",
   "order": 20,
+  "bar": {
+    "section": "right",
+    "order": 30,
+    "marginRight": 10
+  },
   "keywords": "devices paired connected headphones speaker mouse keyboard settings",
   "components": {
     "button": "Button.qml",

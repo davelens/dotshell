@@ -3,6 +3,11 @@
   "name": "Volume",
   "icon": "󰕾",
   "order": 60,
+  "bar": {
+    "section": "right",
+    "order": 50,
+    "marginRight": 16
+  },
   "keywords": "audio sound volume speaker mute pipewire",
   "components": {
     "button": "Button.qml",

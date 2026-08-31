@@ -1,6 +1,12 @@
 # Manifest-driven statusbar defaults
 
-**Status:** parked — revisit if dotshell is prepared for public consumption.
+**Status:** implemented (2026-09). Deviations from the plan below:
+`bar.order` is a dedicated field instead of reusing the top-level
+`order` (which sorts settings categories and would have rearranged the
+bar), and presence of `bar` implies enabled — no `defaultEnabled` flag.
+Non-core modules (`active-collab`, `ai-agents-monitor`, `wallpaper`,
+`system-load`) declare no `bar` and are excluded from the defaults.
+Contract test: `tests/statusbar_defaults_test.sh`.
 
 ## Finding (architecture review, 2026-07, F2)
 

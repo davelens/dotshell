@@ -3,6 +3,11 @@
   "name": "Idle Inhibitor",
   "icon": "󰈈",
   "order": 210,
+  "bar": {
+    "section": "left",
+    "order": 20,
+    "marginRight": 20
+  },
   "keywords": "idle inhibit caffeine sleep prevent",
   "requiresHostWindow": true,
   "components": {
