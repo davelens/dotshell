@@ -56,7 +56,7 @@ Singleton {
     return activePopup === name
   }
 
-  // IPC handler for external control (e.g. qs ipc call popup toggle volume)
+  // IPC handler for external control (e.g. qs ipc call popup toggle <module-id>)
   IpcHandler {
     target: "popup"
 

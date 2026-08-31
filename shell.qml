@@ -23,7 +23,7 @@ ShellRoot {
       if (!ModuleRegistry.ready || root._componentsLoaded) return
       root._componentsLoaded = true
 
-      // Module popups (e.g. volume, bluetooth, wireless popup windows)
+      // Popup windows for modules that declare one in their manifest
       var popups = ModuleRegistry.getPopupModules()
       for (var i = 0; i < popups.length; i++) {
         var popupPath = ModuleRegistry.getPopupRelPath(popups[i].id)
@@ -178,7 +178,7 @@ ShellRoot {
         }
       }
 
-      // Exit bar focus when an overlay (panel, power menu, settings) opens
+      // Exit bar focus when an overlay (module panel or menu, settings) opens
       Connections {
         target: OverlayManager
         function onOverlayOpenChanged() {
@@ -242,7 +242,7 @@ ShellRoot {
           return
         }
 
-        // Segments with activate (e.g. media play/pause)
+        // Segments that declare an activate() action
         if (loaded && typeof loaded.activate === "function") {
           loaded.activate()
           return

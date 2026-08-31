@@ -10,7 +10,7 @@ Singleton {
   id: screenManager
 
   // Core-owned state: primary-screen selection drives popup/overlay
-  // placement, not the display module (its UI merely calls setPrimary).
+  // placement; module settings UIs merely call setPrimary.
   ModuleConfig {
     moduleId: "screens"
     adapter: JsonAdapter {

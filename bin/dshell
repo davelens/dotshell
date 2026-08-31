@@ -112,7 +112,7 @@ display_spec() {
 # State-read seam: every read of a dotshell JSON state file goes through
 # here. Mutations go through ipc(); reads never do — the files are
 # authoritative (QML saves on every change) and must work with the shell
-# down (e.g. `wallpaper restore` at compositor startup).
+# down (e.g. module commands that run at compositor startup).
 json_get() { # json_get <file> <jq-filter> [default]
   local file="$1" filter="$2" default="${3:-}"
   local val=""

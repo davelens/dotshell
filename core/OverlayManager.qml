@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs
 
-// Identity model for full-screen overlays (slide-in panels, power menu,
+// Identity model for full-screen overlays (module panels and menus,
 // settings). At most one overlay is active at a time; opening one closes
 // the active popup and any other overlay. Managers bind their open state
 // to isOpen() and route open/close/toggle through here, so mutual
@@ -16,7 +16,7 @@ Singleton {
   // Module id of the active overlay, or "" when none is open
   property string activeOverlay: ""
 
-  // Optional payload passed by open() (e.g. { category: "notifications" })
+  // Optional payload passed by open() (e.g. { category: "<module-id>" })
   property var overlayContext: ({})
 
   // Screen snapshotted when the overlay opens.
