@@ -2,7 +2,7 @@
   "id": "workspaces",
   "name": "Workspaces",
   "icon": "󰨇",
-  "order": 100,
+  "order": 20,
   "bar": {
     "section": "left",
     "order": 30,

@@ -12,7 +12,7 @@ switched at runtime.
 
 | Path | Content |
 | --- | --- |
-| `general.json` | theme, profiles list, active profile, settings category order |
+| `general.json` | theme, profiles list, active profile |
 | `<moduleId>-general.json` | profile-independent module state (`scope: "general"`) |
 | `<profileDir>/<moduleId>.json` | profile-scoped module state (default) |
 | `themes/` | user theme overrides |

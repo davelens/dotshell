@@ -21,11 +21,9 @@ After discovery, executables in `modules/*/bin/` are symlinked into
 `$XDG_BIN_HOME`, falling back to `~/.local/bin`. Dangling symlinks pointing
 into `modules/` are pruned first, so removing a module cleans up its binaries.
 
-The persisted settings category order is a sorting preference, not an
-allowlist. Modules with a settings component that are absent from that list are
-appended by manifest order; the settings sidebar scrolls when they exceed the
-available height. CLI category completion uses the same persisted-plus-manifest
-model.
+The settings sidebar lists modules with a settings component sorted by their
+manifest `order` field; the sidebar scrolls when they exceed the available
+height. CLI category completion reads the same manifests.
 
 ## Manifest schema (`module.json`)
 
@@ -35,7 +33,7 @@ model.
 | `formerlyKnownAs` | optional old ids migrated to `id` |
 | `name` | display name (settings sidebar, logs) |
 | `icon` | nerd-font glyph for the settings sidebar |
-| `order` | sort key for settings categories and unlisted ordering |
+| `order` | sort key for settings categories |
 | `keywords` | settings search terms |
 | `components.button` / `components.segment` | bar component (button = clickable, segment = passive) |
 | `components.popup` | bar-anchored popup window |
@@ -48,7 +46,7 @@ model.
 Before exposing its readiness gates, `DataManager` moves general state
 (`<old>-general.json`) and active-profile state (`<old>.json`) to the current id
 unless the current file already exists. The same manifest aliases rewrite saved
-statusbar items and settings category order, so existing profiles retain their
+statusbar items, so existing profiles retain their
 configuration after a module rename.
 
 ## CLI extensions

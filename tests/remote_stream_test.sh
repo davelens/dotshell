@@ -219,16 +219,16 @@ XDG_CONFIG_TEST="$SANDBOX/config"
 XDG_DATA_TEST="$SANDBOX/data"
 mkdir -p "$XDG_CONFIG_TEST/dotshell/modules/remote" \
   "$XDG_CONFIG_TEST/dotshell/statusbar" "$XDG_DATA_TEST/dotshell"
-printf '%s\n' '{"settingsCategoryOrder":["statusbar"]}' \
-  >"$XDG_DATA_TEST/dotshell/general.json"
+printf '%s\n' '{}' >"$XDG_DATA_TEST/dotshell/general.json"
 printf '%s\n' '{"id":"remote","order":205,"components":{"settings":"Settings.qml"}}' \
   >"$XDG_CONFIG_TEST/dotshell/modules/remote/module.json"
 printf '%s\n' '{"id":"statusbar","order":5,"components":{"settings":"Settings.qml"}}' \
   >"$XDG_CONFIG_TEST/dotshell/statusbar/module.json"
 CATEGORY_OUTPUT="$(XDG_CONFIG_HOME="$XDG_CONFIG_TEST" XDG_DATA_HOME="$XDG_DATA_TEST" \
   "$DSHELL" --complete settings show-category)"
-assert_eq 'remote' "$(grep -x remote <<<"$CATEGORY_OUTPUT")" \
-  'settings completion includes manifest categories absent from persisted order'
+assert_eq 'statusbar
+remote' "$(grep -x -e statusbar -e remote <<<"$CATEGORY_OUTPUT")" \
+  'settings completion lists manifest categories sorted by order'
 
 # Reproduce an SSH command shell whose PATH omits ~/.local/bin.
 REMOTE_HOME="$SANDBOX/remote-home"

@@ -2,7 +2,7 @@
   "id": "power",
   "name": "Power",
   "icon": "󰐥",
-  "order": 200,
+  "order": 80,
   "bar": {
     "section": "left",
     "order": 10,

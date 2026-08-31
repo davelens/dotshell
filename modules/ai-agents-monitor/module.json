@@ -3,7 +3,7 @@
   "formerlyKnownAs": ["opencode"],
   "name": "AI Agents Monitor",
   "icon": "󰚩",
-  "order": 205,
+  "order": 110,
   "keywords": "opencode claude pi agents monitor ai coding llm busy idle remote ssh",
   "components": {
     "segment": "Segment.qml",

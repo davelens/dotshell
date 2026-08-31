@@ -1,14 +1,4 @@
 {
-  "settingsCategoryOrder": [
-    "statusbar",
-    "workspaces",
-    "display",
-    "wireless",
-    "bluetooth",
-    "notifications",
-    "screen-recording",
-    "power"
-  ],
   "theme": "catppuccin-mocha",
   "activeProfile": "defaults",
   "activeProfileName": "Default",

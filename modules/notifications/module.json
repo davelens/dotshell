@@ -2,7 +2,7 @@
   "id": "notifications",
   "name": "Notifications",
   "icon": "󰂚",
-  "order": 30,
+  "order": 60,
   "bar": {
     "section": "right",
     "order": 90,

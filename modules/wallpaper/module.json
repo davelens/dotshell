@@ -2,7 +2,7 @@
   "id": "wallpaper",
   "name": "Wallpaper",
   "icon": "󰸉",
-  "order": 45,
+  "order": 100,
   "keywords": "wallpaper background image wallhaven browse download",
   "components": {
     "button": "Button.qml",

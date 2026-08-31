@@ -3,7 +3,7 @@
   "formerlyKnownAs": ["updates"],
   "name": "System Updates",
   "icon": "󰄠",
-  "order": 15,
+  "order": 90,
   "bar": {
     "section": "right",
     "order": 80,

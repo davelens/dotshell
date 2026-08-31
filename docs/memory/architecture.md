@@ -15,9 +15,8 @@ module ids, labels, or state-file names. Sanctioned mechanisms:
   (e.g. `OverlayManager.register(id, label)`); the registrations double
   as the known-id list for IPC validation.
 
-One soft exception remains by design: the settings category order
-default in `core/defaults.json` names module ids (ordering hint only;
-unknown modules are appended by manifest order).
+No exceptions remain: settings categories sort by each manifest's
+`order` field, and the default bar layout comes from `bar` declarations.
 
 ## State ownership
 

@@ -2,7 +2,7 @@
   "id": "display",
   "name": "Display",
   "icon": "󰍹",
-  "order": 40,
+  "order": 30,
   "bar": {
     "section": "right",
     "order": 40,

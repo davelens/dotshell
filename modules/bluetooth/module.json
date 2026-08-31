@@ -2,7 +2,7 @@
   "id": "bluetooth",
   "name": "Bluetooth",
   "icon": "󰂯",
-  "order": 20,
+  "order": 50,
   "bar": {
     "section": "right",
     "order": 30,
