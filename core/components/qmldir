@@ -19,7 +19,6 @@ FocusTextInput 1.0 FocusTextInput.qml
 ModulePopup 1.0 ModulePopup.qml
 PasswordInput 1.0 PasswordInput.qml
 SettingsPage 1.0 SettingsPage.qml
-SuccessText 1.0 SuccessText.qml
 SwitchToggle 1.0 SwitchToggle.qml
 TimePicker 1.0 TimePicker.qml
 TitleText 1.0 TitleText.qml
