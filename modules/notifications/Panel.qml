@@ -264,7 +264,7 @@ Scope {
                 text: "󰂚"
                 color: Theme.textMuted
                 font.pixelSize: Theme.scaledFontSize(48)
-                font.family: "Symbols Nerd Font"
+                font.family: Theme.iconFontFamily
               }
 
               Text {

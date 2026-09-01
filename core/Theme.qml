@@ -25,6 +25,7 @@ Singleton {
 
   // Typography
   readonly property string _defaultFontFamily: Qt.application.font.family
+  readonly property string iconFontFamily: "Symbols Nerd Font"
   readonly property real _defaultFontSizeBody: 14
   property string fontFamily: _defaultFontFamily
   property real fontSizeBody: _defaultFontSizeBody

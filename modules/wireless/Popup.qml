@@ -62,7 +62,7 @@ ModulePopup {
           text: WirelessManager.getIcon()
           color: WirelessManager.enabled ? Theme.accent : Theme.textMuted
           font.pixelSize: Theme.scaledFontSize(20)
-          font.family: "Symbols Nerd Font"
+          font.family: Theme.iconFontFamily
         }
 
         Text {
@@ -234,7 +234,7 @@ ModulePopup {
           text: "󰔟"
           color: Theme.accent
           font.pixelSize: Theme.scaledFontSize(14)
-          font.family: "Symbols Nerd Font"
+          font.family: Theme.iconFontFamily
           visible: WirelessManager.scanning
 
           RotationAnimation on rotation {

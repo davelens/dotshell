@@ -20,7 +20,7 @@ Item {
       text: ""
       color: Theme.textPrimary
       font.pixelSize: Theme.scaledFontSize(16)
-      font.family: "Symbols Nerd Font"
+      font.family: Theme.iconFontFamily
     }
 
     Text {
@@ -36,7 +36,7 @@ Item {
       text: "󰧑"
       color: Theme.textPrimary
       font.pixelSize: Theme.scaledFontSize(16)
-      font.family: "Symbols Nerd Font"
+      font.family: Theme.iconFontFamily
       leftPadding: 6
     }
 

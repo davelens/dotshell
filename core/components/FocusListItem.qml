@@ -80,7 +80,7 @@ Item {
         text: item.icon
         color: item.iconColor
         font.pixelSize: Theme.scaledFontSize(item.iconSize)
-        font.family: "Symbols Nerd Font"
+        font.family: Theme.iconFontFamily
         visible: item.icon !== ""
       }
 
@@ -119,7 +119,7 @@ Item {
       text: item.rightIcon
       color: item.hovered || item.focused ? item.rightIconHoverColor : item.rightIconColor
       font.pixelSize: Theme.scaledFontSize(item.iconSize)
-      font.family: "Symbols Nerd Font"
+      font.family: Theme.iconFontFamily
       visible: item.rightIcon !== ""
     }
 

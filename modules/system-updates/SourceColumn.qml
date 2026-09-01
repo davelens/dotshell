@@ -103,7 +103,7 @@ Column {
               return packageMouse.containsMouse ? Theme.success : Theme.textMuted
             }
             font.pixelSize: Theme.scaledFontSize(13)
-            font.family: "Symbols Nerd Font"
+            font.family: Theme.iconFontFamily
 
             RotationAnimation on rotation {
               running: packageRow.updating

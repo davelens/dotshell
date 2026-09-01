@@ -117,7 +117,7 @@ Rectangle {
           anchors.leftMargin: 10
           anchors.verticalCenter: parent.verticalCenter
           text: "󰍉"
-          font.family: "Symbols Nerd Font"
+          font.family: Theme.iconFontFamily
           font.pixelSize: Theme.scaledFontSize(14)
           color: Theme.textMuted
         }

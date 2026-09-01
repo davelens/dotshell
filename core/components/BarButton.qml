@@ -73,7 +73,7 @@ Rectangle {
     text: button.icon
     color: button.iconColorOnHover && mouseArea.containsMouse ? button.iconColorHover : button.iconColor
     font.pixelSize: Theme.scaledFontSize(button.iconSize)
-    font.family: "Symbols Nerd Font"
+    font.family: Theme.iconFontFamily
   }
 
   Component.onCompleted: {

@@ -64,7 +64,7 @@ ModulePopup {
         anchors.verticalCenter: parent.verticalCenter
         text: "󰍹"
         color: Theme.accent
-        font.family: "Symbols Nerd Font"
+        font.family: Theme.iconFontFamily
         font.pixelSize: Theme.scaledFontSize(22)
       }
 
@@ -167,7 +167,7 @@ ModulePopup {
           anchors.verticalCenter: parent.verticalCenter
           text: DisplayManager.getBrightnessIcon(DisplayManager.selectedBrightness)
           color: Theme.warning
-          font.family: "Symbols Nerd Font"
+          font.family: Theme.iconFontFamily
           font.pixelSize: Theme.scaledFontSize(18)
         }
 

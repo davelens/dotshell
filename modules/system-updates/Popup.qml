@@ -51,7 +51,7 @@ ModulePopup {
           text: SystemUpdatesManager.getIcon()
           color: SystemUpdatesManager.totalCount > 0 ? Theme.success : Theme.textMuted
           font.pixelSize: Theme.scaledFontSize(20)
-          font.family: "Symbols Nerd Font"
+          font.family: Theme.iconFontFamily
         }
 
         Text {
@@ -73,7 +73,7 @@ ModulePopup {
           text: "󰑐"
           color: refreshArea.containsMouse ? Theme.accent : Theme.textMuted
           font.pixelSize: Theme.scaledFontSize(16)
-          font.family: "Symbols Nerd Font"
+          font.family: Theme.iconFontFamily
           visible: !SystemUpdatesManager.checking
 
           MouseArea {
@@ -90,7 +90,7 @@ ModulePopup {
           text: "󰔿"
           color: Theme.accent
           font.pixelSize: Theme.scaledFontSize(16)
-          font.family: "Symbols Nerd Font"
+          font.family: Theme.iconFontFamily
           visible: SystemUpdatesManager.checking
 
           RotationAnimation on rotation {

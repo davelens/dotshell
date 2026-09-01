@@ -374,7 +374,7 @@ Scope {
                 text: "󰍉"
                 color: Theme.textMuted
                 font.pixelSize: Theme.scaledFontSize(18)
-                font.family: "Symbols Nerd Font"
+                font.family: Theme.iconFontFamily
               }
 
               TextInput {
@@ -501,7 +501,7 @@ Scope {
                           text: modelData.icon
                           color: root.activeCategory === modelData.id ? Theme.accent : Theme.textPrimary
                           font.pixelSize: Theme.scaledFontSize(16)
-                          font.family: "Symbols Nerd Font"
+                          font.family: Theme.iconFontFamily
                           horizontalAlignment: Text.AlignHCenter
                         }
 

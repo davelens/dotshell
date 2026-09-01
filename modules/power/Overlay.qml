@@ -199,7 +199,7 @@ Scope {
                     text: actionItem.modelData.icon
                     color: Theme.textSecondary
                     font.pixelSize: Theme.scaledFontSize(18)
-                    font.family: "Symbols Nerd Font"
+                    font.family: Theme.iconFontFamily
                   }
 
                   Text {

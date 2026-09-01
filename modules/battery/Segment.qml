@@ -68,7 +68,7 @@ Item {
       text: battery.getBatteryIcon(battery.percentage, battery.charging, battery.fullyCharged)
       color: battery.getBatteryColor(battery.percentage, battery.charging, battery.fullyCharged)
       font.pixelSize: Theme.scaledFontSize(18)
-      font.family: "Symbols Nerd Font"
+      font.family: Theme.iconFontFamily
     }
 
     Text {

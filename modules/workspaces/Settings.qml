@@ -309,7 +309,7 @@ SettingsPage {
                 text: WorkspacesManager.icons[String(index + 1)] || ""
                 color: Theme.textPrimary
                 font.pixelSize: Theme.scaledFontSize(18)
-                font.family: "Symbols Nerd Font"
+                font.family: Theme.iconFontFamily
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 activeFocusOnTab: true
@@ -332,7 +332,7 @@ SettingsPage {
               }
               color: Theme.textMuted
               font.pixelSize: Theme.scaledFontSize(18)
-              font.family: "Symbols Nerd Font"
+              font.family: Theme.iconFontFamily
             }
           }
         }

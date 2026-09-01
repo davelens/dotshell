@@ -490,7 +490,7 @@ Scope {
                     Text {
                       anchors.centerIn: parent
                       text: "\uf04b"
-                      font.family: "Symbols Nerd Font"
+                      font.family: Theme.iconFontFamily
                       font.pixelSize: Theme.scaledFontSize(24)
                       color: Theme.textPrimary
                       opacity: 0.8
@@ -511,7 +511,7 @@ Scope {
                     Text {
                       anchors.centerIn: parent
                       text: panel.activeTab === "screenshots" ? "\uf03e" : "\uf03d"
-                      font.family: "Symbols Nerd Font"
+                      font.family: Theme.iconFontFamily
                       font.pixelSize: Theme.scaledFontSize(28)
                       color: Theme.textMuted
                       visible: {
@@ -792,7 +792,7 @@ Scope {
                       Text {
                         anchors.centerIn: parent
                         text: "󰍉"
-                        font.family: "Symbols Nerd Font"
+                        font.family: Theme.iconFontFamily
                         font.pixelSize: Theme.scaledFontSize(28)
                         color: Theme.textPrimary
                       }
@@ -882,7 +882,7 @@ Scope {
                       Text {
                         anchors.centerIn: parent
                         text: "\uf04b"
-                        font.family: "Symbols Nerd Font"
+                        font.family: Theme.iconFontFamily
                         font.pixelSize: Theme.scaledFontSize(28)
                         color: Theme.textPrimary
                       }

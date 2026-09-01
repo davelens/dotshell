@@ -84,7 +84,7 @@ Item {
         text: passwordField.echoMode === TextInput.Password ? "󰈈" : "󰈉"
         color: toggleMouse.containsMouse ? Theme.textPrimary : Theme.textMuted
         font.pixelSize: Theme.scaledFontSize(16)
-        font.family: "Symbols Nerd Font"
+        font.family: Theme.iconFontFamily
         width: 28
         horizontalAlignment: Text.AlignHCenter
 
@@ -118,7 +118,7 @@ Item {
             ? (submitMouse.containsMouse ? Theme.bgBase : Theme.accent)
             : Theme.bgBorder
           font.pixelSize: Theme.scaledFontSize(16)
-          font.family: "Symbols Nerd Font"
+          font.family: Theme.iconFontFamily
         }
 
         MouseArea {

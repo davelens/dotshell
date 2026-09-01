@@ -60,7 +60,7 @@ Item {
       text: root.activePlayer && root.activePlayer.isPlaying ? "󰐊" : "󰏤"
       color: Theme.accent
       font.pixelSize: Theme.scaledFontSize(14)
-      font.family: "Symbols Nerd Font"
+      font.family: Theme.iconFontFamily
     }
 
     // Player source (e.g., YouTube, Spotify, Firefox)

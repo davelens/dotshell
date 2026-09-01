@@ -19,8 +19,9 @@ overlay knob`.
 Typography defaults to Qt's application font family and `fontSizeBody: 14`.
 `fontFamily` applies throughout dotshell, including
 notifications; `fontSizeBody` remains consumed by `TooltipText` only.
-`Symbols Nerd Font` glyph renderers and `KeyboardTag`'s special font are
-deliberate family exceptions. Runtime `Theme.fontScale` defaults to `1.0` and
+Icon glyph renderers use the readonly `Theme.iconFontFamily` (`Symbols Nerd
+Font`); `KeyboardTag`'s special font is another deliberate family exception.
+Runtime `Theme.fontScale` defaults to `1.0` and
 live-scales every QML pixel font size without changing theme JSON. The display
 module persists a 9–20px text-size choice in `display-general.json`, binds it to
 `fontScale`, and synchronizes GTK plus existing terminal configs when the user

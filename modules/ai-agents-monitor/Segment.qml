@@ -22,7 +22,7 @@ Item {
       text: "󰚩"
       color: Theme.textPrimary
       font.pixelSize: Theme.scaledFontSize(16)
-      font.family: "Symbols Nerd Font"
+      font.family: Theme.iconFontFamily
     }
 
     Text {
@@ -120,7 +120,7 @@ Item {
                 if (modelData.status === "error" || modelData.status === "input") return Theme.danger
                 return Theme.textMuted
               }
-              font.family: "Symbols Nerd Font"
+              font.family: Theme.iconFontFamily
             }
 
             TooltipText {

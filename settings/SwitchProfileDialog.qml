@@ -97,7 +97,7 @@ DialogOverlay {
               text: ""
               color: Theme.accent
               font.pixelSize: Theme.scaledFontSize(14)
-              font.family: "Symbols Nerd Font"
+              font.family: Theme.iconFontFamily
               visible: rowItem.modelData.dir === GeneralSettings.activeProfile
             }
 
@@ -163,7 +163,7 @@ DialogOverlay {
               return Theme.textMuted
             }
             font.pixelSize: Theme.scaledFontSize(switcher.confirmDeleteDir === rowItem.modelData.dir ? 16 : 14)
-            font.family: switcher.confirmDeleteDir === rowItem.modelData.dir ? Theme.fontFamily : "Symbols Nerd Font"
+            font.family: switcher.confirmDeleteDir === rowItem.modelData.dir ? Theme.fontFamily : Theme.iconFontFamily
             font.bold: switcher.confirmDeleteDir === rowItem.modelData.dir
           }
 

@@ -114,7 +114,7 @@ Item {
         text: settingsRoot.draggedItemIcon
         color: Theme.accent
         font.pixelSize: Theme.scaledFontSize(18)
-        font.family: "Symbols Nerd Font"
+        font.family: Theme.iconFontFamily
         width: 24
         horizontalAlignment: Text.AlignHCenter
       }
@@ -488,7 +488,7 @@ Item {
           text: "󰇙"
           color: dragArea.pressed ? Theme.accent : (dragArea.containsMouse ? Theme.textPrimary : Theme.textMuted)
           font.pixelSize: Theme.scaledFontSize(16)
-          font.family: "Symbols Nerd Font"
+          font.family: Theme.iconFontFamily
         }
 
         MouseArea {
@@ -527,7 +527,7 @@ Item {
         }
         color: item.enabled ? Theme.accent : Theme.textMuted
         font.pixelSize: Theme.scaledFontSize(18)
-        font.family: "Symbols Nerd Font"
+        font.family: Theme.iconFontFamily
         width: 24
         horizontalAlignment: Text.AlignHCenter
       }

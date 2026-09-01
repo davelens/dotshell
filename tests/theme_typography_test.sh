@@ -10,12 +10,21 @@ focus_text_input="$repo_root/core/components/FocusTextInput.qml"
 
 # Defaults and public tokens.
 grep -Fq 'readonly property string _defaultFontFamily: Qt.application.font.family' "$theme"
+grep -Fq 'readonly property string iconFontFamily: "Symbols Nerd Font"' "$theme"
 grep -Fq 'readonly property real _defaultFontSizeBody: 14' "$theme"
 grep -Fq 'property string fontFamily: _defaultFontFamily' "$theme"
 grep -Fq 'property real fontSizeBody: _defaultFontSizeBody' "$theme"
 grep -Fq 'property real fontScale: 1.0' "$theme"
 grep -Fq 'function scaledFontSize(pixelSize) {' "$theme"
 grep -Fq 'return pixelSize * theme.fontScale' "$theme"
+
+# Icon renderers use the centralized family rather than repeating the literal.
+if grep -RIn --include='*.qml' 'Symbols Nerd Font' \
+    "$repo_root/core/components" "$repo_root/settings" "$repo_root/statusbar" "$repo_root/modules"; then
+  exit 1
+fi
+grep -Rqs --include='*.qml' 'font.family: Theme.iconFontFamily' \
+  "$repo_root/core/components" "$repo_root/settings" "$repo_root/statusbar" "$repo_root/modules"
 
 # Every parsed theme either applies valid overrides or resets to defaults.
 grep -Fq 'fontFamily = typeof t.fontFamily === "string" && t.fontFamily.trim() !== "" ? t.fontFamily : _defaultFontFamily' "$theme"

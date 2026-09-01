@@ -463,7 +463,7 @@ SettingsPage {
                 text: monitorData ? (monitorData.name.startsWith("eDP") ? "󰌢" : "󰍹") : ""
                 color: monitorData && monitorData.active ? Theme.textPrimary : Theme.textMuted
                 font.pixelSize: Theme.scaledFontSize(Math.min(16, monitorRect.height * 0.3))
-                font.family: "Symbols Nerd Font"
+                font.family: Theme.iconFontFamily
               }
 
               Text {

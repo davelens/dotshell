@@ -522,7 +522,7 @@ Scope {
                       Text {
                         anchors.centerIn: parent
                         text: "󰄬"
-                        font.family: "Symbols Nerd Font"
+                        font.family: Theme.iconFontFamily
                         font.pixelSize: Theme.scaledFontSize(12)
                         color: Theme.bgDeep
                       }
@@ -698,7 +698,7 @@ Scope {
                     Text {
                       anchors.centerIn: parent
                       text: "󰋩"
-                      font.family: "Symbols Nerd Font"
+                      font.family: Theme.iconFontFamily
                       font.pixelSize: Theme.scaledFontSize(28)
                       color: Theme.textMuted
                       visible: !browseCell.itemData
@@ -742,7 +742,7 @@ Scope {
                       Text {
                         anchors.centerIn: parent
                         text: "󰇚"
-                        font.family: "Symbols Nerd Font"
+                        font.family: Theme.iconFontFamily
                         font.pixelSize: Theme.scaledFontSize(12)
                         color: Theme.bgDeep
                       }

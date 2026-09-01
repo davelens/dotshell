@@ -47,7 +47,7 @@ Item {
     text: button.icon
     color: button.hovered || button.focused ? button.hoverColor : button.iconColor
     font.pixelSize: Theme.scaledFontSize(button.iconSize)
-    font.family: "Symbols Nerd Font"
+    font.family: Theme.iconFontFamily
   }
 
   MouseArea {

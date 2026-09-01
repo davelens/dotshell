@@ -152,7 +152,7 @@ Item {
           text: dropdown.headerIcon
           color: Theme.accent
           font.pixelSize: Theme.scaledFontSize(16)
-          font.family: "Symbols Nerd Font"
+          font.family: Theme.iconFontFamily
           visible: dropdown.headerIcon
         }
 
@@ -187,7 +187,7 @@ Item {
         text: dropdown.expanded ? "\uf106" : "\uf107"
         color: Theme.textMuted
         font.pixelSize: Theme.scaledFontSize(16)
-        font.family: "Symbols Nerd Font"
+        font.family: Theme.iconFontFamily
       }
 
       MouseArea {
@@ -241,7 +241,7 @@ Item {
               text: isSelected ? dropdown.selectedIcon : (dropdown.itemIcon || dropdown.headerIcon)
               color: isSelected ? Theme.success : (isHighlighted ? Theme.accent : Theme.textMuted)
               font.pixelSize: Theme.scaledFontSize(16)
-              font.family: "Symbols Nerd Font"
+              font.family: Theme.iconFontFamily
             }
 
             Text {
@@ -313,7 +313,7 @@ Item {
         text: dropdown.expanded ? "\uf106" : "\uf107"
         color: Theme.textMuted
         font.pixelSize: Theme.scaledFontSize(10)
-        font.family: "Symbols Nerd Font"
+        font.family: Theme.iconFontFamily
       }
     }
 
