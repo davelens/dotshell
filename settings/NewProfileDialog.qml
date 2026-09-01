@@ -105,14 +105,7 @@ DialogOverlay {
     }
   }
 
-  // Preview function (mirrors GeneralSettings.sanitizeName without the UUID part)
   function previewSanitized(displayName) {
-    var base = displayName.toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "")
-    if (!base) base = "profile"
-    return base + "-<id>"
+    return GeneralSettings.sanitizeNameBase(displayName) + "-<id>"
   }
 }

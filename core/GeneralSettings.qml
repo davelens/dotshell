@@ -83,14 +83,18 @@ Singleton {
   }
 
   // Sanitize a display name into a directory name
-  function sanitizeName(displayName) {
+  function sanitizeNameBase(displayName) {
     var base = displayName.toLowerCase()
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, "")
     if (!base) base = "profile"
-    return base + "-" + generateId()
+    return base
+  }
+
+  function sanitizeName(displayName) {
+    return sanitizeNameBase(displayName) + "-" + generateId()
   }
 
   // First-run: auto-create "Default" profile and migrate any existing flat
