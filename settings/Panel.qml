@@ -72,11 +72,6 @@ Scope {
          (category.keywords && category.keywords.toLowerCase().indexOf(query) !== -1)
   }
 
-  // Highlight matching text with yellow background
-  function highlightText(text, query) {
-    return Theme.highlightText(text, query)
-  }
-
   // Get visible categories (filtered by search)
   function getVisibleCategories() {
     return categories.filter(function(cat) { return matchesSearch(cat) })

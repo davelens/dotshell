@@ -20,10 +20,6 @@ Item {
   property string draggedItemName: ""
   property string draggedItemIcon: ""
 
-  function highlightText(text, query) {
-    return Theme.highlightText(text, query)
-  }
-
   function startDrag(itemId, fromSection) {
     draggedItemId = itemId
     draggedFromSection = fromSection
@@ -168,7 +164,7 @@ Item {
         spacing: 8
 
         TitleText {
-          text: settingsRoot.highlightText("Bar Margins", settingsRoot.searchQuery)
+          text: Theme.highlightText("Bar Margins", settingsRoot.searchQuery)
           textFormat: Text.RichText
         }
 
@@ -196,7 +192,7 @@ Item {
 
         Text {
           anchors.verticalCenter: parent.verticalCenter
-          text: settingsRoot.highlightText("Popup stem connector", settingsRoot.searchQuery)
+          text: Theme.highlightText("Popup stem connector", settingsRoot.searchQuery)
           textFormat: Text.RichText
           color: Theme.textPrimary
           font.family: Theme.fontFamily
@@ -361,7 +357,7 @@ Item {
     }
 
     TitleText {
-      text: settingsRoot.highlightText(sectionRoot.title, settingsRoot.searchQuery)
+      text: Theme.highlightText(sectionRoot.title, settingsRoot.searchQuery)
       textFormat: Text.RichText
     }
 
