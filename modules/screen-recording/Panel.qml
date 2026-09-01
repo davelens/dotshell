@@ -168,13 +168,13 @@ Scope {
 
         Keys.onPressed: function(event) {
           var ctrl = event.modifiers & Qt.ControlModifier
-          var inSearch = searchInput.activeFocus
+          var inSearch = galleryPanel.searchActive
 
           // Escape / Q: layered dismiss
           if (event.key === Qt.Key_Escape || event.key === Qt.Key_Q) {
             if (inSearch) {
-              searchInput.text = ""
-              searchInput.focus = false
+              galleryPanel.clearSearch()
+              galleryPanel.blurSearch()
               panel.contentItem.forceActiveFocus()
             } else if (panel.viewMode === "detail") {
               panel.returnToGrid()
@@ -192,7 +192,7 @@ Scope {
           // Ctrl+[: layered dismiss (vim escape)
           if (event.key === Qt.Key_BracketLeft && ctrl) {
             if (inSearch) {
-              searchInput.focus = false
+              galleryPanel.blurSearch()
               panel.contentItem.forceActiveFocus()
             } else if (panel.viewMode === "detail") {
               panel.returnToGrid()
@@ -209,7 +209,7 @@ Scope {
 
           // Ctrl+F: focus search
           if (event.key === Qt.Key_F && ctrl) {
-            searchInput.forceActiveFocus()
+            galleryPanel.focusSearch()
             event.accepted = true
             return
           }
@@ -324,157 +324,28 @@ Scope {
 
       // -- Panel container --------------------------------------------------
 
-      Rectangle {
-        id: panelRect
-        anchors.centerIn: parent
+      GalleryPanel {
+        id: galleryPanel
         width: parent.width * 0.6
         height: parent.height * 0.7
-        color: Theme.bgBase
-        radius: 8
-        border.width: 1
-        border.color: Theme.bgBorder
-
-        // Absorb clicks on the panel itself
-        MouseArea {
-          anchors.fill: parent
-          onClicked: function(event) { event.accepted = true }
+        tabs: [
+          { id: "screenshots", label: "Screenshots" },
+          { id: "screencasts", label: "Screencasts" }
+        ]
+        activeTab: panel.activeTab
+        searchPlaceholder: "Search files..."
+        searchVisible: panel.viewMode === "grid"
+        onTabSelected: function(tabId) { panel.activeTab = tabId }
+        onSearchTextChanged: {
+          panel.searchQuery = searchText
+          gridNavigator.index = -1
         }
-
-        Column {
-          id: panelColumn
-          anchors.fill: parent
-          anchors.margins: 16
-          spacing: 12
-
-          // -- Tab bar ------------------------------------------------------
-
-          Row {
-            id: tabBar
-            spacing: 0
-            width: parent.width
-
-            Repeater {
-              model: [
-                { id: "screenshots", label: "Screenshots" },
-                { id: "screencasts", label: "Screencasts" }
-              ]
-
-              Rectangle {
-                required property var modelData
-                required property int index
-
-                width: tabBar.width / 2
-                height: 40
-                color: panel.activeTab === modelData.id ? Theme.bgCard : "transparent"
-                radius: 6
-
-                Text {
-                  anchors.centerIn: parent
-                  text: modelData.label
-                  color: panel.activeTab === modelData.id ? Theme.textPrimary : Theme.textSecondary
-                  font.family: Theme.fontFamily
-                  font.pixelSize: Theme.scaledFontSize(15)
-                  font.bold: panel.activeTab === modelData.id
-                }
-
-                Rectangle {
-                  anchors.bottom: parent.bottom
-                  anchors.horizontalCenter: parent.horizontalCenter
-                  width: parent.width * 0.6
-                  height: 3
-                  radius: 1.5
-                  color: Theme.accent
-                  visible: panel.activeTab === modelData.id
-                }
-
-                MouseArea {
-                  anchors.fill: parent
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: panel.activeTab = modelData.id
-                }
-              }
-            }
-          }
-
-          // -- Search input -------------------------------------------------
-
-          Rectangle {
-            id: searchBar
-            width: parent.width
-            height: 36
-            radius: 6
-            color: Theme.bgCardHover
-            border.width: searchInput.activeFocus ? 2 : 1
-            border.color: searchInput.activeFocus ? Theme.focusRing : Theme.bgBorder
-            visible: panel.viewMode === "grid"
-
-            Text {
-              id: searchIcon
-              anchors.left: parent.left
-              anchors.leftMargin: 10
-              anchors.verticalCenter: parent.verticalCenter
-              text: "󰍉"
-              font.family: "Symbols Nerd Font"
-              font.pixelSize: Theme.scaledFontSize(14)
-              color: Theme.textMuted
-            }
-
-            TextInput {
-              id: searchInput
-              anchors.left: searchIcon.right
-              anchors.leftMargin: 8
-              anchors.right: parent.right
-              anchors.rightMargin: 8
-              anchors.verticalCenter: parent.verticalCenter
-              height: parent.height
-              color: Theme.textPrimary
-              font.family: Theme.fontFamily
-              font.pixelSize: Theme.scaledFontSize(14)
-              verticalAlignment: TextInput.AlignVCenter
-              activeFocusOnTab: true
-              selectByMouse: true
-              clip: true
-
-              property bool showFocusRing: false
-
-              Text {
-                anchors.fill: parent
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Search files..."
-                color: Theme.textMuted
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.scaledFontSize(14)
-                verticalAlignment: Text.AlignVCenter
-                visible: !searchInput.text && !searchInput.activeFocus
-              }
-
-              onTextChanged: {
-                panel.searchQuery = text
-                gridNavigator.index = -1
-              }
-
-              Keys.onEscapePressed: {
-                text = ""
-                focus = false
-                panel.contentItem.forceActiveFocus()
-              }
-            }
-
-            MouseArea {
-              anchors.fill: parent
-              cursorShape: Qt.IBeamCursor
-              onPressed: function(mouse) {
-                searchInput.forceActiveFocus()
-                mouse.accepted = false
-              }
-            }
-          }
+        onSearchDismissed: panel.contentItem.forceActiveFocus()
 
           // -- Content area -------------------------------------------------
 
-          Item {
-            width: parent.width
-            height: parent.height - tabBar.height - (searchBar.visible ? searchBar.height + panelColumn.spacing : 0) - panelColumn.spacing
+        Item {
+          anchors.fill: parent
 
             // -- Grid view --------------------------------------------------
 
@@ -1152,7 +1023,6 @@ Scope {
                 }
               }
             }
-          }
         }
       }
     }

@@ -49,6 +49,111 @@ Scope {
         { value: "hot", label: "Hot" }
       ]
 
+      Component {
+        id: sortAccessory
+
+        Rectangle {
+          width: 120
+          height: 36
+          radius: 6
+          color: sortMouse.containsMouse ? Theme.bgCardHover : Theme.bgCard
+          border.width: 1
+          border.color: Theme.bgBorder
+
+          Row {
+            anchors.centerIn: parent
+            spacing: 6
+
+            Text {
+              text: {
+                for (var i = 0; i < panel.sortOptions.length; i++) {
+                  if (panel.sortOptions[i].value === panel.browseSorting)
+                    return panel.sortOptions[i].label
+                }
+                return "Top"
+              }
+              color: Theme.textPrimary
+              font.family: Theme.fontFamily
+              font.pixelSize: Theme.scaledFontSize(14)
+            }
+
+            Text {
+              text: sortMenu.visible ? "▲" : "▼"
+              color: Theme.textMuted
+              font.family: Theme.fontFamily
+              font.pixelSize: Theme.scaledFontSize(10)
+              anchors.verticalCenter: parent.verticalCenter
+            }
+          }
+
+          MouseArea {
+            id: sortMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: sortMenu.visible = !sortMenu.visible
+          }
+
+          Rectangle {
+            id: sortMenu
+            visible: false
+            anchors.top: parent.bottom
+            anchors.topMargin: 4
+            anchors.right: parent.right
+            width: parent.width
+            height: sortMenuColumn.height + 8
+            radius: 6
+            color: Theme.bgCard
+            border.width: 1
+            border.color: Theme.bgBorder
+            z: 100
+
+            Column {
+              id: sortMenuColumn
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.top: parent.top
+              anchors.margins: 4
+
+              Repeater {
+                model: panel.sortOptions
+
+                Rectangle {
+                  required property var modelData
+                  required property int index
+
+                  width: sortMenuColumn.width
+                  height: 32
+                  radius: 4
+                  color: sortItemMouse.containsMouse ? Theme.bgCardHover : "transparent"
+
+                  Text {
+                    anchors.centerIn: parent
+                    text: modelData.label
+                    color: panel.browseSorting === modelData.value ? Theme.accent : Theme.textPrimary
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.scaledFontSize(14)
+                    font.bold: panel.browseSorting === modelData.value
+                  }
+
+                  MouseArea {
+                    id: sortItemMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                      panel.browseSorting = modelData.value
+                      sortMenu.visible = false
+                      WallpaperManager.search(galleryPanel.searchText, modelData.value, 1)
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
       onActiveTabChanged: {
         searchQuery = ""
         gridNavigator.index = -1
@@ -145,13 +250,13 @@ Scope {
 
         Keys.onPressed: function(event) {
           var ctrl = event.modifiers & Qt.ControlModifier
-          var inSearch = searchInput.activeFocus
+          var inSearch = galleryPanel.searchActive
 
           // Escape / Q: layered dismiss
           if (event.key === Qt.Key_Escape || event.key === Qt.Key_Q) {
             if (inSearch) {
-              searchInput.text = ""
-              searchInput.focus = false
+              galleryPanel.clearSearch()
+              galleryPanel.blurSearch()
               panel.contentItem.forceActiveFocus()
             } else if (panel.previewOpen) {
               panel.closePreview()
@@ -167,7 +272,7 @@ Scope {
           // Ctrl+[: vim escape
           if (event.key === Qt.Key_BracketLeft && ctrl) {
             if (inSearch) {
-              searchInput.focus = false
+              galleryPanel.blurSearch()
               panel.contentItem.forceActiveFocus()
             } else if (panel.previewOpen) {
               panel.closePreview()
@@ -182,7 +287,7 @@ Scope {
 
           // Ctrl+F: focus search
           if (event.key === Qt.Key_F && ctrl) {
-            searchInput.forceActiveFocus()
+            galleryPanel.focusSearch()
             event.accepted = true
             return
           }
@@ -300,279 +405,39 @@ Scope {
 
       // -- Panel container --------------------------------------------------
 
-      Rectangle {
-        id: panelRect
-        anchors.centerIn: parent
+      GalleryPanel {
+        id: galleryPanel
         width: parent.width * 0.65
         height: parent.height * 0.75
-        color: Theme.bgBase
-        radius: 8
-        border.width: 1
-        border.color: Theme.bgBorder
-
-        MouseArea {
-          anchors.fill: parent
-          onClicked: function(event) { event.accepted = true }
+        tabs: [
+          { id: "local", label: "Local" },
+          { id: "browse", label: "Wallhaven" }
+        ]
+        activeTab: panel.activeTab
+        searchPlaceholder: panel.activeTab === "local"
+          ? "Search local files..." : "Search wallhaven..."
+        searchAccessory: sortAccessory
+        searchAccessoryVisible: panel.activeTab === "browse"
+        onTabSelected: function(tabId) { panel.activeTab = tabId }
+        onSearchTextChanged: {
+          if (panel.activeTab === "local") {
+            panel.searchQuery = searchText
+            gridNavigator.index = -1
+          }
         }
-
-        Column {
-          id: panelColumn
-          anchors.fill: parent
-          anchors.margins: 16
-          spacing: 12
-
-          // -- Tab bar ------------------------------------------------------
-
-          Row {
-            id: tabBar
-            spacing: 0
-            width: parent.width
-
-            Repeater {
-              model: [
-                { id: "local", label: "Local" },
-                { id: "browse", label: "Wallhaven" }
-              ]
-
-              Rectangle {
-                required property var modelData
-                required property int index
-
-                width: tabBar.width / 2
-                height: 40
-                color: panel.activeTab === modelData.id ? Theme.bgCard : "transparent"
-                radius: 6
-
-                Text {
-                  anchors.centerIn: parent
-                  text: modelData.label
-                  color: panel.activeTab === modelData.id ? Theme.textPrimary : Theme.textSecondary
-                  font.family: Theme.fontFamily
-                  font.pixelSize: Theme.scaledFontSize(15)
-                  font.bold: panel.activeTab === modelData.id
-                }
-
-                Rectangle {
-                  anchors.bottom: parent.bottom
-                  anchors.horizontalCenter: parent.horizontalCenter
-                  width: parent.width * 0.6
-                  height: 3
-                  radius: 1.5
-                  color: Theme.accent
-                  visible: panel.activeTab === modelData.id
-                }
-
-                MouseArea {
-                  anchors.fill: parent
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: panel.activeTab = modelData.id
-                }
-              }
-            }
+        onSearchAccepted: function(text) {
+          if (panel.activeTab === "browse") {
+            WallpaperManager.search(text, panel.browseSorting, 1)
+            galleryPanel.blurSearch()
+            panel.contentItem.forceActiveFocus()
           }
-
-          // -- Search / filter bar ------------------------------------------
-
-          Row {
-            id: searchFilterRow
-            width: parent.width
-            spacing: 8
-            z: 1
-
-            // Search input
-            Rectangle {
-              id: searchBar
-              width: panel.activeTab === "browse" ? parent.width - sortDropdown.width - 8 : parent.width
-              height: 36
-              radius: 6
-              color: Theme.bgCardHover
-              border.width: searchInput.activeFocus ? 2 : 1
-              border.color: searchInput.activeFocus ? Theme.focusRing : Theme.bgBorder
-
-              Text {
-                id: searchIcon
-                anchors.left: parent.left
-                anchors.leftMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-                text: "󰍉"
-                font.family: "Symbols Nerd Font"
-                font.pixelSize: Theme.scaledFontSize(14)
-                color: Theme.textMuted
-              }
-
-              TextInput {
-                id: searchInput
-                anchors.left: searchIcon.right
-                anchors.leftMargin: 8
-                anchors.right: parent.right
-                anchors.rightMargin: 8
-                anchors.verticalCenter: parent.verticalCenter
-                height: parent.height
-                color: Theme.textPrimary
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.scaledFontSize(14)
-                verticalAlignment: TextInput.AlignVCenter
-                activeFocusOnTab: true
-                selectByMouse: true
-                clip: true
-
-                property bool showFocusRing: false
-
-                Text {
-                  anchors.fill: parent
-                  anchors.verticalCenter: parent.verticalCenter
-                  text: panel.activeTab === "local" ? "Search local files..." : "Search wallhaven..."
-                  color: Theme.textMuted
-                  font.family: Theme.fontFamily
-                  font.pixelSize: Theme.scaledFontSize(14)
-                  verticalAlignment: Text.AlignVCenter
-                  visible: !searchInput.text && !searchInput.activeFocus
-                }
-
-                onTextChanged: {
-                  if (panel.activeTab === "local") {
-                    panel.searchQuery = text
-                    gridNavigator.index = -1
-                  }
-                }
-
-                // Submit search on Enter for browse tab
-                Keys.onReturnPressed: {
-                  if (panel.activeTab === "browse") {
-                    WallpaperManager.search(text, panel.browseSorting, 1)
-                    focus = false
-                    panel.contentItem.forceActiveFocus()
-                  }
-                }
-
-                Keys.onEscapePressed: {
-                  text = ""
-                  focus = false
-                  panel.contentItem.forceActiveFocus()
-                }
-              }
-
-              MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.IBeamCursor
-                onPressed: function(mouse) {
-                  searchInput.forceActiveFocus()
-                  mouse.accepted = false
-                }
-              }
-            }
-
-            // Sort dropdown (browse tab only)
-            Rectangle {
-              id: sortDropdown
-              width: 120
-              height: 36
-              radius: 6
-              color: sortMouse.containsMouse ? Theme.bgCardHover : Theme.bgCard
-              border.width: 1
-              border.color: Theme.bgBorder
-              visible: panel.activeTab === "browse"
-
-              Row {
-                anchors.centerIn: parent
-                spacing: 6
-
-                Text {
-                  text: {
-                    for (var i = 0; i < panel.sortOptions.length; i++) {
-                      if (panel.sortOptions[i].value === panel.browseSorting)
-                        return panel.sortOptions[i].label
-                    }
-                    return "Top"
-                  }
-                  color: Theme.textPrimary
-                  font.family: Theme.fontFamily
-                  font.pixelSize: Theme.scaledFontSize(14)
-                }
-
-                Text {
-                  text: sortMenu.visible ? "▲" : "▼"
-                  color: Theme.textMuted
-                  font.family: Theme.fontFamily
-                  font.pixelSize: Theme.scaledFontSize(10)
-                  anchors.verticalCenter: parent.verticalCenter
-                }
-              }
-
-              MouseArea {
-                id: sortMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: sortMenu.visible = !sortMenu.visible
-              }
-
-              // Sort options menu
-              Rectangle {
-                id: sortMenu
-                visible: false
-                anchors.top: parent.bottom
-                anchors.topMargin: 4
-                anchors.right: parent.right
-                width: parent.width
-                height: sortMenuColumn.height + 8
-                radius: 6
-                color: Theme.bgCard
-                border.width: 1
-                border.color: Theme.bgBorder
-                z: 100
-
-                Column {
-                  id: sortMenuColumn
-                  anchors.left: parent.left
-                  anchors.right: parent.right
-                  anchors.top: parent.top
-                  anchors.margins: 4
-
-                  Repeater {
-                    model: panel.sortOptions
-
-                    Rectangle {
-                      required property var modelData
-                      required property int index
-
-                      width: sortMenuColumn.width
-                      height: 32
-                      radius: 4
-                      color: sortItemMouse.containsMouse ? Theme.bgCardHover : "transparent"
-
-                      Text {
-                        anchors.centerIn: parent
-                        text: modelData.label
-                        color: panel.browseSorting === modelData.value ? Theme.accent : Theme.textPrimary
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.scaledFontSize(14)
-                        font.bold: panel.browseSorting === modelData.value
-                      }
-
-                      MouseArea {
-                        id: sortItemMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                          panel.browseSorting = modelData.value
-                          sortMenu.visible = false
-                          WallpaperManager.search(searchInput.text, modelData.value, 1)
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+        }
+        onSearchDismissed: panel.contentItem.forceActiveFocus()
 
           // -- Content area -------------------------------------------------
 
-          Item {
-            width: parent.width
-            height: parent.height - tabBar.height - searchFilterRow.height - panelColumn.spacing * 2
+        Item {
+          anchors.fill: parent
 
             // -- Grid view (local tab) --------------------------------------
 
@@ -1150,7 +1015,6 @@ Scope {
                 }
               }
             }
-          }
         }
       }
     }
