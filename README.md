@@ -1,117 +1,75 @@
 # dotshell
 
-A custom, keyboard-driven shell featuring a modular status bar and settings panel, built on [Quickshell](https://quickshell.outfoxxed.me)
+A modular, keyboard-driven desktop shell for Sway and Niri, built on [Quickshell](https://quickshell.outfoxxed.me). 
 
-> [!NOTE]
-> This was made to support my own simple needs as a backend dev on Arch and Void Linux.
-> I chose to open source this for the few interested souls looking for something similar.
+This reflects my personal setup for my Arch and Void Linux machines. 
 
 ## Screenshots
 
 ### Status bar
 
-#### Custom icons, fixed workspaces
-<img width="2558" height="42" alt="image" src="https://github.com/user-attachments/assets/26c0fcad-989b-40b5-bfd4-edab2a71aa81" />
+Custom icons, fixed workspaces:
 
-#### Dots, fixed workspaces, less icons
-<img width="2558" height="42" alt="image" src="https://github.com/user-attachments/assets/756c45e6-2ffe-4ecd-903e-eadc1ea8f252" />
+![Status bar with custom icons](https://github.com/user-attachments/assets/26c0fcad-989b-40b5-bfd4-edab2a71aa81)
 
-#### Numbers, with autodetect
-<img width="2558" height="42" alt="image" src="https://github.com/user-attachments/assets/495c2507-36d5-412f-95f5-2a8b93adba51" />
+Dots, fixed workspaces:
 
-### Settings panel
-<img width="1554" height="1141" alt="image" src="https://github.com/user-attachments/assets/012ece19-c5ba-4378-86c6-3cf39541acd6" />
+![Status bar with dots](https://github.com/user-attachments/assets/756c45e6-2ffe-4ecd-903e-eadc1ea8f252)
 
-### System updates panel
-<img width="935" height="664" alt="image" src="https://github.com/user-attachments/assets/5b2baa8d-030f-4119-9cac-a728b6f9fdd4" />
+Numbers, autodetected workspaces:
+
+![Status bar with numbered workspaces](https://github.com/user-attachments/assets/495c2507-36d5-412f-95f5-2a8b93adba51)
+
+### Settings
+
+![Settings panel](https://github.com/user-attachments/assets/012ece19-c5ba-4378-86c6-3cf39541acd6)
+
+### System updates
+
+![System updates panel](https://github.com/user-attachments/assets/5b2baa8d-030f-4119-9cac-a728b6f9fdd4)
 
 ## Features
 
-- Modular status bar with drop-in modules:
-  - ai-agents-monitor - Status indicator for OpenCode, Claude Code, and interactive Pi sessions
-  - battery - Charge level and AC adapter status
-  - bluetooth - Device pairing and connection management
-  - clock - Date and time display
-  - display - Monitor layout, scaling, text size, and laptop/external brightness controls
-  - idle-inhibitor - Toggle to prevent the system from going idle/sleeping
-  - media - Play/pause toggles for music
-  - notifications - Desktop notification history and management
-  - power - Lock, suspend, logout, reboot, and shutdown actions
-  - screen-recording - Screenshot and screencast capture with file browsing
-  - system-load - Live CPU and memory usage display
-  - system-updates - Package update checker for native repositories, community packages, and Flatpak
-  - volume - Audio output and input level control
-  - wallpaper - Browse, download, and apply wallpapers via Wallhaven
-  - wireless - Wi-Fi network scanning and connection management
-  - workspaces - Window manager workspace indicators and switching
-- Workspace support for Sway/i3 and Niri compositors
-- Settings panel with basic profile management
-- Keyboard-driven navigation throughout, status bar included
-- Catppuccin Mocha color scheme - Not configurable yet, but you can alter `core/Colors.qml`
+- Configurable status bar with drop-in modules and keyboard focus mode.
+- Keyboard-driven settings and profile management.
+- Live-switching JSON themes: Catppuccin, Everforest, Nord, Rosé Pine, and
+  Tokyo Night, with [user overrides](docs/wiki/core/theming.md).
 
-### Module: AI Agents Monitor
+| Module | Provides |
+|---|---|
+| `ai-agents-monitor` | OpenCode, Claude Code, and interactive Pi session status; remote monitoring over SSH |
+| `battery` | Charge and AC status |
+| `bluetooth` | Device discovery, pairing, and connections |
+| `clock` | Date and time |
+| `display` | Monitor layout, scaling, text size, and internal/external brightness |
+| `idle-inhibitor` | Prevent compositor idle actions |
+| `media` | Media playback controls |
+| `notifications` | Desktop notifications, history, do-not-disturb, and remote subscriptions |
+| `power` | Lock, suspend, logout, reboot, and shutdown |
+| `screen-recording` | Screenshots, screencasts, and captured-file browsing |
+| `system-load` | CPU and memory usage |
+| `system-updates` | Native repository, community package, and Flatpak updates where supported |
+| `volume` | Audio output/input levels, devices, and streams |
+| `wallpaper` | Wallhaven browsing, downloads, and wallpaper selection |
+| `wireless` | Wi-Fi scanning, connections, and throughput |
+| `workspaces` | Sway/Niri workspace indicators and switching |
 
-The module discovers standalone Claude Code and interactive Pi sessions
-automatically. Headless Pi workers, including RPC sessions started by Pi Browser
-Taskbar, are ignored. OpenCode must be started with the bundled `oc` wrapper so
-the module can discover its server and report its state in real time.
+### AI agent monitoring
 
-#### Remote monitoring
+Standalone Claude Code and interactive Pi sessions are discovered automatically;
+headless Pi workers are ignored. Start OpenCode with the bundled `oc` wrapper
+(installed at shell startup). Discovery polls every 10 seconds.
 
-Dotshell instances can monitor each other across machines. Every instance
-publishes its locally discovered agents on the `agents` IPC target:
-
-```sh
-dshell ai-agents-monitor current # one snapshot
-dshell ai-agents-monitor listen  # stream one snapshot per poll
-```
-
-To subscribe from another machine, set the SSH host alias of the machine you
-want to monitor under Settings → AI Agents Monitor. The subscription runs over
-a single persistent SSH connection (BatchMode, no forwardings, host-key
-verification intact), so it works anywhere your normal SSH access works —
-including over Tailscale: use your existing SSH alias or the server's MagicDNS
-name as the host. Authentication, ports, and jump hosts all come from
-`~/.ssh/config`.
-
-Imported agents are labelled with their source host in the tooltip and are
-dropped from the counts after 60 seconds without fresh data, with the
-connection retried every 5 seconds. Snapshots contain only provider, project
-name, status, and session title — no PIDs, paths, or ports. Only locally
-discovered agents are re-published, so two machines can safely monitor each
-other without feedback loops.
-
-## Dependencies
-There's quite a few you will need to install, seeing as this is mostly a personal setup.
-Though I dare say most of them are common, and widely used.
-
-| Dependency | Packages | Reason |
-|---|---|---|
-| Quickshell | `quickshell` | The core runtime |
-| Compositor | `sway` or `niri` | Workspace and display control |
-| Bluetooth tools | `bluez`, `bluez-utils` | GUI connection management |
-| Network management | `networkmanager` | GUI connection management |
-| Display tools | `brightnessctl`, `ddcutil`, GLib (`gsettings`) | Display brightness and text scaling |
-| Audio stack | `pipewire`, `wireplumber` | Volume/audio integration |
-| Fonts | `otf-commit-mono-nerd`, `ttf-dejavu` | Font + nerd icons used in panels |
-| Notifications CLI | `libnotify` | Catch and display notifications |
-| JSON tooling | `jq` | `dshell` state reads and completion |
+To monitor another dotshell machine, enter its SSH alias under
+**Settings → AI Agents Monitor**. This uses non-interactive SSH with your usual
+SSH configuration, including Tailscale hosts. See the
+[CLI reference](bin/README.md#remote-agent-snapshots) for snapshot commands and
+transport details.
 
 ## Installation
 
-Install the dependencies above, then clone the repo to `~/.config/dotshell`:
-```sh
-git clone https://github.com/davelens/dotshell.git ~/.config/dotshell
-```
-
-### Arch Linux and Void Linux
-
-The setup script detects either distribution. On Arch it installs packages via
-`pacman`/`paru` and configures a systemd user service. On Void it installs
-packages via XBPS and configures a turnstile-managed runit user service, matching
-the session setup in [dotsys](https://github.com/davelens/dotsys).
-
-Clone the repository wherever and run the setup script:
+Run setup as your desktop user, **not root**, from a checkout outside
+`~/.config/dotshell`; setup creates that symlink for you:
 
 ```sh
 git clone https://github.com/davelens/dotshell.git
@@ -119,105 +77,41 @@ cd dotshell
 bash setup/init.sh
 ```
 
-The setup script will:
-1. Install dotshell's Quickshell runtime and dependencies via `pacman`/`paru` or XBPS
-2. Configure `i2c-dev` for external monitor brightness control (ddcutil)
-3. Symlink the repo to `~/.config/dotshell`
-4. Install the `dotshell` systemd (Arch) or turnstile/runit (Void) user service
-5. Install a desktop entry for the settings panel
+- **Arch:** requires `sudo`, `paru`, and a configured graphical session. Installs
+  packages through `pacman`/`paru` and enables a systemd user service.
+- **Void:** requires `sudo`, elogind, and turnstile's runit backend, as configured
+  by [dotsys](https://github.com/davelens/dotsys). Installs through XBPS; the
+  bundled user service requires **Sway** to launch dotshell in the graphical
+  session, even though the shell itself also supports Niri.
 
-The Void path expects elogind for session/seat/polkit integration and
-turnstile's runit backend for the user service tree at `~/.config/service`, as
-configured by this author's dotsys setup. Runit supervises dotshell while Sway
-launches the process into the active graphical session, allowing background
-polkit requests to reach its graphical agent. If you need external monitor
-brightness control, log out and back in to refresh group membership.
+Setup installs Quickshell and shared module dependencies, configures `i2c-dev`
+for external brightness, and installs the service, CLI, Bash completion, and
+settings desktop entry. Exact package lists live in the
+[Arch](setup/platforms/arch.sh) and [Void](setup/platforms/void.sh) adapters;
+setup does not provision a complete desktop session or every optional tool.
 
-### Renderer backend
+Stop any existing notification daemon (such as Mako) before using dotshell's
+notifications. Log out and back in after setup adds you to device-access groups.
 
-The installed services default to `QSG_RHI_BACKEND=vulkan`, which used about
-64 MB less PSS than Qt's OpenGL backend in testing. Use `opengl` as a
-compatibility fallback; changing the backend requires restarting dotshell.
-Platform-specific override instructions live in the
-[setup documentation](docs/wiki/setup.md#renderer-backend).
+Services default to the Vulkan renderer; use OpenGL if needed. See
+[setup documentation](docs/wiki/setup.md) for renderer overrides, service
+behavior, and uninstall details.
+
+## CLI and documentation
+
+- [`dshell` reference](bin/README.md) — commands, completion, and module extensions.
+- [Project wiki](docs/wiki/index.md) — architecture, configuration, and behavior.
 
 ## Tests
-
-Run the safe, distribution-independent test harness from the repository root:
 
 ```sh
 bash tests/run.sh
 ```
 
-The harness replaces privileged and host-changing commands with recording
-fakes, then runs the real setup and uninstall entry points against temporary
-homes. It covers the Arch (`pacman`/`paru` and systemd) and Void (XBPS and
-turnstile/runit) branches, reruns, paths containing spaces, and rejected
-invocations without changing the host. CI also runs the suite inside both Arch
-and Void Linux containers.
-
-`shellcheck` is used automatically when installed; `jq` is required for JSON
-validation.
-
-## CLI
-
-dotshell ships a `dshell` CLI for controlling the shell from the command line or window manager keybinds. It is symlinked into `$XDG_BIN_HOME`, falling back to `~/.local/bin`; make sure that directory is in your `$PATH`.
-
-`bin/dshell` owns the core command registrations, dispatch, usage, completion,
-and registration helpers. On every invocation, including completion, it
-sources each installed `modules/<module-id>/dshell/init.sh` through
-`$CONFIG_DIR`. These files only register commands/groups and define local CLI
-functions, so removing a module also removes its commands. This needs no
-`module.json` declaration or setup change.
-
-```sh
-dshell <command> <subcommand> [args]
-```
-
-| Command | Subcommand | Description |
-|---|---|---|
-| `ai-agents-monitor` | `current` | Print the current local AI agent snapshot |
-| `ai-agents-monitor` | `listen` | Stream local AI agent snapshots |
-| `status-bar` | `focus <verb>` | Status bar focus mode: `toggle`, `enable`, `disable`, `state` |
-| `bluetooth` | `toggle` | Toggle Bluetooth popup |
-| `display` | `toggle` | Toggle display popup |
-| `display` | `text-size [px]` | Show or set display text size (9–20px) |
-| `idle-inhibitor` | `enable` | Enable idle inhibitor |
-| `idle-inhibitor` | `disable` | Disable idle inhibitor |
-| `idle-inhibitor` | `toggle` | Toggle idle inhibitor |
-| `idle-inhibitor` | `state` | Show idle inhibitor state |
-| `notifications` | `toggle` | Toggle notification panel |
-| `notifications` | `open` | Open notification panel |
-| `notifications` | `close` | Close notification panel |
-| `notifications` | `dismiss <id>` | Dismiss a notification by id |
-| `notifications` | `clear-all` | Clear notification history |
-| `notifications` | `listen` | Stream new local notifications |
-| `notifications` | `remote set <host>` | Set the remote notification SSH host |
-| `notifications` | `remote clear` | Clear the remote notification SSH host |
-| `power` | `toggle` | Toggle power menu |
-| `power` | `open` | Open power menu |
-| `power` | `close` | Close power menu |
-| `profile` | `list` | List all profiles |
-| `profile` | `current` | Show active profile name |
-| `profile` | `set <name>` | Switch to a profile |
-| `screen-recording` | `files <verb>` | Screen recording file browser: `toggle`, `open`, `close` |
-| `settings` | `toggle` | Toggle settings panel |
-| `settings` | `open` | Open settings panel |
-| `settings` | `close` | Close settings panel |
-| `settings` | `show-category <id>` | Open settings to a specific category |
-| `theme` | `list` | List available themes |
-| `theme` | `set <name>` | Switch to a theme |
-| `theme` | `current` | Show active theme name |
-| `theme` | `refresh` | Regenerate GTK CSS for the active theme |
-| `system-updates` | `toggle` | Toggle system updates popup |
-| `volume` | `toggle` | Toggle volume popup |
-| `wallpaper` | `browser <verb>` | Wallpaper browser panel: `toggle`, `open`, `close` |
-| `wallpaper` | `set <path>` | Set a wallpaper by file path |
-| `wallpaper` | `restore [fallback]` | Restore saved wallpaper |
-| `wireless` | `status` | List active network connections |
-| `wireless` | `toggle` | Toggle wireless popup |
-
-There are no compatibility aliases for removed command names.
+Requires `jq`; uses `shellcheck` when installed. The suite includes shell checks,
+JSON validation, and fixture tests. Setup/uninstall tests use temporary homes
+and fake host-changing commands. CI runs the full suite on Ubuntu and the
+setup/uninstall harness in Arch and Void containers.
 
 ## License
 

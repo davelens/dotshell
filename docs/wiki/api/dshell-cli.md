@@ -85,4 +85,4 @@ For core groups (`status-bar`, `profile`, `settings`, `theme`), add registration
 2. Register the command and, for a new module extension, its group description.
 3. New argument kind → add a completion source function and a case in
    `complete_words`.
-4. Update the command table in `README.md`.
+4. Update the command table in [`bin/README.md`](../../../bin/README.md).
