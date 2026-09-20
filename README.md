@@ -63,18 +63,12 @@ Discovery polls every 10 seconds.
 
 #### Optional Pi activation (manual, on each monitored machine)
 
-Requires Pi's `ctx.mode` and `session_start`/`session_shutdown` lifecycle API
-(verified against Pi 0.86.1). To activate, add the absolute path
-`/path/to/dotshell/modules/ai-agents-monitor/extensions/dotshell-agent-state.ts`
-to the existing `extensions` array in Pi's user `settings.json`, preserving other
-settings. Its documented location is
-`${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}/settings.json`; use the environment of the
-Pi process, not an assumed `~/.config/pi` directory. Then run `/reload` in each
-open interactive Pi session, or restart Pi. For a one-off launch instead:
-
-```sh
-pi -e /path/to/dotshell/modules/ai-agents-monitor/extensions/dotshell-agent-state.ts
-```
+The extension lives in [pi-config](https://github.com/davelens/pi-config) at
+`extensions/dotshell-agent-state/index.ts`, not in dotshell. Pi auto-loads it
+when that repo is the active agent directory (`PI_CODING_AGENT_DIR`). Run
+`/reload` in each open Pi session after installing or updating it; restarting
+dotshell alone does not load Pi extensions. Requires Pi's `ctx.mode` and
+`session_start`/`session_shutdown` lifecycle API (verified against Pi 0.86.1).
 
 The extension atomically publishes private, per-PID records under
 `${XDG_RUNTIME_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}}/dotshell-agent-state` and
@@ -88,7 +82,8 @@ their file (normally after an assistant message), then appear automatically.
 
 The latest nonblank session name takes precedence over the first user prompt.
 Full normalized names survive transport, subject to the 64-KiB snapshot limit;
-unnamed prompt previews retain an 80-character limit. Bar elision is visual only. Existing status inference is unchanged. Remote
+unnamed prompt previews retain an 80-character limit. Bar elision is visual only.
+Existing status inference is unchanged. Remote
 monitoring needs the updated module and extension activation on the remote host
 as well; deployment and activation are separate manual steps, not part of setup.
 
@@ -142,9 +137,9 @@ bash tests/run.sh
 
 Requires `jq`; uses `shellcheck` when installed. The suite includes shell checks,
 JSON validation, and fixture tests. Setup/uninstall tests use temporary homes
-and fake host-changing commands. Pi extension lifecycle checks use Node's native
-TypeScript support (22.6+); they report a skip if unavailable. CI runs the full
-suite on Ubuntu and the setup/uninstall harness in Arch and Void containers.
+and fake host-changing commands. Pi extension lifecycle checks live in pi-config.
+CI runs the full suite on Ubuntu and the setup/uninstall harness in Arch and
+Void containers.
 
 ## License
 
