@@ -530,8 +530,8 @@ Singleton {
   // Completed Pi instances for the current poll cycle
   property var _piInstances: []
 
-  // Kick off Pi discovery — delegates to bin/pi-discover which correlates
-  // live `pi` processes against on-disk JSONL session files by cwd.
+  // Kick off Pi discovery — bin/pi-discover validates dotshell-agent-state
+  // PID records before reading each process's exact session file.
   function _piDiscover() {
     if (manager._piSessionsDir === "") {
       manager._piInstances = []

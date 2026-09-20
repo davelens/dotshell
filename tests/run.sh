@@ -39,6 +39,7 @@ bash tests/dshell_test.sh
 bash tests/module_rename_test.sh
 bash tests/statusbar_defaults_test.sh
 bash tests/pi_discover_test.sh
+bash tests/pi_agent_state_test.sh
 bash tests/remote_stream_test.sh
 bash tests/notification_remote_stream_test.sh
 bash tests/popup_manager_cleanup_test.sh

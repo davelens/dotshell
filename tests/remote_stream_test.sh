@@ -63,14 +63,14 @@ chmod +x "$FAKE_SSH"
 ARGS_FILE="$SANDBOX/ssh-args"
 STREAM_FILE="$SANDBOX/stream"
 LONG_PROJECT="$(printf 'p%.0s' {1..500})"
-LONG_TITLE="$(printf 't%.0s' {1..500})"
+LONG_TITLE="Infrastructure > Docker > Build development bootstrap with MySQL and production imports $(printf 't%.0s' {1..500})"
 
 # Line 1: valid payload; the second instance has an unknown provider and the
 #         third an unknown status, so only the first may survive.
 # Line 2: not JSON at all.
 # Line 3: unknown schema version.
 # Line 4: more than 256 instances.
-# Line 5: valid payload with oversized fields (must be truncated).
+# Line 5: valid payload with long title (preserved) and oversized project (truncated).
 {
   jq -nc --arg project "dotshell" '{
     version: 1, ready: true, generatedAtMs: 100,
@@ -92,6 +92,15 @@ LONG_TITLE="$(printf 't%.0s' {1..500})"
     instances: [{ provider: "opencode", project: $project, status: "idle", sessionTitle: $title }]
   }'
   echo '{"version":1,"ready":true,"generatedAtMs":NaN,"instances":[]}'
+  # The total 64-KiB bound still applies, including UTF-8 byte size.
+  for character in t é; do
+    jq -nc --arg character "$character" '{
+      version: 1, ready: true, generatedAtMs: 104,
+      instances: [{provider:"pi", project:"p", status:"idle", sessionTitle:($character * 66000)}]
+    }'
+  done
+  jq -nc '{version:1, ready:true, generatedAtMs:105,
+    instances:[{provider:"pi", project:"p", status:"idle", sessionTitle:("é" * 40000)}]}'
 } >"$STREAM_FILE"
 
 OUTPUT="$(SSH_BIN="$FAKE_SSH" FAKE_SSH_ARGS="$ARGS_FILE" FAKE_SSH_STREAM="$STREAM_FILE" \
@@ -112,8 +121,10 @@ assert_jq "$FIRST" '.instances[0] | has("pid") or has("cwd") | not' \
   'non-display fields are stripped'
 assert_jq "$FIRST" '.instances[0].sessionTitle == "<b>hi</b> next"' \
   'control characters are replaced'
-assert_jq "$SECOND" '.instances[0] | (.project | length) == 120 and (.sessionTitle | length) == 160' \
-  'oversized fields are truncated'
+assert_jq "$SECOND" '.instances[0].project | length == 120' \
+  'oversized project remains truncated'
+assert_eq "$LONG_TITLE" "$(jq -r '.instances[0].sessionTitle' <<<"$SECOND")" \
+  'full named title longer than 160 characters survives bounded transport'
 
 SSH_ARGS="$(cat "$ARGS_FILE")"
 assert_eq 'devbox' "$(sed -n '/^--$/{n;p;}' <<<"$SSH_ARGS")" \

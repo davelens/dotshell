@@ -76,7 +76,7 @@ trap cleanup EXIT TERM INT
 ssh_pid=$!
 
 jq -Rc --unbuffered --arg host "$host" '
-  select(length <= 65536)
+  select(utf8bytelength <= 65536)
   | fromjson?
   | select(type == "object")
   | select(.version == 1)
@@ -99,7 +99,7 @@ jq -Rc --unbuffered --arg host "$host" '
             provider,
             project: (.project | gsub("[[:cntrl:]]"; " ") | .[0:120]),
             status,
-            sessionTitle: (.sessionTitle | gsub("[[:cntrl:]]"; " ") | .[0:160]),
+            sessionTitle: (.sessionTitle | gsub("[[:cntrl:]]"; " ")),
             source: $host,
             remote: true
           }
