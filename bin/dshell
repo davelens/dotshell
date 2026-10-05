@@ -100,7 +100,8 @@ ipc() {
 }
 
 ipc_listen() {
-  exec qs -p "$CONFIG_DIR" ipc --any-display listen "$@"
+  # SSH disconnects can orphan quiet listeners without ever triggering SIGPIPE.
+  exec setpriv --pdeathsig TERM qs -p "$CONFIG_DIR" ipc --any-display listen "$@"
 }
 
 # Strip the :source suffixes from an args spec for display

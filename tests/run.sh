@@ -41,6 +41,7 @@ bash tests/statusbar_defaults_test.sh
 bash tests/pi_discover_test.sh
 bash tests/remote_stream_test.sh
 bash tests/notification_remote_stream_test.sh
+bash tests/ipc_listener_lifetime_test.sh
 bash tests/popup_manager_cleanup_test.sh
 bash tests/popup_ipc_test.sh
 bash tests/popup_geometry_test.sh
