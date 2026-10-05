@@ -5,7 +5,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SANDBOX="$(mktemp -d)"
 parent=""
 listener=""
-# shellcheck disable=SC2329
+# shellcheck disable=SC2317,SC2329
 cleanup() {
   [[ -z "$parent" ]] || kill "$parent" 2>/dev/null || true
   [[ -z "$listener" ]] || kill "$listener" 2>/dev/null || true
