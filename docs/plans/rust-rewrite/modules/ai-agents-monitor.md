@@ -6,33 +6,23 @@ busy/idle/error/question counts.
 
 ## Feature parity
 
-- Three providers, merged only when all three finish a poll cycle
-  (ports `_tryMerge`/`_mergeProviders` and the per-provider `_busy`
-  flags):
-  - **OpenCode**: discover instances via `bin/oc` /
-    `claude-discover`-style discovery script, then query each local
-    HTTP API (status, session, question, permission endpoints) with
-    short connect/read timeouts (1s/2s today).
-  - **Claude Code**: sessions/tasks directory scanning
-    (`_ccSessionsDir`, `_ccTasksDir`).
-  - **pi**: sessions directory scanning (`_piSessionsDir`).
+- Agents push status over `$XDG_RUNTIME_DIR/dotshell-agents.sock` (one
+  JSON line per change; see README "AI agent monitoring"). Persistent
+  connections (Pi, OpenCode) own their agent until they close; one-shot
+  Claude hook lines are pruned by a 60 s `bin/claude-discover` rescan,
+  which also seeds pre-existing Claude sessions and heartbeats the
+  remote snapshot.
 - Counts exposed: `totalCount`, `busyCount`, `idleCount`,
   `errorCount`, `questionCount`; segment presentation (glyph 󰚩 +
   per-state counts/colors) unchanged.
-- `bin/oc`, `bin/claude-discover`, `bin/pi-discover` stay bash and
-  keep being symlinked into `$XDG_BIN_HOME` (or `~/.local/bin` when unset).
+- `bin/claude-discover` and `bin/claude-hook` stay bash.
 
 ## Stack
 
-- Module crate, segment component only (order 205).
-- Poll timer on `calloop`; discovery via `collect_output` on the
-  existing bin scripts (they are the contract — do not reimplement
-  their logic in Rust).
-- Local HTTP calls: `reqwest` on the tokio sidecar with the same 1s
-  connect / 2s total timeouts (replaces the `curl -sf` chains); the
-  sequential pending-queue walk (`_ocQueryNext` etc.) becomes a plain
-  async loop per provider.
-- Directory scans: `std::fs` + mtime checks, same semantics.
+- Module crate, segment component only.
+- Unix socket listener on `calloop`; line-delimited JSON, same
+  validation as `Manager._apply`.
+- 60 s rescan via `collect_output` on `bin/claude-discover`.
 
 ## State / IPC / keymaps
 
@@ -41,12 +31,12 @@ busy/idle/error/question counts.
 
 ## Risks
 
-- The provider state machines are the densest QML in the repo; port
-  each provider behind its own `Provider` trait impl with unit tests
-  against captured API fixtures before wiring the segment.
+- Keep the ownership rule: a replaced Pi session reconnects before its
+  old connection closes, so only drop agents the closing connection
+  still owns.
 
 ## Verification
 
 - With one busy OpenCode session, one idle Claude session: counts
-  match the current shell side-by-side; unreachable API (killed
-  instance) degrades to removal within one cycle, no hang (timeouts).
+  match the current shell side-by-side; a killed Pi/OpenCode instance
+  disappears immediately, a killed Claude within a minute.

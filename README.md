@@ -56,36 +56,38 @@ Numbers, autodetected workspaces:
 
 ### AI agent monitoring
 
-Standalone Claude Code is discovered automatically. Interactive Pi requires the
-optional `dotshell-agent-state` extension below; headless Pi workers are ignored.
-Start OpenCode with the bundled `oc` wrapper (installed at shell startup).
-Discovery polls every 10 seconds.
+Agents push their status to the shell over a Unix socket at
+`$XDG_RUNTIME_DIR/dotshell-agents.sock`, one JSON line per change:
 
-#### Optional Pi activation (manual, on each monitored machine)
+```json
+{"provider": "pi", "pid": 1234, "status": "busy", "cwd": "/path", "title": "..."}
+```
 
-The extension lives in [pi-config](https://github.com/davelens/pi-config) at
-`extensions/dotshell-agent-state/index.ts`, not in dotshell. Pi auto-loads it
-when that repo is the active agent directory (`PI_CODING_AGENT_DIR`). Run
-`/reload` in each open Pi session after installing or updating it; restarting
-dotshell alone does not load Pi extensions. Requires Pi's `ctx.mode` and
-`session_start`/`session_shutdown` lifecycle API (verified against Pi 0.86.1).
+`provider` is `opencode`, `claude-code`, or `pi`; `status` is `busy`, `idle`,
+`error`, `input`, or `gone` (removes the agent). Pi and OpenCode keep their
+connection open, and closing it removes the agent. Claude Code hooks send
+one-shot lines with `"oneshot": true`. Once a minute the shell rescans Claude
+session files: Claude sessions started before the shell appear as idle, and
+sessions that ended without a `SessionEnd` hook are dropped.
 
-The extension atomically publishes private, per-PID records under
-`${XDG_RUNTIME_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}}/dotshell-agent-state` and
-removes its record on shutdown or session replacement. Pi and dotshell must
-share that environment; `PI_AGENT_STATE_DIR` can override the directory for both.
-Discovery checks PID start ticks, boot identity, and the exact session header ID;
-it never guesses ownership from cwd or file age. Unregistered, stale, or invalid
-records are omitted. Nonpersistent (`--no-session`) sessions have an idle row
-with a blank title. New persistent sessions are omitted until Pi first flushes
-their file (normally after an assistant message), then appear automatically.
+Each agent needs a sender, set up manually on each monitored machine:
 
-The latest nonblank session name takes precedence over the first user prompt.
-Full normalized names survive transport, subject to the 64-KiB snapshot limit;
-unnamed prompt previews retain an 80-character limit. Bar elision is visual only.
-Existing status inference is unchanged. Remote
-monitoring needs the updated module and extension activation on the remote host
-as well; deployment and activation are separate manual steps, not part of setup.
+- **Pi:** the `dotshell-agent-state` extension in
+  [pi-config](https://github.com/davelens/pi-config). Only interactive (TUI)
+  sessions report; run `/reload` in open sessions after installing or updating
+  it.
+- **OpenCode (2.x):** the `dotshell-agents/` plugin directory in the OpenCode
+  `plugins/` config directory (kept in the dotfiles repo). Its `tui.js` runs in
+  each TUI process, so closing the TUI removes the agent even though the
+  background service keeps running.
+- **Claude Code:** register `bin/claude-hook` (symlinked to
+  `${XDG_BIN_HOME:-$HOME/.local/bin}/claude-hook`) in `settings.json` for
+  `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`,
+  `PermissionRequest`, `Stop`, `StopFailure`, and `SessionEnd`. It sends with
+  `ncat`, and skips Claude processes driven by Pi so Pi stays the single
+  counted agent.
+
+Remote monitoring needs the same senders on the remote host.
 
 To monitor another dotshell machine, enter its SSH alias under
 **Settings → AI Agents Monitor**. This uses non-interactive SSH with your usual

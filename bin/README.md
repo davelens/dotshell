@@ -70,7 +70,7 @@ Persisted reads such as profile/theme queries work without the shell running.
 
 ```sh
 dshell ai-agents-monitor current # one local snapshot
-dshell ai-agents-monitor listen  # stream after each completed discovery poll
+dshell ai-agents-monitor listen  # stream after each change, at least once a minute
 ```
 
 Both use the internal `agents` IPC target with `--any-display`, allowing queries
@@ -84,8 +84,8 @@ Ports and jump hosts come from your SSH configuration, so existing Tailscale
 aliases or MagicDNS names work too.
 
 Remote agents are labelled by source host. Staleness is checked every 10 seconds;
-imported agents are dropped once no newer snapshot has arrived for over 60
-seconds. Disconnected streams are retried on a five-second timer.
+imported agents are dropped once no newer snapshot has arrived for over 150
+seconds (publishers send one at least once a minute). Disconnected streams are retried on a five-second timer.
 
 Each exported agent contains only provider, project name, status, and session
 title—not PIDs, working-directory paths, or ports. Snapshots also carry version,

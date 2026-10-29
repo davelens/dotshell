@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Claude Code hook: pushes the session's status to the dotshell agents socket.
+# Register this one command for SessionStart, UserPromptSubmit, PreToolUse,
+# PostToolUse, PermissionRequest, Stop, StopFailure, and SessionEnd; the event
+# name in the hook payload (stdin) picks the status.
+#
+# Claude processes driven by Pi (pi-claude-bridge) are skipped so Pi stays the
+# single counted agent. Never fails or blocks Claude: a missing socket, jq, or
+# ncat just means nothing is sent.
+
+pid=$PPID
+claude_pid=""
+# Walk the ancestry through /proc with builtins only; this runs per tool call.
+while [[ "$pid" =~ ^[0-9]+$ ]] && [ "$pid" -gt 1 ]; do
+  read -r stat <"/proc/$pid/stat" 2>/dev/null || break
+  comm=${stat#*(}
+  comm=${comm%)*}
+  case "$comm" in
+    claude) [ -n "$claude_pid" ] || claude_pid=$pid ;;
+    pi) exit 0 ;;
+  esac
+  # shellcheck disable=SC2086
+  set -- ${stat##*) }
+  pid=$2
+done
+
+[ -n "$claude_pid" ] || exit 0
+
+socket="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/dotshell-agents.sock"
+
+jq -c --argjson pid "$claude_pid" '
+  {
+    SessionStart: "idle",
+    UserPromptSubmit: "busy",
+    PreToolUse: (if .tool_name == "AskUserQuestion" then "input" else "busy" end),
+    PostToolUse: "busy",
+    PermissionRequest: "input",
+    Stop: "idle",
+    StopFailure: "error",
+    SessionEnd: "gone"
+  }[.hook_event_name // ""] as $status
+  | select($status)
+  | {provider: "claude-code", pid: $pid, oneshot: true, status: $status, cwd: (.cwd // "")}
+  + if (.prompt | type) == "string" then
+      {title: (.prompt | gsub("\\s+"; " ") | ltrimstr(" ") | rtrimstr(" ")
+        | if length > 80 then .[0:77] + "..." else . end)}
+    else {} end
+' 2>/dev/null | {
+  read -r line || exit 0
+  printf '%s\n' "$line" | ncat -U --send-only "$socket" 2>/dev/null
+}
+
+exit 0

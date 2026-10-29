@@ -16,63 +16,137 @@ Singleton {
   property int questionCount: 0
 
   // Per-instance details — normalized across all providers:
-  //   { provider, pid, cwd, project, status, sessionTitle, <provider-specific> }
-  // OpenCode extras: port
+  //   { provider, pid, cwd, project, status, sessionTitle }
   // Remote extras: source, remote (imported from another dotshell over SSH)
   property var instances: []
 
-  // Registry directory for OpenCode (set once at startup)
-  property string registryDir: ""
+  // -------------------------------------------------------------------------
+  // Local agents, pushed over a Unix socket
+  // -------------------------------------------------------------------------
 
-  // Sessions directory for Claude Code (set once at startup)
-  property string _ccSessionsDir: ""
+  // Agents write one JSON line per status change:
+  //   { provider, pid, status, cwd?, title?, oneshot? }
+  // Status "gone" removes the agent. Pi and OpenCode keep their connection
+  // open, so closing it removes their agent too. Claude Code hooks send
+  // `oneshot` lines and are pruned by the liveness timer instead.
+  readonly property string socketPath:
+    (Quickshell.env("XDG_RUNTIME_DIR") || "/run/user/1000") + "/dotshell-agents.sock"
 
-  // Tasks directory for Claude Code (set once at startup)
-  property string _ccTasksDir: ""
+  readonly property var _providers: ({ "opencode": true, "claude-code": true, "pi": true })
+  readonly property var _statuses: ({ "busy": true, "idle": true, "error": true, "input": true })
 
-  // Sessions directory for Pi (set once at startup)
-  property string _piSessionsDir: ""
+  // Local agents keyed by "<provider>:<pid>", and the persistent connection
+  // that owns each of them
+  property var _agents: ({})
+  property var _owners: ({})
 
-  Component.onCompleted: {
-    var xdgRuntime = Quickshell.env("XDG_RUNTIME_DIR")
-    if (!xdgRuntime) xdgRuntime = "/run/user/1000"
-    registryDir = xdgRuntime + "/opencode-ports"
-
-    var xdgConfig = Quickshell.env("XDG_CONFIG_HOME")
-    if (!xdgConfig) {
-      var home = Quickshell.env("HOME")
-      xdgConfig = (home ? home : "/root") + "/.config"
+  SocketServer {
+    active: true
+    path: manager.socketPath
+    handler: Socket {
+      id: conn
+      onConnectedChanged: if (!connected) manager._disconnect(conn)
+      parser: SplitParser {
+        onRead: line => manager._ingest(line, conn)
+      }
     }
-    _ccSessionsDir = xdgConfig + "/claude/sessions"
-    _ccTasksDir = xdgConfig + "/claude/tasks"
-    _piSessionsDir = xdgConfig + "/pi/sessions"
   }
 
-  // Guard flags to prevent re-entry and coordinate merge timing
-  property bool _ocBusy: false
-  property bool _ccBusy: false
-  property bool _piBusy: false
+  function _ingest(line, conn) {
+    var msg
+    try {
+      msg = JSON.parse(line)
+    } catch(e) {
+      return
+    }
+    if (_apply(msg, conn)) _publishLocal()
+  }
 
-  // Poll every 10 seconds — orchestrates all provider discovery passes
+  // Validate one agent message and fold it into _agents. Returns whether
+  // anything changed.
+  function _apply(msg, conn) {
+    if (!msg || !_providers[msg.provider]) return false
+    if (typeof msg.pid !== "number" || msg.pid <= 0 || msg.pid % 1 !== 0) return false
+
+    var key = msg.provider + ":" + msg.pid
+    if (msg.status === "gone") {
+      if (!(key in _agents)) return false
+      delete _agents[key]
+      delete _owners[key]
+      return true
+    }
+    if (!_statuses[msg.status]) return false
+
+    var prev = _agents[key] || {}
+    var cwd = typeof msg.cwd === "string" && msg.cwd !== "" ? msg.cwd : (prev.cwd || "")
+    var parts = cwd.split("/")
+    _agents[key] = {
+      provider: msg.provider,
+      pid: String(msg.pid),
+      cwd: cwd,
+      project: parts[parts.length - 1],
+      status: msg.status,
+      sessionTitle: typeof msg.title === "string" ? msg.title : (prev.sessionTitle || "")
+    }
+    if (!msg.oneshot && conn) _owners[key] = conn
+    return true
+  }
+
+  // A replaced Pi session reconnects before its old socket closes, so only
+  // drop agents this connection still owns.
+  function _disconnect(conn) {
+    var changed = false
+    for (var key in _owners) {
+      if (_owners[key] !== conn) continue
+      delete _owners[key]
+      delete _agents[key]
+      changed = true
+    }
+    if (changed) _publishLocal()
+  }
+
+  // Seeds Claude sessions started before the shell, prunes ones that exited
+  // without a SessionEnd hook, and doubles as the snapshot heartbeat for
+  // remote subscribers.
   Timer {
-    interval: 10000
-    running: manager.registryDir !== "" || manager._ccSessionsDir !== "" || manager._piSessionsDir !== ""
+    interval: 60000
+    running: true
     repeat: true
     triggeredOnStart: true
-    onTriggered: {
-      if (manager._ocBusy || manager._ccBusy || manager._piBusy) return
-      manager._ocBusy = true
-      manager._ccBusy = true
-      manager._piBusy = true
-      manager._ocDiscover()
-      manager._ccDiscover()
-      manager._piDiscover()
-    }
+    onTriggered: claudeDiscoverProc.running = true
   }
 
-  // Only merge when all providers have finished their current cycle
-  function _tryMerge() {
-    if (!_ocBusy && !_ccBusy && !_piBusy) _mergeProviders()
+  // bin/claude-discover skips Claude processes driven by Pi, which is the
+  // single counted agent in that case.
+  Process {
+    id: claudeDiscoverProc
+    command: ["bash", Quickshell.shellDir + "/modules/ai-agents-monitor/bin/claude-discover"]
+    stdout: StdioCollector {}
+    onExited: {
+      var live = {}
+      var lines = claudeDiscoverProc.stdout.text.trim().split("\n")
+      for (var i = 0; i < lines.length; i++) {
+        var colonIdx = lines[i].indexOf(":")
+        if (colonIdx < 0) continue
+        try {
+          live[lines[i].substring(0, colonIdx)] = JSON.parse(lines[i].substring(colonIdx + 1)).cwd
+        } catch(e) {
+          // Skip malformed session files
+        }
+      }
+
+      for (var key in manager._agents) {
+        if (key.indexOf("claude-code:") === 0 && !(key.substring(12) in live))
+          delete manager._agents[key]
+      }
+      for (var pid in live) {
+        if (!(("claude-code:" + pid) in manager._agents))
+          manager._apply({ provider: "claude-code", pid: Number(pid), status: "idle", cwd: live[pid], oneshot: true }, null)
+      }
+
+      manager._localReady = true
+      manager._publishLocal()
+    }
   }
 
   // Locally discovered instances only — this is what gets exported to
@@ -81,20 +155,16 @@ Singleton {
   property bool _localReady: false
   property double _localGeneratedAtMs: 0
 
-  // Merge completed provider instance arrays into the local snapshot,
-  // broadcast it to IPC subscribers, and republish the display list.
-  function _mergeProviders() {
-    var merged = []
-    for (var i = 0; i < _ocInstances.length; i++)
-      merged.push(_ocInstances[i])
-    for (var j = 0; j < _ccInstances.length; j++)
-      merged.push(_ccInstances[j])
-    for (var k = 0; k < _piInstances.length; k++)
-      merged.push(_piInstances[k])
+  // Rebuild the local snapshot, broadcast it to IPC subscribers, and
+  // republish the display list.
+  function _publishLocal() {
+    var list = []
+    for (var key in _agents)
+      list.push(_agents[key])
 
-    _localInstances = merged
-    _localGeneratedAtMs = Date.now()
-    _localReady = true
+    _localInstances = list
+    // Remote subscribers drop non-advancing generations, so never repeat one.
+    _localGeneratedAtMs = Math.max(Date.now(), _localGeneratedAtMs + 1)
     agentsIpc.snapshot(_snapshotJson())
     _publish()
   }
@@ -128,7 +198,7 @@ Singleton {
   }
 
   // Compact v1 snapshot of local instances only — display fields, no
-  // pid/cwd/port/sessionId.
+  // pid/cwd.
   function _snapshotJson() {
     var list = []
     for (var i = 0; i < _localInstances.length; i++) {
@@ -150,7 +220,7 @@ Singleton {
 
   // Read/subscribe surface for other dotshell instances: `call agents
   // current` returns the latest snapshot, `listen agents snapshot` receives
-  // a push after every completed local provider poll.
+  // a push after every local change and at least once a minute.
   IpcHandler {
     id: agentsIpc
     target: "agents"
@@ -159,424 +229,6 @@ Singleton {
 
     function current(): string {
       return manager._snapshotJson()
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // OpenCode provider discovery
-  // -------------------------------------------------------------------------
-
-  // Completed OpenCode instances for the current poll cycle
-  property var _ocInstances: []
-
-  // State for the async query chain
-  property var _ocPending: []
-  property int _ocPendingIdx: 0
-  property string _ocPendingSessionId: ""
-
-  // Kick off OpenCode discovery (Step 1)
-  function _ocDiscover() {
-    discoverProc.command = ["bash", "-c",
-      "shopt -s nullglob; " +
-      "for f in \"" + manager.registryDir + "\"/*.json; do " +
-      "  pid=$(basename \"$f\" .json); " +
-      "  if kill -0 \"$pid\" 2>/dev/null; then " +
-      "    echo \"$pid:$(cat \"$f\")\"; " +
-      "  else " +
-      "    rm -f \"$f\"; " +
-      "  fi; " +
-      "done"
-    ]
-    discoverProc.running = true
-  }
-
-  // Step 1: read OpenCode registry files and validate PIDs
-  Process {
-    id: discoverProc
-    stdout: StdioCollector {}
-    onExited: {
-      var lines = discoverProc.stdout.text.trim().split("\n")
-      var discovered = []
-
-      for (var i = 0; i < lines.length; i++) {
-        if (lines[i] === "") continue
-        var colonIdx = lines[i].indexOf(":")
-        if (colonIdx < 0) continue
-
-        var pid = lines[i].substring(0, colonIdx)
-        var jsonStr = lines[i].substring(colonIdx + 1)
-
-        try {
-          var info = JSON.parse(jsonStr)
-          var parts = info.cwd.split("/")
-          discovered.push({
-            provider: "opencode",
-            pid: pid,
-            port: info.port,
-            cwd: info.cwd,
-            project: parts[parts.length - 1],
-            status: "unknown",
-            sessionTitle: ""
-          })
-        } catch(e) {
-          // Skip malformed registry files
-        }
-      }
-
-      if (discovered.length === 0) {
-        manager._ocInstances = []
-        manager._ocBusy = false
-        manager._tryMerge()
-        return
-      }
-
-      // Carry over session titles from previous cycle (matched by PID)
-      var prev = {}
-      for (var j = 0; j < manager._ocInstances.length; j++)
-        prev[manager._ocInstances[j].pid] = manager._ocInstances[j].sessionTitle || ""
-      for (var k = 0; k < discovered.length; k++)
-        if (prev[discovered[k].pid]) discovered[k].sessionTitle = prev[discovered[k].pid]
-
-      // Store discovered instances, then query their status
-      manager._ocPending = discovered
-      manager._ocPendingIdx = 0
-      manager._ocQueryNext()
-    }
-  }
-
-  // Drive the per-instance OpenCode query chain
-  function _ocQueryNext() {
-    if (_ocPendingIdx >= _ocPending.length) {
-      // All OpenCode queries done — publish results
-      manager._ocInstances = _ocPending
-      manager._ocBusy = false
-      manager._tryMerge()
-      return
-    }
-
-    var instance = _ocPending[_ocPendingIdx]
-    statusProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
-      "http://127.0.0.1:" + instance.port + "/session/status"]
-    statusProc.running = true
-  }
-
-  // Advance to session title fetch or next instance
-  function _ocFetchSessionOrAdvance() {
-    if (manager._ocPendingSessionId !== "") {
-      var instance = manager._ocPending[manager._ocPendingIdx]
-      sessionProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
-        "http://127.0.0.1:" + instance.port + "/session/" + manager._ocPendingSessionId]
-      sessionProc.running = true
-    } else {
-      manager._ocPendingIdx++
-      manager._ocQueryNext()
-    }
-  }
-
-  // Step 2: query each OpenCode instance's session status via HTTP
-  Process {
-    id: statusProc
-    stdout: StdioCollector {}
-    onExited: function(exitCode, exitStatus) {
-      var idx = manager._ocPendingIdx
-      manager._ocPendingSessionId = ""
-      if (idx < manager._ocPending.length) {
-        if (exitCode === 0 && statusProc.stdout.text.trim() !== "") {
-          try {
-            // Response is { "sessionId": { "type": "idle"|"busy"|"retry", ... }, ... }
-            var statusMap = JSON.parse(statusProc.stdout.text.trim())
-            var hasBusy = false
-            var hasRetry = false
-            var keys = Object.keys(statusMap)
-            for (var i = 0; i < keys.length; i++) {
-              var s = statusMap[keys[i]]
-              if (s && s.type === "busy") hasBusy = true
-              else if (s && s.type === "retry") hasRetry = true
-            }
-            if (hasRetry) manager._ocPending[idx].status = "error"
-            else if (hasBusy) manager._ocPending[idx].status = "busy"
-            else manager._ocPending[idx].status = "idle"
-
-            // Pick the first session ID for title lookup
-            if (keys.length > 0) manager._ocPendingSessionId = keys[0]
-          } catch(e) {
-            manager._ocPending[idx].status = "error"
-          }
-        } else {
-          // curl failed — server unreachable
-          manager._ocPending[idx].status = "error"
-        }
-      }
-
-      // If the instance is busy, check for pending questions
-      if (manager._ocPending[idx].status === "busy") {
-        var instance = manager._ocPending[idx]
-        questionProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
-          "http://127.0.0.1:" + instance.port + "/question"]
-        questionProc.running = true
-      } else {
-        manager._ocFetchSessionOrAdvance()
-      }
-    }
-  }
-
-  // Step 3: check for pending questions (only when busy)
-  Process {
-    id: questionProc
-    stdout: StdioCollector {}
-    onExited: function(exitCode, exitStatus) {
-      var idx = manager._ocPendingIdx
-      if (idx < manager._ocPending.length && exitCode === 0 && questionProc.stdout.text.trim() !== "") {
-        try {
-          var questions = JSON.parse(questionProc.stdout.text.trim())
-          if (Array.isArray(questions) && questions.length > 0)
-            manager._ocPending[idx].status = "input"
-        } catch(e) {
-          // Parse failed — keep busy status
-        }
-      }
-
-      // If still busy (no questions found), check for pending permissions
-      if (manager._ocPending[idx].status === "busy") {
-        var instance = manager._ocPending[idx]
-        permissionProc.command = ["curl", "-sf", "--connect-timeout", "1", "--max-time", "2",
-          "http://127.0.0.1:" + instance.port + "/permission"]
-        permissionProc.running = true
-      } else {
-        manager._ocFetchSessionOrAdvance()
-      }
-    }
-  }
-
-  // Step 3b: check for pending permissions (only when busy + no questions)
-  Process {
-    id: permissionProc
-    stdout: StdioCollector {}
-    onExited: function(exitCode, exitStatus) {
-      var idx = manager._ocPendingIdx
-      if (idx < manager._ocPending.length && exitCode === 0 && permissionProc.stdout.text.trim() !== "") {
-        try {
-          var permissions = JSON.parse(permissionProc.stdout.text.trim())
-          if (Array.isArray(permissions) && permissions.length > 0)
-            manager._ocPending[idx].status = "input"
-        } catch(e) {
-          // Parse failed — keep busy status
-        }
-      }
-
-      manager._ocFetchSessionOrAdvance()
-    }
-  }
-
-  // Step 4: fetch session title for the active OpenCode session
-  Process {
-    id: sessionProc
-    stdout: StdioCollector {}
-    onExited: function(exitCode, exitStatus) {
-      var idx = manager._ocPendingIdx
-      if (idx < manager._ocPending.length && exitCode === 0 && sessionProc.stdout.text.trim() !== "") {
-        try {
-          var session = JSON.parse(sessionProc.stdout.text.trim())
-          if (session.title) manager._ocPending[idx].sessionTitle = session.title
-        } catch(e) {
-          // Title unavailable — leave empty
-        }
-      }
-
-      manager._ocPendingIdx++
-      manager._ocQueryNext()
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Claude Code provider discovery
-  // -------------------------------------------------------------------------
-
-  // Completed Claude Code instances for the current poll cycle
-  property var _ccInstances: []
-
-  // State for the async status query chain
-  property var _ccPending: []
-  property int _ccPendingIdx: 0
-
-  // Kick off Claude Code discovery. The helper filters Claude processes that
-  // are descendants of Pi, which means pi-claude-bridge is driving Claude and
-  // Pi should be the single counted agent instance.
-  function _ccDiscover() {
-    ccDiscoverProc.command = ["bash",
-      Quickshell.shellDir + "/modules/ai-agents-monitor/bin/claude-discover"]
-    ccDiscoverProc.running = true
-  }
-
-  // Read Claude session files and validate PIDs
-  Process {
-    id: ccDiscoverProc
-    stdout: StdioCollector {}
-    onExited: {
-      var lines = ccDiscoverProc.stdout.text.trim().split("\n")
-      var discovered = []
-
-      for (var i = 0; i < lines.length; i++) {
-        if (lines[i] === "") continue
-        var colonIdx = lines[i].indexOf(":")
-        if (colonIdx < 0) continue
-
-        var pid = lines[i].substring(0, colonIdx)
-        var jsonStr = lines[i].substring(colonIdx + 1)
-
-        try {
-          var info = JSON.parse(jsonStr)
-          var parts = info.cwd.split("/")
-          discovered.push({
-            provider: "claude-code",
-            pid: pid,
-            sessionId: info.sessionId,
-            cwd: info.cwd,
-            project: parts[parts.length - 1],
-            status: "idle",
-            sessionTitle: ""
-          })
-        } catch(e) {
-          // Skip malformed session files
-        }
-      }
-
-      if (discovered.length === 0) {
-        manager._ccInstances = []
-        manager._ccBusy = false
-        manager._tryMerge()
-        return
-      }
-
-      manager._ccPending = discovered
-      manager._ccPendingIdx = 0
-      manager._ccQueryNext()
-    }
-  }
-
-  // Drive the per-instance Claude Code task status query chain
-  function _ccQueryNext() {
-    if (_ccPendingIdx >= _ccPending.length) {
-      manager._ccInstances = _ccPending
-      manager._ccBusy = false
-      manager._tryMerge()
-      return
-    }
-
-    var instance = _ccPending[_ccPendingIdx]
-    var sessionId = instance.sessionId || ""
-
-    // Skip status query if sessionId is missing to avoid reading root tasks dir
-    if (!sessionId) {
-      manager._ccPendingIdx++
-      manager._ccQueryNext()
-      return
-    }
-
-    var tasksDir = manager._ccTasksDir + "/" + sessionId
-    ccStatusProc.command = ["bash", "-c",
-      "shopt -s nullglob; " +
-      "for f in \"" + tasksDir + "\"/*.json; do " +
-      "  cat \"$f\"; " +
-      "  echo '__SEP__'; " +
-      "done"
-    ]
-    ccStatusProc.running = true
-  }
-
-  // Read task JSON files for the current Claude session
-  Process {
-    id: ccStatusProc
-    stdout: StdioCollector {}
-    onExited: function(exitCode, exitStatus) {
-      var idx = manager._ccPendingIdx
-      if (idx < manager._ccPending.length) {
-        var raw = ccStatusProc.stdout.text.trim()
-        var hasInProgress = false
-        var hasError = false
-
-        if (raw !== "") {
-          var chunks = raw.split("__SEP__")
-          for (var i = 0; i < chunks.length; i++) {
-            var chunk = chunks[i].trim()
-            if (chunk === "") continue
-            try {
-              var task = JSON.parse(chunk)
-              if (task.status === "in_progress") hasInProgress = true
-              if (task.title && !manager._ccPending[idx].sessionTitle)
-                manager._ccPending[idx].sessionTitle = task.title
-            } catch(e) {
-              hasError = true
-            }
-          }
-        }
-
-        if (hasError && !hasInProgress)
-          manager._ccPending[idx].status = "error"
-        else if (hasInProgress)
-          manager._ccPending[idx].status = "busy"
-        // else: leave as "idle" (no tasks or all pending)
-      }
-
-      manager._ccPendingIdx++
-      manager._ccQueryNext()
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Pi provider discovery
-  // -------------------------------------------------------------------------
-
-  // Completed Pi instances for the current poll cycle
-  property var _piInstances: []
-
-  // Kick off Pi discovery — bin/pi-discover validates dotshell-agent-state
-  // PID records before reading each process's exact session file.
-  function _piDiscover() {
-    if (manager._piSessionsDir === "") {
-      manager._piInstances = []
-      manager._piBusy = false
-      manager._tryMerge()
-      return
-    }
-    piDiscoverProc.command = ["bash",
-      Quickshell.shellDir + "/modules/ai-agents-monitor/bin/pi-discover"]
-    piDiscoverProc.running = true
-  }
-
-  Process {
-    id: piDiscoverProc
-    stdout: StdioCollector {}
-    onExited: {
-      var lines = piDiscoverProc.stdout.text.trim().split("\n")
-      var discovered = []
-
-      for (var i = 0; i < lines.length; i++) {
-        if (lines[i] === "") continue
-        var fields = lines[i].split("\t")
-        if (fields.length < 4) continue
-
-        var pid = fields[0]
-        var cwd = fields[1]
-        var sessionId = fields[2]
-        var status = fields[3]
-        var sessionTitle = fields.length >= 5 ? fields[4] : ""
-
-        var parts = cwd.split("/")
-        discovered.push({
-          provider: "pi",
-          pid: pid,
-          sessionId: sessionId,
-          cwd: cwd,
-          project: parts[parts.length - 1],
-          status: status,
-          sessionTitle: sessionTitle
-        })
-      }
-
-      manager._piInstances = discovered
-      manager._piBusy = false
-      manager._tryMerge()
     }
   }
 
@@ -687,15 +339,16 @@ Singleton {
     onTriggered: manager._startRemoteStream()
   }
 
-  // Drop imported rows once the stream has gone 60s without an advancing
-  // generation, so counts never show a dead remote as active.
+  // Drop imported rows once the stream has gone 150s without an advancing
+  // generation (the publisher heartbeats every 60s), so counts never show a
+  // dead remote as active.
   Timer {
     interval: 10000
     running: manager.remoteConfigured
     repeat: true
     onTriggered: {
       if (manager.remoteState === "stale") return
-      if (Date.now() - manager._remoteFreshAtMs > 60000) {
+      if (Date.now() - manager._remoteFreshAtMs > 150000) {
         manager.remoteState = "stale"
         manager._remoteInstances = []
         manager._publish()

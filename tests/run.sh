@@ -8,7 +8,7 @@ test_scripts=(tests/*_test.sh)
 
 bash -n setup/init.sh setup/uninstall.sh setup/lib/platform.sh setup/platforms/*.sh \
   bin/dshell bin/generate-gtk-css core/migrate-module-state modules/*/dshell/init.sh \
-  modules/ai-agents-monitor/bin/pi-discover \
+  modules/ai-agents-monitor/bin/claude-hook \
   modules/ai-agents-monitor/bin/remote-stream modules/notifications/bin/remote-stream \
   modules/display/bin/display-brightness modules/display/bin/display-text-size \
   modules/bluetooth/bin/bluetooth-device \
@@ -27,7 +27,7 @@ done < <(find core modules statusbar themes -name '*.json' -type f -print0)
 if command -v shellcheck >/dev/null 2>&1; then
   shellcheck setup/init.sh setup/uninstall.sh setup/dotshell.run setup/lib/platform.sh \
     setup/platforms/*.sh core/migrate-module-state modules/*/dshell/init.sh \
-    modules/ai-agents-monitor/bin/pi-discover \
+    modules/ai-agents-monitor/bin/claude-hook \
     modules/ai-agents-monitor/bin/remote-stream modules/notifications/bin/remote-stream \
     modules/display/bin/display-brightness modules/display/bin/display-text-size \
     modules/bluetooth/bin/bluetooth-device \
@@ -38,7 +38,7 @@ fi
 bash tests/dshell_test.sh
 bash tests/module_rename_test.sh
 bash tests/statusbar_defaults_test.sh
-bash tests/pi_discover_test.sh
+bash tests/claude_hook_test.sh
 bash tests/remote_stream_test.sh
 bash tests/notification_remote_stream_test.sh
 bash tests/ipc_listener_lifetime_test.sh

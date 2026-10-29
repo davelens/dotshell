@@ -20,6 +20,7 @@ platform_install_packages() {
     libnotify \
     ffmpeg \
     jq \
+    nmap \
     desktop-file-utils; then
     cat >&2 <<'EOF'
 error: unable to install dotshell's Arch packages.

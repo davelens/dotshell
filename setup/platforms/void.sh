@@ -20,6 +20,7 @@ platform_install_packages() {
     libnotify \
     ffmpeg \
     jq \
+    nmap \
     desktop-file-utils
 
   if [[ -d /etc/sv/bluetoothd ]]; then
