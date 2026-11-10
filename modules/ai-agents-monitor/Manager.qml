@@ -24,13 +24,14 @@ Singleton {
   // Local agents, pushed over a Unix socket
   // -------------------------------------------------------------------------
 
-  // Agents write one JSON line per status change:
+  // Agents write one JSON line per status change to every reader socket in
+  // the shared agent-state directory, so other apps can listen alongside us:
   //   { provider, pid, status, cwd?, title?, oneshot? }
   // Status "gone" removes the agent. Pi and OpenCode keep their connection
   // open, so closing it removes their agent too. Claude Code hooks send
   // `oneshot` lines and are pruned by the liveness timer instead.
-  readonly property string socketPath:
-    (Quickshell.env("XDG_RUNTIME_DIR") || "/run/user/1000") + "/dotshell-agents.sock"
+  readonly property string readerDir:
+    (Quickshell.env("XDG_RUNTIME_DIR") || "/run/user/1000") + "/agent-state"
 
   readonly property var _providers: ({ "opencode": true, "claude-code": true, "pi": true })
   readonly property var _statuses: ({ "busy": true, "idle": true, "error": true, "input": true })
@@ -40,9 +41,19 @@ Singleton {
   property var _agents: ({})
   property var _owners: ({})
 
+  // The first reader to start creates the directory.
+  Process {
+    command: ["mkdir", "-p", manager.readerDir]
+    running: true
+    onExited: function(exitCode) {
+      if (exitCode === 0) agentSocket.active = true
+      else console.warn("[AiAgentsMonitor] Could not create", manager.readerDir)
+    }
+  }
+
   SocketServer {
-    active: true
-    path: manager.socketPath
+    id: agentSocket
+    path: manager.readerDir + "/dotshell.sock"
     handler: Socket {
       id: conn
       onConnectedChanged: if (!connected) manager._disconnect(conn)

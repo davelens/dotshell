@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Claude Code hook: pushes the session's status to the dotshell agents socket.
+# Claude Code hook: pushes the session's status to every reader socket in
+# $XDG_RUNTIME_DIR/agent-state/ (such as dotshell's).
 # Register this one command for SessionStart, UserPromptSubmit, PreToolUse,
 # PostToolUse, PermissionRequest, Stop, StopFailure, and SessionEnd; the event
 # name in the hook payload (stdin) picks the status.
 #
 # Claude processes driven by Pi (pi-claude-bridge) are skipped so Pi stays the
-# single counted agent. Never fails or blocks Claude: a missing socket, jq, or
+# single counted agent. Never fails or blocks Claude: no reader sockets, jq, or
 # ncat just means nothing is sent.
 
 pid=$PPID
@@ -26,7 +27,7 @@ done
 
 [ -n "$claude_pid" ] || exit 0
 
-socket="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/dotshell-agents.sock"
+readers="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/agent-state"
 
 jq -c --argjson pid "$claude_pid" '
   {
@@ -47,7 +48,10 @@ jq -c --argjson pid "$claude_pid" '
     else {} end
 ' 2>/dev/null | {
   read -r line || exit 0
-  printf '%s\n' "$line" | ncat -U --send-only "$socket" 2>/dev/null
+  shopt -s nullglob
+  for socket in "$readers"/*.sock; do
+    printf '%s\n' "$line" | ncat -U --send-only "$socket" 2>/dev/null
+  done
 }
 
 exit 0

@@ -6,8 +6,9 @@ busy/idle/error/question counts.
 
 ## Feature parity
 
-- Agents push status over `$XDG_RUNTIME_DIR/dotshell-agents.sock` (one
-  JSON line per change; see README "AI agent monitoring"). Persistent
+- Agents push status to every socket in `$XDG_RUNTIME_DIR/agent-state/`;
+  dotshell listens on `dotshell.sock` there (one JSON line per change; see
+  README "AI agent monitoring"). Persistent
   connections (Pi, OpenCode) own their agent until they close; one-shot
   Claude hook lines are pruned by a 60 s `bin/claude-discover` rescan,
   which also seeds pre-existing Claude sessions and heartbeats the

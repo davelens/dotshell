@@ -10,12 +10,15 @@ mkdir -p "$SANDBOX/bin"
 export PATH="$SANDBOX/bin:$PATH"
 export XDG_RUNTIME_DIR="$SANDBOX/run"
 export SENT="$SANDBOX/sent"
+READERS="$XDG_RUNTIME_DIR/agent-state"
+mkdir -p "$READERS"
+touch "$READERS/dotshell.sock"
 
-# Stand in for ncat: record its argv and the line it would send.
+# Stand in for ncat: record its argv and the line it would send, once per call.
 cat >"$SANDBOX/bin/ncat" <<'SH'
 #!/usr/bin/env bash
-printf '%s\n' "$*" >"$SENT.args"
-cat >"$SENT"
+printf '%s\n' "$*" >>"$SENT.args"
+cat >>"$SENT"
 SH
 chmod +x "$SANDBOX/bin/ncat"
 
@@ -43,7 +46,7 @@ detached() {
 }
 
 run_under_claude() {
-  rm -f "$SENT"
+  rm -f "$SENT" "$SENT.args"
   # shellcheck disable=SC2016
   detached "$SANDBOX/claude" -c 'printf "%s\n" "$$" >"$SENT.pid"; "$1" <<<"$2"; :' _ "$HOOK" "$1"
 }
@@ -86,11 +89,22 @@ expect '{"hook_event_name":"SessionEnd","cwd":"/w"}' '.status == "gone"' \
 run_under_claude '{"hook_event_name":"Notification","cwd":"/w"}'
 expect_none 'unmapped events send nothing'
 
-if grep -qx -- "-U --send-only $XDG_RUNTIME_DIR/dotshell-agents.sock" "$SENT.args"; then
-  pass 'sends to the runtime-dir socket'
+touch "$READERS/other.sock" "$READERS/notes.txt"
+run_under_claude '{"hook_event_name":"Stop","cwd":"/w"}'
+expected="-U --send-only $READERS/dotshell.sock
+-U --send-only $READERS/other.sock"
+if [[ "$(sort "$SENT.args")" == "$expected" ]] && [[ "$(wc -l <"$SENT")" -eq 2 ]]; then
+  pass 'sends one line to every reader socket'
 else
-  fail "sends to the runtime-dir socket (args: $(cat "$SENT.args"))"
+  fail "sends one line to every reader socket (args: $(cat "$SENT.args"))"
 fi
+rm -f "$READERS"/*
+
+run_under_claude '{"hook_event_name":"Stop","cwd":"/w"}'
+expect_none 'no reader sockets sends nothing'
+rmdir "$READERS"
+run_under_claude '{"hook_event_name":"Stop","cwd":"/w"}'
+expect_none 'a missing reader directory sends nothing'
 
 rm -f "$SENT"
 # shellcheck disable=SC2016

@@ -56,8 +56,12 @@ Numbers, autodetected workspaces:
 
 ### AI agent monitoring
 
-Agents push their status to the shell over a Unix socket at
-`$XDG_RUNTIME_DIR/dotshell-agents.sock`, one JSON line per change:
+Agents push their status to every reader socket in
+`$XDG_RUNTIME_DIR/agent-state/`, one JSON line per change. The shell listens on
+`agent-state/dotshell.sock` (creating the directory if needed); any other app
+can read agent state by listening on its own `<name>.sock` next to it. Pi and
+OpenCode pick up new sockets within 5 seconds; the Claude hook sends to every
+socket present at each event.
 
 ```json
 {"provider": "pi", "pid": 1234, "status": "busy", "cwd": "/path", "title": "..."}
@@ -72,11 +76,11 @@ sessions that ended without a `SessionEnd` hook are dropped.
 
 Each agent needs a sender, set up manually on each monitored machine:
 
-- **Pi:** the `dotshell-agent-state` extension in
+- **Pi:** the `agent-state` extension in
   [pi-config](https://github.com/davelens/pi-config). Only interactive (TUI)
   sessions report; run `/reload` in open sessions after installing or updating
   it.
-- **OpenCode (2.x):** the `dotshell-agents/` plugin directory in the OpenCode
+- **OpenCode (2.x):** the `agent-state/` plugin directory in the OpenCode
   `plugins/` config directory (kept in the dotfiles repo). Its `tui.js` runs in
   each TUI process, so closing the TUI removes the agent even though the
   background service keeps running.
