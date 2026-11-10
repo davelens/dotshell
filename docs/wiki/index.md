@@ -1,6 +1,6 @@
 # dotshell wiki
 
-How things work now. Domain vocabulary lives in `../../CONTEXT.md`,
+How things work now. Domain vocabulary lives in `../../GLOSSARY.md`,
 decisions in `../adr/`, durable constraints in `../memory/`.
 
 - [Preface](preface.md) — what dotshell is.
